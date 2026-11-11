@@ -198,6 +198,7 @@ function stepTruck(dt) {
   const y = [...players.values()].find((p) => p.seat === 2), yi = y ? y.inp : null; // yolcunun şoföre işareti: 1 sol, 2 sağ, 3 yavaş
   T.sig = yi ? yi.sg || ((yi.mx || 0) > 0.5 ? 1 : (yi.mx || 0) < -0.5 ? 2 : (yi.mz || 0) < -0.5 ? 3 : 0) : 0;
   if (T.state === 'lobby') { T.v = 0; T.pax = T.paz = 0; return; }
+  if (T.state === 'run' && T.cd > 0) { T.cd -= dt; T.v = 0; T.pax = T.paz = 0; T.gas = T.br = 0; if (T.cd > 0) return; T.cd = 0; T.v = 8; say('Yola çıktınız! Kamyon durmasın'); } // başlangıç geri sayımı: kamyon bekler
   T.t += dt; T.msgT -= dt;
   const d = [...players.values()].find((p) => p.seat === 1), run = T.state === 'run';
   const si = d ? clamp(d.inp.mx || 0, -1, 1) : 0; let gas = d && run ? Math.max(0, d.inp.mz || 0) : 0; const br = d ? Math.max(0, -(d.inp.mz || 0)) : run ? 0 : 1;
@@ -223,9 +224,9 @@ function stepTruck(dt) {
   if (T.Z >= LEN) { T.state = 'win'; T.why = 'Hedefe ulaştınız! 🏁'; }
   else if (T.t > 6 && T.v < 0.4) { T.state = 'over'; T.why = T.fuel <= 0 ? 'Yakıt bitti, kamyon durdu!' : 'Kamyon durdu!'; }
 }
-function startGame() { resetGame(); T.state = 'run'; T.v = 8; say('Yola çıktınız! Kamyon durmasın'); }
+function startGame() { resetGame(); T.state = 'run'; T.v = 0; T.cd = 5; }
 function resetGame() {
-  Object.assign(T, { X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], state: 'lobby', t: 0, nextFlat: rnd(25, 40), msg: '', msgT: 0, why: '', sig: 0 });
+  Object.assign(T, { X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], state: 'lobby', t: 0, cd: 0, nextFlat: rnd(25, 40), msg: '', msgT: 0, why: '', sig: 0 });
   Object.assign(TKS, { st: 0, z: -50, valve: 0, vp: 0 }); NZ.holder = null; NZ.dock = false; AH.holder = null; AH.p = AIR.slice(); for (const o of OBS) o.hit = false;
 }
 function simStep(dt) { stepAir(dt);
@@ -234,7 +235,7 @@ function simStep(dt) { stepAir(dt);
   for (let a = 0; a < L.length; a++) for (let b = a + 1; b < L.length; b++) { const p = L[a], q = L[b]; if (p.seat || q.seat || p.dead > 0 || q.dead > 0) continue; for (const k of [0, 1]) { const i = k * 3, dx = q.P[i] - p.P[i], dy = q.P[i + 1] - p.P[i + 1], dz = q.P[i + 2] - p.P[i + 2], d = Math.hypot(dx, dy, dz) || 1e-6; if (d < 0.56) { const s = ((0.56 - d) / d) * 0.5; p.P[i] -= dx * s; p.P[i + 2] -= dz * s; q.P[i] += dx * s; q.P[i + 2] += dz * s; } } }
 }
 const r2 = (v) => Math.round(v * 100) / 100;
-const snap = () => ({ t: 's', T: { X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, s: T.state, m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], p: [...players.values()].map((p) => ({ id: p.id, n: p.name, c: p.ci, s: p.seat, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, P: Array.from(p.P, r2) })) });
+const snap = () => ({ t: 's', T: { X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], p: [...players.values()].map((p) => ({ id: p.id, n: p.name, c: p.ci, s: p.seat, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, P: Array.from(p.P, r2) })) });
 
 // ---------- görüntü ----------
 const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
@@ -407,6 +408,7 @@ function draw(V, dt) {
   const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Önünü göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görüyorsun: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · E kalk · T tanker çağır' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F vana · T tanker çağır';
   let af = '';
   if (t.s === 'lobby') af += `<div>Oda kodu: <span class="uyari">${odaKodu}</span> · ${V.p.length}/4 oyuncu</div><div style="font-size:18px">${isHost ? 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat' : 'Oda sahibinin başlatması bekleniyor'}</div><div style="font-size:16px">Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!</div>`;
+  if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>Yerlerinizi alın, kamyon kalkıyor!</div>`;
   if (t.s === 'over' || t.s === 'win') af += `<div class="buyuk">${t.s === 'win' ? '🏁 BAŞARDINIZ!' : '💥 OYUN BİTTİ'}</div><div>${t.why}</div><div style="font-size:18px">${isHost ? 'ENTER: yeniden' : ''}</div>`;
   if (t.m) af += `<div>${t.m}</div>`;
   if (t.s === 'run') { if (t.f < 25) af += `<div class="uyari">⛽ YAKIT AZ! ${ks ? '' : 'T ile tankeri ara'}</div>`; t.fl.forEach((f, i) => { if (f) af += `<div class="uyari">🛞 ${WHEEL[i][3]} lastik patlak — arkadaki basınç hortumunu TUT, lastiğin yanına götür</div>`; }); if (ks === 2) af += `<div style="font-size:18px">${V.n[3] ? (kv ? 'Yakıt doluyor…' : 'Hortum takılı: tankerin üstündeki vanayı F ile aç') : 'Tankerden sarı hortum ucunu TUT, sol öndeki depo ağzına bırak'}${V.k[4] > 0 ? ' · vana %' + Math.round(V.k[4] * 100) : ''}</div>`; }
