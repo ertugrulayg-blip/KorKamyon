@@ -100,18 +100,19 @@ function stepPlayer(pl, dt) {
     Q[i] = P[i]; Q[i + 1] = P[i + 1]; Q[i + 2] = P[i + 2];
     P[i] += vx + T.pax * dt * dt; P[i + 1] += vy - 22 * dt * dt; P[i + 2] += vz + T.paz * dt * dt;
   }
-  const g = stand ? 0.25 : pinned ? 0.04 : 0.02, tv = 4.3 * dt;
+  const hold = stand && ((pl.pin[0] && pl.pin[0].b) || (pl.pin[1] && pl.pin[1].b)) ? 0 : 1; // kasaya tutunup ayakta duran yürümez
+  const g = stand ? 0.25 : pinned ? 0.04 : 0.02, tv = 4.3 * dt * hold;
   for (const i of [0, 3]) { P[i] += (mx * tv - (P[i] - Q[i])) * g; P[i + 2] += (mz * tv - (P[i + 2] - Q[i + 2])) * g; }
   if (stand) {
-    const wd = -Math.cos(pl.phase) * 0.14 * ml; // yalpa: gövde basan ayağın üstüne yatar
+    const wd = -Math.cos(pl.phase) * 0.14 * ml * hold; // yalpa: gövde basan ayağın üstüne yatar
     { const c = (Math.min(P[16], P[19]) + 0.5 - P[1]) * 0.3; P[1] += c; Q[1] += c * 0.65; } // Q'ya da uygula: yay enerji pompalamasın (inişte zıplatıyordu)
     P[3] += (P[0] + mx * 0.1 + lx * wd - P[3]) * 0.15; { const c = (P[1] + 0.4 - P[4]) * 0.3; P[4] += c; Q[4] += c * 0.65; } P[5] += (P[2] + mz * 0.1 + lz * wd - P[5]) * 0.15;
     P[6] += (P[3] - P[6]) * 0.12; { const c = (P[4] + 0.36 - P[7]) * 0.3; P[7] += c; Q[7] += c * 0.65; } P[8] += (P[5] - P[8]) * 0.12;
-    pl.phase += ml * dt * 9;
+    pl.phase += ml * hold * dt * 9;
     for (let s = 0; s < 2; s++) {
-      const i = 15 + s * 3, sd = s ? -1 : 1, ph = pl.phase + s * Math.PI, sw = Math.sin(ph) * 0.28 * ml;
+      const i = 15 + s * 3, sd = s ? -1 : 1, ph = pl.phase + s * Math.PI, sw = Math.sin(ph) * 0.28 * ml * hold;
       P[i] += (P[0] + lx * sd * 0.17 + fx * sw - P[i]) * 0.35; P[i + 2] += (P[2] + lz * sd * 0.17 + fz * sw - P[i + 2]) * 0.35;
-      const up = Math.cos(ph); if (ml > 0.1 && up > 0) { const c = (P[34 - i] + up * 0.16 - P[i + 1]) * 0.4; P[i + 1] += c; Q[i + 1] += c; } // kalkan ayak: konum düzeltmesi, hız eklemez (eskiden zıplatıyordu)
+      const up = Math.cos(ph); if (ml * hold > 0.1 && up > 0) { const c = (P[34 - i] + up * 0.16 - P[i + 1]) * 0.4; P[i + 1] += c; Q[i + 1] += c; } // kalkan ayak: konum düzeltmesi, hız eklemez (eskiden zıplatıyordu)
     }
     if (I.j && !pl.lj) { for (let i = 1; i < 21; i += 3) Q[i] = P[i] - 6.6 * dt; pl.jumpT = 0.3; pl.gndT = 0; }
   }
@@ -165,7 +166,7 @@ function stepPlayer(pl, dt) {
   for (let h = 0; h < 2; h++) { const pin = pl.pin[h]; if (pin && (d3(P, 3, P, 9 + h * 3) > 1.35 || (pin.b && !pin.b.on) || (pin.q && (pin.q.seat || pin.q.dead > 0)))) pl.pin[h] = null; }
   if (pl.punchT > 0 && !pl.hitDone) { const i = 9 + pl.punchH * 3; for (const q of players.values()) if (q !== pl && q.dead <= 0 && d3(P, i, q.P, 6) < 0.48) { pl.hitDone = true; hitPlayer(pl, q, fx, fz); break; } }
   if (I.u && !st) {
-    if (pinned && !gnd) for (let w = 0; w < 4; w++) if (T.flat[w] && Math.hypot(P[3] - WHEEL[w][0], P[4] - WHEEL[w][1], P[5] - WHEEL[w][2]) < 1.9) { T.rep[w] += dt / 4; if (T.rep[w] >= 1) { T.flat[w] = 0; T.rep[w] = 0; say(pl.name + ' lastiği tamir etti 🔧'); } }
+    for (let w = 0; w < 4; w++) if (T.flat[w] && Math.hypot(P[3] - WHEEL[w][0], P[5] - WHEEL[w][2]) < 2.0) { T.rep[w] += dt / 4; if (T.rep[w] >= 1) { T.flat[w] = 0; T.rep[w] = 0; say(pl.name + ' lastiği tamir etti 🔧'); } }
     if (TKS.st === 2 && Math.hypot(P[3] - TKS.x, P[4] - 2.3, P[5] - (TKS.z - 2)) < 1.4) { TKS.vp += dt / 1.2; if (TKS.vp >= 1) { TKS.vp = 0; TKS.valve = 25; say('Vana açıldı ⛽'); } }
   }
   pl.offT = P[1] < 0.7 ? pl.offT + dt : 0;
@@ -237,6 +238,7 @@ const boxMesh = (b, par) => { const m = new THREE.Mesh(BG, M(b.c)); m.scale.set(
 const add = (par, geo, mat, x, y, z, sx = 1, sy = sx, sz = sx) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); par.add(m); return m; };
 const truck = new THREE.Group(); scene.add(truck);
 for (const b of BOX) if (b !== TK) boxMesh(b, truck);
+const marks = WHEEL.map((w) => add(truck, CG, new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true }), Math.sign(w[0]) * 1.05, 1.32, clamp(w[2], -5.4, 0.55), 0.42, 0.03, 0.42)); // patlak lastik için durulacak yer
 const wheels = WHEEL.map((w) => { const m = add(truck, CG, M(0x222222), w[0], w[1], w[2], 0.55, 0.4, 0.55); m.rotation.z = Math.PI / 2; return m; });
 add(truck, BG, M(0x30415d), 0.7, 1.95, 1.45, 0.8, 0.9, 0.12); add(truck, BG, M(0x30415d), -0.7, 2.3, 1.45, 0.8, 1.0, 0.12);
 add(truck, CG, M(0xffd23f), INLET[0], 1.65, INLET[2], 0.09, 0.7, 0.09); add(truck, CG, M(0x222222), INLET[0], 2.0, INLET[2], 0.16, 0.08, 0.16);
@@ -340,12 +342,15 @@ function drawBar(V, dt) {
   ren.render(bar, barCam);
 }
 const pm = new Map();
-function playerMesh(ci) { // oyundaki pelte karakter de bardaki kamyoncunun aynısı: deri ceket, göbek, şapka/sakal
-  const k = ci % 4, g = new THREE.Group(), sk = M(SKIN[k]), col = M(COL[k]), o = { g, s: [], l: [] };
-  [[0.27, jean], [0.33, leather], [0.25, sk], [0.13, sk], [0.13, sk], [0.16, dark], [0.16, dark]].forEach(([r, m]) => o.s.push(add(g, SG, m, 0, 0, 0, r)));
-  for (let i = 0; i < 5; i++) o.l.push(add(g, CG, i < 2 || i === 4 ? leather : jean, 0, 0, 0, 1));
-  o.b = add(g, SG, col, 0, 0, 0, 0.31, 0.31, 0.28); o.t = add(g, BG, col, 0, 0, 0, 0.36, 0.3, 0.06); // göbek + ceketin sırtındaki renkli arma (arkadan kim olduğu anlaşılsın)
-  o.h = new THREE.Group(); o.h.scale.setScalar(1.19); faceParts(o.h, k, sk, col, M(HAIR[k])); g.add(o.h);
+const qY = new THREE.Quaternion(), v3 = new THREE.Vector3();
+function limbV(m, a, b, r) { const L = a.distanceTo(b) || 0.01; m.position.copy(a).add(b).multiplyScalar(0.5); m.scale.set(r, L, r); m.quaternion.setFromUnitVectors(UP, v3.copy(b).sub(a).divideScalar(L)); }
+function playerMesh(ci) { // bardaki kamyoncunun aynısı. Gövde+göbek+kafa tek katı parça (o.body); eller, ayaklar ve uzuvlar fizik noktalarını izler
+  const k = ci % 4, g = new THREE.Group(), sk = M(SKIN[k]), col = M(COL[k]), o = { g, s: [], l: [] }, b = (o.body = new THREE.Group()); g.add(b);
+  add(b, SG, jean, 0, 0, 0, 0.27, 0.24, 0.25); add(b, SG, leather, 0, 0.42, -0.02, 0.4, 0.46, 0.33); add(b, SG, col, 0, 0.24, 0.16, 0.33, 0.33, 0.29); add(b, BG, col, 0, 0.47, -0.31, 0.34, 0.28, 0.06);
+  add(b, CG, sk, 0, 0.86, 0, 0.1, 0.12, 0.1); for (const sd of [-1, 1]) add(b, SG, leather, sd * 0.36, 0.66, 0, 0.14);
+  const hd = new THREE.Group(); hd.position.set(0, 1.0, 0.02); hd.scale.setScalar(1.1); add(hd, SG, sk, 0, 0, 0, 0.21, 0.235, 0.21); faceParts(hd, k, sk, col, M(HAIR[k])); b.add(hd);
+  [[0.13, sk], [0.13, sk], [0.16, dark], [0.16, dark]].forEach(([r, m]) => o.s.push(add(g, SG, m, 0, 0, 0, r)));
+  for (let i = 0; i < 4; i++) o.l.push(add(g, CG, i < 2 ? leather : jean, 0, 0, 0, 1));
   scene.add(g); return o;
 }
 function limb(m, P, a, b, r) { v1.set(P[a], P[a + 1], P[a + 2]); v2.set(P[b], P[b + 1], P[b + 2]); const L = v1.distanceTo(v2) || 0.01; m.position.copy(v1).add(v2).multiplyScalar(0.5); m.scale.set(r, L, r); m.quaternion.setFromUnitVectors(UP, v2.sub(v1).divideScalar(L)); }
@@ -355,6 +360,7 @@ function draw(V, dt) {
   if (isHost) { cT.X = t.X; cT.Z = t.Z; cT.th = t.th; } else { cT.th += (t.th - cT.th) * 0.25; cT.X += Math.sin(cT.th) * t.v * dt; cT.Z += Math.cos(cT.th) * t.v * dt; cT.X += (t.X - cT.X) * 0.15; cT.Z += (t.Z - cT.Z) * 0.15; if (Math.abs(t.Z - cT.Z) > 30) { cT.X = t.X; cT.Z = t.Z; } }
   pivot.rotation.y = -cT.th; world.position.set(-cT.X, 0, -cT.Z);
   wheels.forEach((w, i) => { w.rotation.x += t.v * dt / 0.55; w.scale.x = w.scale.z = t.fl[i] ? 0.42 : 0.55; w.position.y = t.fl[i] ? 0.42 : 0.55; w.material.color.setHex(t.fl[i] ? 0x8a2a1e : 0x222222); });
+  marks.forEach((m, i) => { m.visible = !!t.fl[i] && t.s === 'run'; m.material.opacity = 0.55 + 0.4 * Math.sin(performance.now() / 150); });
   swheel.rotation.z = t.st * 2.2; pedG.position.z = 3.1 + t.g * 0.06; pedB.position.z = 3.1 + t.b * 0.06; needle.rotation.z = (t.f / 100 - 0.5) * -2.4;
   obsMesh.forEach((m, i) => (m.visible = !t.oh.includes(i)));
   const [ks, kx, kz, kv] = V.k; tanker.visible = ks > 0; tanker.position.set(kx, 0, kz); valve.rotation.z += kv ? dt * 4 : 0;
@@ -366,9 +372,9 @@ function draw(V, dt) {
     seen.add(p.id); let o = pm.get(p.id); if (!o) { o = playerMesh(p.c); pm.set(p.id, o); RP[p.id] = Float32Array.from(p.P); }
     const P = RP[p.id]; for (let i = 0; i < 21; i++) P[i] = isHost || p.s || Math.abs(p.P[i] - P[i]) > 3 ? p.P[i] : P[i] + (p.P[i] - P[i]) * 0.4;
     o.g.visible = !p.d && !(p === me && p.s && camMode < 0);
-    o.s.forEach((m, k) => m.position.set(P[k * 3], P[k * 3 + 1], P[k * 3 + 2]));
-    limb(o.l[0], P, 3, 9, 0.09); limb(o.l[1], P, 3, 12, 0.09); limb(o.l[2], P, 0, 15, 0.11); limb(o.l[3], P, 0, 18, 0.11); limb(o.l[4], P, 0, 3, 0.27);
-    const fx = Math.sin(p.y), fz = Math.cos(p.y); o.h.position.set(P[6], P[7], P[8]); o.h.rotation.y = p.y; o.b.position.set((P[0] + P[3]) / 2 + fx * 0.2, (P[1] + P[4]) / 2 + 0.02, (P[2] + P[5]) / 2 + fz * 0.2); o.t.position.set(P[3] - fx * 0.3, P[4] + 0.02, P[5] - fz * 0.3); o.t.rotation.y = p.y;
+    const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
+    o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3]));
+    for (let k = 0; k < 4; k++) { const sd = k % 2 ? -1 : 1; v1.set(sd * (k < 2 ? 0.38 : 0.15), k < 2 ? 0.62 : -0.04, 0).applyQuaternion(B.quaternion).add(B.position); v2.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3]); limbV(o.l[k], v1, v2, k < 2 ? 0.1 : 0.115); }
   }
   for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); pm.delete(id); delete RP[id]; }
   const seat = camMode >= 0 ? camMode : me ? me.s : 0;
@@ -386,7 +392,7 @@ function draw(V, dt) {
   if (t.s === 'lobby') af += `<div>Oda kodu: <span class="uyari">${odaKodu}</span> · ${V.p.length}/4 oyuncu</div><div style="font-size:18px">${isHost ? 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat' : 'Oda sahibinin başlatması bekleniyor'}</div><div style="font-size:16px">Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!</div>`;
   if (t.s === 'over' || t.s === 'win') af += `<div class="buyuk">${t.s === 'win' ? '🏁 BAŞARDINIZ!' : '💥 OYUN BİTTİ'}</div><div>${t.why}</div><div style="font-size:18px">${isHost ? 'ENTER: yeniden' : ''}</div>`;
   if (t.m) af += `<div>${t.m}</div>`;
-  if (t.s === 'run') { if (t.f < 25) af += `<div class="uyari">⛽ YAKIT AZ! ${ks ? '' : 'T ile tankeri ara'}</div>`; t.fl.forEach((f, i) => { if (f) af += `<div class="uyari">🛞 ${WHEEL[i][3]} lastik patlak${t.rp[i] > 0 ? ' — tamir %' + Math.round(t.rp[i] * 100) : ' (tutunup in, F ile tamir et)'}</div>`; }); if (ks === 2) af += `<div style="font-size:18px">${V.n[3] ? (kv ? 'Yakıt doluyor…' : 'Hortum takılı: tankerin üstündeki vanayı F ile aç') : 'Tankerden sarı hortum ucunu TUT, sol öndeki depo ağzına bırak'}${V.k[4] > 0 ? ' · vana %' + Math.round(V.k[4] * 100) : ''}</div>`; }
+  if (t.s === 'run') { if (t.f < 25) af += `<div class="uyari">⛽ YAKIT AZ! ${ks ? '' : 'T ile tankeri ara'}</div>`; t.fl.forEach((f, i) => { if (f) af += `<div class="uyari">🛞 ${WHEEL[i][3]} lastik patlak${t.rp[i] > 0 ? ' — tamir %' + Math.round(t.rp[i] * 100) : (TOUCH ? ' — sarı işarete git, KULLAN/TAMİR basılı tut' : ' — sarı işarete git, F basılı tut')}</div>`; }); if (ks === 2) af += `<div style="font-size:18px">${V.n[3] ? (kv ? 'Yakıt doluyor…' : 'Hortum takılı: tankerin üstündeki vanayı F ile aç') : 'Tankerden sarı hortum ucunu TUT, sol öndeki depo ağzına bırak'}${V.k[4] > 0 ? ' · vana %' + Math.round(V.k[4] * 100) : ''}</div>`; }
   const h = rol + af + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
   if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (micOk ? '<br>🎙 M: mikrofon aç/kapa' : '<br>🔇 mikrofon yok'); $('afis').innerHTML = af; $('afis').className = t.s === 'lobby' ? 'alt' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('bilgi').textContent = `Kalan ${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} km/s`; $('oda').textContent = 'Oda ' + odaKodu; }
 }
