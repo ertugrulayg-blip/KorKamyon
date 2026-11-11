@@ -369,9 +369,70 @@ function playerMesh(ci) { // bardaki kamyoncunun aynısı. Gövde+göbek+kafa te
   scene.add(g); return o;
 }
 function limb(m, P, a, b, r) { v1.set(P[a], P[a + 1], P[a + 2]); v2.set(P[b], P[b + 1], P[b + 2]); const L = v1.distanceTo(v2) || 0.01; m.position.copy(v1).add(v2).multiplyScalar(0.5); m.scale.set(r, L, r); m.quaternion.setFromUnitVectors(UP, v2.sub(v1).divideScalar(L)); }
+// ---- Ses: hepsi WebAudio ile sentezlenir (ses dosyası yok). Oda sahibinden gelen duruma (V) bakarak her istemcide çalar. ----
+let AC = null, SND = null, musOn = localStorage.getItem('kk-muz') !== '0';
+function initSnd() {
+  if (AC) { if (AC.state === 'suspended' && !document.hidden) AC.resume(); return; }
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  const out = AC.createDynamicsCompressor(); out.connect(AC.destination);
+  const nb = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  const G = (v, to) => { const g = AC.createGain(); g.gain.value = v; g.connect(to); return g; };
+  const F = (type, f, q, to) => { const b = AC.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; b.connect(to); return b; };
+  const O = (type, f, to) => { const o = AC.createOscillator(); o.type = type; o.frequency.value = f; o.connect(to); o.start(); return o; };
+  const N = (to) => { const s = AC.createBufferSource(); s.buffer = nb; s.loop = true; s.connect(to); s.start(); return s; };
+  const master = G(0.9, out), mg = G(musOn ? 1 : 0, master), mlp = F('lowpass', 2200, 0.5, mg);
+  const eg = G(0, master), ef = F('lowpass', 250, 1.5, eg), e1 = O('sawtooth', 40, ef), e2 = O('square', 20, ef); // motor
+  const rg = G(0, master), rf = F('lowpass', 400, 0.7, rg); N(rf); // gaz / yol uğultusu
+  const bg = G(0, master); N(F('bandpass', 2400, 5, bg)); // fren
+  const ag = G(0, master), af = F('bandpass', 3000, 1.5, ag); N(af); const cg = G(0, master); O('sawtooth', 31, F('lowpass', 180, 2, cg)); // basınçlı hava tıslaması + kompresör
+  const fg = G(0, master), fm = G(0.55, fg); N(F('lowpass', 520, 1, fm)); const gur = O('sine', 150, G(0.5, fm)); O('sine', 6.5, G(0.45, fm.gain)); O('sine', 9.3, G(40, gur.frequency)); // yakıt: lıkır lıkır
+  SND = { master, mg, mlp, eg, ef, e1, e2, rg, rf, bg, ag, af, cg, fg, gur, nb };
+  document.addEventListener('visibilitychange', () => (document.hidden ? AC.suspend() : AC.resume()));
+}
+function tone(f, t0, dur, vol, type = 'sine', to = SND.master, f2 = 0) { const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g); g.connect(to); o.start(t0); o.stop(t0 + dur + 0.05); }
+function burst(t0, dur, vol, type, f, to = SND.master) { const s = AC.createBufferSource(), fl = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = SND.nb; s.loop = true; fl.type = type; fl.frequency.value = f; g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); s.connect(fl); fl.connect(g); g.connect(to); s.start(t0, Math.random()); s.stop(t0 + dur + 0.05); }
+const horn = (t0, dur) => { for (const f of [185, 233]) tone(f, t0, dur, 0.16, 'sawtooth', SND.master, f * 0.985); };
+// Müzik: Mi'de 12 ölçülük blues, shuffle. Barda ağır, yolda hızlı.
+const BARS = [0, 0, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7], WALK = [0, 0, 4, 4, 7, 7, 9, 7], PENTA = [0, 3, 5, 7, 10, 12, 15], st = (n) => Math.pow(2, n / 12);
+function musStep(i, t0, road) {
+  const S = SND, e = i % 8, root = BARS[((i / 8) | 0) % 12], bt = 60 / (road ? 128 : 84);
+  tone(82.4 * st(root + WALK[e]), t0, bt * 0.5, 0.2, 'triangle', S.mg);
+  if (e % 4 === 0) tone(110, t0, 0.14, 0.35, 'sine', S.mg, 42); // kick
+  if (e % 4 === 2) { burst(t0, 0.13, road ? 0.16 : 0.09, 'bandpass', 1900, S.mg); for (const n of [4, 10, 14]) tone(164.8 * st(root + n), t0, bt * 0.45, 0.045, road ? 'sawtooth' : 'triangle', S.mlp); } // trampet + akor
+  burst(t0, 0.035, e % 2 ? 0.035 : 0.07, 'highpass', 7000, S.mg); // hi-hat
+  if (Math.random() < (road ? 0.4 : 0.28)) { const n = PENTA[(Math.random() * PENTA.length) | 0]; tone((road ? 329.6 : 659.3) * st(n), t0, bt * (e % 2 ? 0.3 : 0.6), road ? 0.06 : 0.05, road ? 'square' : 'triangle', S.mlp); } // doğaçlama ezgi
+  return bt * (e % 2 ? 0.34 : 0.66);
+}
+const sm = { s: '', cd: 0, fl: [0, 0, 0, 0], rp: 0, oh: 0, m: '', infl: 0, mode: -1, step: 0, nt: 0 };
+function sfx(V, dt) {
+  if (!SND || AC.state !== 'running') return;
+  const t = V.T, S = SND, now = AC.currentTime, run = t.s === 'run', roll = run && !t.cd, set = (p, v, tc = 0.08) => p.setTargetAtTime(v, now, tc);
+  const rpm = roll ? t.v * 3.2 + t.g * 24 : 0;
+  set(S.e1.frequency, 36 + rpm); set(S.e2.frequency, 18 + rpm / 2); set(S.ef.frequency, 200 + rpm * 5 + t.g * 450); set(S.eg.gain, run ? 0.05 + (roll ? t.g * 0.05 : 0) : 0, 0.25);
+  set(S.rg.gain, roll ? 0.01 + t.v * 0.002 + t.g * 0.06 : 0, 0.15); set(S.rf.frequency, 280 + t.v * 35 + t.g * 500);
+  set(S.bg.gain, roll && t.b > 0.1 && t.v > 2 ? 0.045 * t.b : 0);
+  const rp = t.rp.reduce((a, b) => a + b, 0); if (rp > sm.rp + 1e-5) sm.infl = 0.3; else sm.infl -= dt; sm.rp = rp;
+  const inf = run && sm.infl > 0; set(S.ag.gain, inf ? 0.2 : 0, 0.04); set(S.cg.gain, inf ? 0.12 : 0, 0.1); if (inf) set(S.af.frequency, 2000 + Math.max(...t.rp) * 4000, 0.2);
+  const fill = run && V.k[3] && V.n[3] && t.f < 100; set(S.fg.gain, fill ? 0.3 : 0, 0.1); if (fill) set(S.gur.frequency, 110 + t.f * 2.2, 0.3);
+  if (run && t.cd !== sm.cd) { if (t.cd > 0) tone(520, now, 0.16, 0.25, 'square'); else if (sm.cd > 0) { tone(1040, now, 0.5, 0.25, 'square'); horn(now + 0.1, 0.9); } } sm.cd = run ? t.cd : 0;
+  t.fl.forEach((f, i) => { if (f && !sm.fl[i]) { burst(now, 0.4, 0.7, 'lowpass', 1100); tone(140, now, 0.35, 0.5, 'sine', S.master, 38); burst(now + 0.05, 1.4, 0.12, 'bandpass', 4200); } }); sm.fl = t.fl.slice(); // patlama + sönme tıslaması
+  if (t.oh.length > sm.oh) { burst(now, 0.5, 0.8, 'lowpass', 700); tone(95, now, 0.45, 0.6, 'sine', S.master, 30); burst(now + 0.03, 0.3, 0.2, 'highpass', 3500); } sm.oh = t.oh.length;
+  if (t.m !== sm.m) { const m = (sm.m = t.m);
+    if (m.includes('Tümse')) { tone(75, now, 0.3, 0.5, 'sine', S.master, 34); burst(now, 0.18, 0.3, 'lowpass', 500); }
+    else if (m.includes('şişirdi')) { tone(880, now, 0.25, 0.2); tone(1320, now + 0.12, 0.45, 0.2); }
+    else if (m.includes('Vana')) { burst(now, 0.08, 0.4, 'bandpass', 900); tone(300, now, 0.2, 0.15, 'square', S.master, 140); }
+    else if (m.includes('takıldı')) { burst(now, 0.05, 0.5, 'bandpass', 1500); burst(now + 0.09, 0.05, 0.4, 'bandpass', 2300); }
+    else if (m.includes('çağırdı')) for (let i = 0; i < 2; i++) for (let j = 0; j < 6; j++) tone(j % 2 ? 480 : 620, now + i * 0.55 + j * 0.06, 0.06, 0.12, 'square');
+    else if (m.includes('Tanker ayrılıyor')) horn(now, 0.5);
+    else if (m.includes('kurtuldu')) burst(now, 0.5, 0.3, 'bandpass', 3800); }
+  if (t.s !== sm.s) { if (t.s === 'win') [0, 4, 7, 12, 16].forEach((n, i) => tone(329.6 * st(n), now + i * 0.14, i === 4 ? 0.9 : 0.25, 0.2, 'square')); if (t.s === 'over') { tone(300, now, 1.4, 0.3, 'sawtooth', S.master, 55); [7, 3, 0].forEach((n, i) => tone(196 * st(n), now + i * 0.3, 0.5, 0.18, 'triangle')); } sm.s = t.s; }
+  const mode = t.s === 'lobby' ? 0 : roll ? 1 : -1; if (mode !== sm.mode) { sm.mode = mode; sm.step = 0; sm.nt = now + 0.15; }
+  set(S.mg.gain, musOn ? (mode ? 1 : 0.9) : 0, 0.1);
+  if (mode >= 0 && musOn) { if (sm.nt < now) sm.nt = now + 0.05; while (sm.nt < now + 0.2) sm.nt += musStep(sm.step++, sm.nt, mode); }
+}
 const RP = {}, cT = { X: 0, Z: 0, th: 0 }; let V = null, camMode = -1, hudT = 0, lastHud = '';
 function draw(V, dt) {
-  const t = V.T;
+  const t = V.T; sfx(V, dt);
   if (isHost) { cT.X = t.X; cT.Z = t.Z; cT.th = t.th; } else { cT.th += (t.th - cT.th) * 0.25; cT.X += Math.sin(cT.th) * t.v * dt; cT.Z += Math.cos(cT.th) * t.v * dt; cT.X += (t.X - cT.X) * 0.15; cT.Z += (t.Z - cT.Z) * 0.15; if (Math.abs(t.Z - cT.Z) > 30) { cT.X = t.X; cT.Z = t.Z; } }
   pivot.rotation.y = -cT.th; world.position.set(-cT.X, 0, -cT.Z);
   wheels.forEach((w, i) => { w.rotation.x += t.v * dt / 0.55; w.scale.x = w.scale.z = t.fl[i] ? 0.42 : 0.55; w.position.y = t.fl[i] ? 0.42 : 0.55; w.material.color.setHex(t.fl[i] ? 0x8a2a1e : 0x222222); });
@@ -413,16 +474,16 @@ function draw(V, dt) {
   if (t.m) af += `<div>${t.m}</div>`;
   if (t.s === 'run') { if (t.f < 25) af += `<div class="uyari">⛽ YAKIT AZ! ${ks ? '' : 'T ile tankeri ara'}</div>`; t.fl.forEach((f, i) => { if (f) af += `<div class="uyari">🛞 ${WHEEL[i][3]} lastik patlak — arkadaki basınç hortumunu TUT, lastiğin yanına götür</div>`; }); if (ks === 2) af += `<div style="font-size:18px">${V.n[3] ? (kv ? 'Yakıt doluyor…' : 'Hortum takılı: tankerin üstündeki vanayı F ile aç') : 'Tankerden sarı hortum ucunu TUT, sol öndeki depo ağzına bırak'}${V.k[4] > 0 ? ' · vana %' + Math.round(V.k[4] * 100) : ''}</div>`; }
   const h = rol + af + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
-  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (micOk ? '<br>🎙 M: mikrofon aç/kapa' : '<br>🔇 mikrofon yok'); $('afis').innerHTML = af; $('afis').className = t.s === 'lobby' ? 'alt' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('bilgi').textContent = `Kalan ${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} km/s`; $('oda').textContent = 'Oda ' + odaKodu; }
+  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (micOk ? '<br>🎙 M: mikrofon aç/kapa' : '<br>🔇 mikrofon yok') + (TOUCH ? '' : '<br>🎵 N: müzik aç/kapa'); $('afis').innerHTML = af; $('afis').className = t.s === 'lobby' ? 'alt' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('bilgi').textContent = `Kalan ${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} km/s`; $('oda').textContent = 'Oda ' + odaKodu; }
 }
 const fit = () => { ren.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 80 : 62; cam.updateProjectionMatrix(); }; addEventListener('resize', fit); fit();
 
 // ---------- girdi ----------
 const TOUCH = matchMedia('(pointer:coarse)').matches;
 const key = {}, cnt = { p: 0, s: 0, c: 0 }, tb = {}, joy = { x: 0, y: 0 }; let mouseL = false;
-addEventListener('keydown', (e) => { if (e.repeat || $('menu').style.display !== 'none') return; key[e.code] = 1; if (e.code === 'KeyK') cnt.p++; if (e.code === 'KeyE') cnt.s++; if (e.code === 'KeyT') cnt.c++; if (e.code === 'Enter') hostStart(); if (e.code === 'KeyM' && mic) { const tr = mic.getAudioTracks()[0]; if (tr) tr.enabled = !tr.enabled; } if (DBG && e.code === 'KeyC') camMode = camMode >= 2 ? -1 : camMode + 1; if (e.code === 'Space') e.preventDefault(); });
+addEventListener('keydown', (e) => { if (e.repeat || $('menu').style.display !== 'none') return; key[e.code] = 1; if (e.code === 'KeyK') cnt.p++; if (e.code === 'KeyE') cnt.s++; if (e.code === 'KeyT') cnt.c++; initSnd(); if (e.code === 'KeyN') { musOn = !musOn; localStorage.setItem('kk-muz', musOn ? '1' : '0'); } if (e.code === 'Enter') hostStart(); if (e.code === 'KeyM' && mic) { const tr = mic.getAudioTracks()[0]; if (tr) tr.enabled = !tr.enabled; } if (DBG && e.code === 'KeyC') camMode = camMode >= 2 ? -1 : camMode + 1; if (e.code === 'Space') e.preventDefault(); });
 addEventListener('keyup', (e) => (key[e.code] = 0));
-ren.domElement.addEventListener('mousedown', (e) => { if (e.button === 0) mouseL = true; else cnt.p++; }); addEventListener('mouseup', (e) => { if (e.button === 0) mouseL = false; }); addEventListener('contextmenu', (e) => e.preventDefault());
+addEventListener('pointerdown', initSnd); ren.domElement.addEventListener('mousedown', (e) => { if (e.button === 0) mouseL = true; else cnt.p++; }); addEventListener('mouseup', (e) => { if (e.button === 0) mouseL = false; }); addEventListener('contextmenu', (e) => e.preventDefault());
 ren.domElement.addEventListener('dblclick', () => matchMedia('(pointer:coarse)').matches && hostStart());
 { const j = $('joy'), nub = j.firstElementChild, mv = (e) => { e.preventDefault(); const r = j.getBoundingClientRect(), t = e.targetTouches[0]; if (!t) { joy.x = joy.y = 0; nub.style.transform = ''; return; } const h = r.width / 2; let x = (t.clientX - r.left - h) / (h * 0.8), y = (t.clientY - r.top - h) / (h * 0.8); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } joy.x = x; joy.y = -y; nub.style.transform = `translate(${x * 75}%,${y * 75}%)`; };
   const d = $('dir'), wh = d.lastElementChild, dv = (e) => { e.preventDefault(); const r = d.getBoundingClientRect(), t = e.targetTouches[0]; const x = t ? clamp((t.clientX - r.left - r.width / 2) / (r.width * 0.4), -1, 1) : 0; joy.x = x; joy.y = 0; wh.style.transform = `rotate(${x * 110}deg)`; };
@@ -449,6 +510,7 @@ function begin() { $('menu').style.display = 'none'; $('hud').style.display = 'b
   try { const w = new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),33)'], { type: 'text/javascript' }))); w.onmessage = () => document.hidden && frame(performance.now()); } catch (e) {}
   addEventListener('blur', () => { for (const k in key) key[k] = 0; mouseL = false; }); }
 async function go(kod, host) {
+  initSnd();
   const name = ($('ad').value.trim() || 'Oyuncu').slice(0, 12); localStorage.setItem('kk-ad', name); if (!mic) { durum('Mikrofon izni isteniyor…'); await getMic(); } durum('Bağlanıyor…');
   if (location.search.includes('tek')) { isHost = true; myId = 'ben'; odaKodu = 'TEK'; mkPlayer(myId, name); $('kod').value = ''; return begin(); } // ağsız tek kişilik deneme
   isHost = host; odaKodu = kod || Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPRSTUVYZ'[(Math.random() * 21) | 0]).join('');
