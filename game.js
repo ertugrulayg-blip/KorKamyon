@@ -335,18 +335,20 @@ function begin() { $('menu').style.display = 'none'; $('hud').style.display = 'b
     else if (hostConn && hostConn.open && fc % 2 === 0) hostConn.send({ t: 'i', ...I });
     if (V) draw(V, dt); };
   requestAnimationFrame(frame); }
-async function go(kod) {
-  const name = ($('ad').value.trim() || 'Oyuncu').slice(0, 12); localStorage.setItem('kk-ad', name); durum('Mikrofon izni isteniyor…'); await getMic(); durum('Bağlanıyor…');
-  if (location.search.includes('tek')) { isHost = true; myId = 'ben'; odaKodu = 'TEK'; mkPlayer(myId, name); return begin(); } // ağsız tek kişilik deneme
-  isHost = !kod; odaKodu = kod || Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPRSTUVYZ'[(Math.random() * 21) | 0]).join('');
+async function go(kod, host) {
+  const name = ($('ad').value.trim() || 'Oyuncu').slice(0, 12); localStorage.setItem('kk-ad', name); if (!mic) { durum('Mikrofon izni isteniyor…'); await getMic(); } durum('Bağlanıyor…');
+  if (location.search.includes('tek')) { isHost = true; myId = 'ben'; odaKodu = 'TEK'; mkPlayer(myId, name); $('kod').value = ''; return begin(); } // ağsız tek kişilik deneme
+  isHost = host; odaKodu = kod || Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPRSTUVYZ'[(Math.random() * 21) | 0]).join('');
   // ?yerel: ofis ağında 0.peerjs.com engelli; deneme için yerel sunucu (npx peer --port 9000 --path /kk)
   const PO = location.search.includes("yerel") ? { host: "localhost", port: 9000, path: "/kk", secure: false } : {};
   peer = isHost ? new Peer(ODA + odaKodu, PO) : new Peer(PO);
-  peer.on('error', (e) => durum(e.type === 'peer-unavailable' ? 'Böyle bir oda yok: ' + odaKodu : e.type === 'unavailable-id' ? 'Kod çakıştı, tekrar dene' : 'Bağlantı hatası: ' + e.type));
+  const zam = setTimeout(() => $('menu').style.display !== 'none' && durum('Bağlanılamadı. Wi-Fi yerine mobil veriyle (ya da tersi) tekrar dene.'), 12000);
+  // Aynı kodu yazan herkes aynı odada buluşur: oda yoksa kurulur, varsa katılınır.
+  peer.on('error', (e) => { if (e.type === 'peer-unavailable' && !isHost) { clearTimeout(zam); peer.destroy(); go(odaKodu, true); } else if (e.type === 'unavailable-id' && isHost) { clearTimeout(zam); peer.destroy(); go(odaKodu, false); } else durum('Bağlantı hatası: ' + e.type); });
   peer.on('call', (c) => { c.answer(mic); c.on('stream', (s) => playAudio(c.peer, s)); });
   peer.on('open', (id) => { myId = id;
     if (isHost) { mkPlayer(id, name); peer.on('connection', (c) => { c.on('data', (d) => { if (d.t === 'hi') { if (players.size >= 4) return c.send({ t: 'full' }); conns[c.peer] = c; mkPlayer(c.peer, String(d.name).slice(0, 12)); c.send({ t: 'w', peers: [myId, ...Object.keys(conns).filter((i) => i !== c.peer)] }); } else if (d.t === 'i') { const p = players.get(c.peer); if (p) p.inp = d; } }); c.on('close', () => { delete conns[c.peer]; const p = players.get(c.peer); if (p && NZ.holder === p.id) NZ.holder = null; players.delete(c.peer); }); }); begin(); }
     else { hostConn = peer.connect(ODA + odaKodu, { serialization: 'json' }); hostConn.on('open', () => hostConn.send({ t: 'hi', name })); hostConn.on('data', (d) => { if (d.t === 's') V = d; else if (d.t === 'w') { d.peers.forEach(callPeer); begin(); } else if (d.t === 'full') durum('Oda dolu (4 kişi)'); }); hostConn.on('close', () => { $('menu').style.display = 'flex'; durum('Oda sahibi ayrıldı'); }); } });
 }
-$('ad').value = localStorage.getItem('kk-ad') || ''; $('kur').onclick = () => go(''); $('katil').onclick = () => { const k = $('kod').value.trim().toUpperCase(); if (k.length === 4) go(k); else durum('4 harfli oda kodunu yaz'); };
+$('ad').value = localStorage.getItem('kk-ad') || ''; $('kur').onclick = () => { const k = $('kod').value.trim().toUpperCase(); go(k.length === 4 ? k : '', true); }; $('katil').onclick = () => { const k = $('kod').value.trim().toUpperCase(); if (k.length === 4) go(k, false); else durum('4 harfli oda kodunu yaz'); };
 if (DBG) window.G = { T, TKS, NZ, players, OBS, BUMP, key, cnt, startGame, mkPlayer, place, simStep, WHEEL, INLET, get V() { return V; }, set cam(v) { camMode = v; } };
