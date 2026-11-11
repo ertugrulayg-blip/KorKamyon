@@ -320,7 +320,7 @@ function faceParts(h, k, sk, col, hr) { // kafa yarıçapı 0.21 kabul edilir; +
 // Duruşlar (yerel eksen: +z kişinin baktığı yön). ry: gövde dönüşü (0 = bara dönük), hy: kafanın gövdeye göre dönüşü.
 const LEG = (s) => [[s * 0.21, 0.87, 0.45], [s * 0.21, 0.36, 0.38]];
 const POSE = [
-  { ry: Math.PI, z: -0.5, hy: 0.25, lean: -0.1, legs: [[[0.25, 0.5, 0.4], [0.28, 0.08, 0.62]], LEG(-1)], arms: [[[0.6, 1.27, -0.42], [0.76, 1.22, -0.2]], [[-0.6, 1.27, -0.42], [-0.76, 1.22, -0.2]]], mug: [-0.95, -0.75] }, // sırtı barda, bir ayağı yerde
+  { ry: Math.PI, z: -0.5, hy: 0.25, lean: -0.1, legs: [[[0.25, 0.5, 0.4], [0.28, 0.08, 0.62]], LEG(-1)], arms: [[[0.53, 1.26, 0.1], [0.46, 1.2, 0.5]], [[-0.6, 1.27, -0.42], [-0.76, 1.22, -0.2]]], mug: [-0.95, -0.75], ball: 1 }, // sırtı barda, bir ayağı yerde, elinde beyzbol topu
   { ry: -Math.PI / 2, z: -0.7, hy: -1.1, lean: 0, legs: [LEG(1), LEG(-1)], arms: [[[0.66, 1.25, 0.02], [0.74, 1.24, 0.3]], [[-0.52, 1.3, 0.12], [-0.25, 1.02, 0.42]]], mug: [0.92, 0.42] }, // yan oturmuş, dirseği tezgâhta, bakıyor
   { ry: 0.5, z: -0.7, hy: 1.75, lean: 0.06, legs: [LEG(1), LEG(-1)], arms: [[[0.54, 1.3, 0.3], [0.28, 1.23, 0.72]], [[-0.54, 1.3, 0.3], [-0.28, 1.23, 0.72]]], mug: [0.3, 1.1] }, // bara dönük, omzunun üstünden bakıyor
   { ry: Math.PI, z: -0.7, hy: 0, lean: 0, legs: [[[0.3, 0.87, 0.42], [0.34, 0.36, 0.36]], [[-0.3, 0.87, 0.42], [-0.34, 0.36, 0.36]]], arms: [[[0.52, 1.3, 0.2], [-0.1, 1.4, 0.42]], [[-0.52, 1.3, 0.2], [0.1, 1.33, 0.44]]], mug: [0.6, -0.95] }, // salona dönük, kollar bağlı
@@ -336,7 +336,8 @@ function trucker(ci, name) {
   const h = new THREE.Group(); h.position.set(0, 2.05 + Y, 0.02); b.add(h); add(h, SG, sk, 0, 0, 0, 0.21, 0.235, 0.21); faceParts(h, k, sk, col, hr);
   add(g, CG, M(0xe9a824, { transparent: true, opacity: 0.85 }), ps.mug[0], 1.25, ps.mug[1], 0.07, 0.18, 0.07); add(g, CG, M(0xffffff), ps.mug[0], 1.355, ps.mug[1], 0.072, 0.035, 0.072);
   const ns = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false, fog: false, map: tex(256, 64, (c, w, hh) => { c.font = '900 34px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#000'; c.strokeText(name, w / 2, hh / 2); c.fillStyle = '#' + COL[k].toString(16).padStart(6, '0'); c.fillText(name, w / 2, hh / 2); }) })); ns.position.set(0, 2.62, 0); ns.scale.set(1.3, 0.325, 1); g.add(ns);
-  g.rotation.y = ps.ry; g.userData = { h, belly, k, ps }; return g;
+  let ball = null; if (ps.ball) { const A = ps.arms[0][1]; ball = new THREE.Group(); ball.userData.y0 = A[1] + Y + 0.125; ball.position.set(A[0], ball.userData.y0, A[2] + 0.02); b.add(ball); add(ball, SG, M(0xf4efe2), 0, 0, 0, 0.045); for (const r of [0.6, -0.6]) add(ball, new THREE.TorusGeometry(0.04, 0.004, 4, 16), M(0xc0392b), 0, 0, 0).rotation.set(r, r, 0); } // beyzbol topu
+  g.rotation.y = ps.ry; g.userData = { h, belly, k, ps, ball }; return g;
 }
 const truckers = new Map(); let barT = 0;
 function drawBar(V, dt) {
@@ -345,7 +346,8 @@ function drawBar(V, dt) {
   const ids = new Set(), mid = (V.p.length - 1) / 2;
   V.p.forEach((p, i) => { ids.add(p.id); let g = truckers.get(p.id); if (!g) { g = trucker(p.c, p.n); truckers.set(p.id, g); bar.add(g); }
     const u = g.userData; g.position.set((mid - i) * 1.7, 0, u.ps.z);
-    u.h.rotation.y = u.ps.hy + Math.sin(barT * 0.45 + u.k * 2.1) * 0.22; u.h.rotation.x = 0.08 + Math.sin(barT * 0.3 + u.k) * 0.05; u.belly.scale.z = 0.33 * (1 + Math.sin(barT * 1.6 + u.k) * 0.05); });
+    u.h.rotation.y = u.ps.hy + Math.sin(barT * 0.45 + u.k * 2.1) * 0.22; u.h.rotation.x = 0.08 + Math.sin(barT * 0.3 + u.k) * 0.05; u.belly.scale.z = 0.33 * (1 + Math.sin(barT * 1.6 + u.k) * 0.05);
+    if (u.ball) { const t = Math.min(1, ((barT * 0.4) % 1) / 0.72); u.ball.position.y = u.ball.userData.y0 + 1.9 * t * (1 - t); u.ball.rotation.x = t * Math.PI * 2; } }); // topu yavaşça atıp tutar
   for (const [id, g] of truckers) if (!ids.has(id)) { bar.remove(g); truckers.delete(id); }
   smoke.forEach((s, i) => { const u = (barT * 0.22 + i / smoke.length) % 1; s.position.set(0.145 + Math.sin(u * 6 + i) * 0.12 * u + u * 0.15, 1.26 + u * 1.7, 0.5 + Math.cos(u * 4 + i * 2) * 0.08 * u); const z = 0.06 + u * 0.55; s.scale.set(z, z, 1); s.material.opacity = 0.34 * (1 - u) * Math.min(1, u * 10); });
   dust.position.set(Math.sin(barT * 0.13) * 0.15, Math.sin(barT * 0.2) * 0.12, 0);
