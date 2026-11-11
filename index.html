@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Kör Kamyon</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#9fd4ff;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none}
+  canvas{display:block}
+  #menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#1f2a44,#d8432f);z-index:10}
+  #menu .kart{background:#fff;color:#1a1a1a;border-radius:24px;padding:28px;width:min(92vw,380px);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  #menu h1{margin:0 0 4px;font-size:34px;letter-spacing:-1px}
+  #menu p{margin:0 0 16px;color:#555;font-size:14px;line-height:1.4}
+  #menu input{width:100%;box-sizing:border-box;font-size:18px;padding:12px 14px;border-radius:12px;border:2px solid #ddd;margin-bottom:10px}
+  #menu button{width:100%;font-size:18px;font-weight:800;padding:14px;border-radius:12px;border:0;background:#d8432f;color:#fff;margin-bottom:10px;cursor:pointer}
+  #menu button.iki{background:#1f2a44}
+  #menu .sat{display:flex;gap:8px}#menu .sat input{flex:1;text-transform:uppercase;margin:0}#menu .sat button{width:auto;margin:0;padding:12px 18px}
+  #durum{font-size:13px;color:#d8432f;min-height:18px;margin-top:8px}
+  #hud{position:fixed;inset:0;pointer-events:none;display:none;text-shadow:0 2px 4px rgba(0,0,0,.6)}
+  #rol{position:absolute;left:12px;top:10px;font-size:14px;line-height:1.5;max-width:46vw}
+  #rol b{font-size:20px}
+  #sag{position:absolute;right:12px;top:10px;text-align:right;font-size:15px;font-weight:700}
+  #yakit{width:180px;height:16px;border:2px solid #fff;border-radius:9px;overflow:hidden;margin:4px 0 4px auto;background:rgba(0,0,0,.3)}
+  #yakit i{display:block;height:100%;background:#7bd389}
+  #afis{position:absolute;left:0;right:0;top:22%;text-align:center;font-size:26px;font-weight:900}
+  #afis div{margin:6px 0}
+  #afis .uyari{color:#ffe14d}#afis .buyuk{font-size:54px}
+  #dok{position:fixed;inset:0;display:none;pointer-events:none}
+  #joy{position:absolute;left:18px;bottom:18px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.5);pointer-events:auto}
+  #joy i{position:absolute;left:45px;top:45px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.7)}
+  #dug{position:absolute;right:12px;bottom:14px;display:grid;grid-template-columns:repeat(3,74px);gap:8px;pointer-events:auto}
+  #dug b{height:60px;border-radius:16px;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:13px}
+  #dug b.bas{background:rgba(255,225,77,.6)}
+  @media (pointer:coarse){#dok{display:block}}
+</style>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<div id="menu"><div class="kart">
+  <h1>🚚 Kör Kamyon</h1>
+  <p>Şoför önünü göremez, yolcu tarif eder, kasadakiler yakıt ve lastikle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.</p>
+  <input id="ad" maxlength="12" placeholder="Adın">
+  <button id="kur">Oda kur</button>
+  <div class="sat"><input id="kod" maxlength="4" placeholder="KOD"><button id="katil" class="iki">Katıl</button></div>
+  <div id="durum"></div>
+</div></div>
+<div id="hud">
+  <div id="rol"></div>
+  <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="bilgi"></div></div>
+  <div id="afis"></div>
+</div>
+<div id="dok">
+  <div id="joy"><i></i></div>
+  <div id="dug">
+    <b data-k="c">TANKER</b><b data-k="s">OTUR</b><b data-k="u">KULLAN</b>
+    <b data-k="p">ŞAPLAK</b><b data-k="g">TUT</b><b data-k="j">ZIPLA</b>
+  </div>
+</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>
