@@ -1,4 +1,4 @@
-# Kör Kamyon
+# Road Hogs
 
 2-4 kişilik tarayıcı ortak oyunu: kör şoför, yolu tarif eden yolcu, kasada yakıt/lastik işleri.
 

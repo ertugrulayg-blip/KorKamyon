@@ -1,4 +1,4 @@
-// Kör Kamyon — 2-4 kişilik ortak oyun. Oda sahibi fiziği hesaplar, diğerleri girdi yollar (PeerJS).
+// Road Hogs — 2-4 kişilik ortak oyun. Oda sahibi fiziği hesaplar, diğerleri girdi yollar (PeerJS).
 // Eksenler (kamyon çerçevesi): +z ileri, +y yukarı, +x SOL (three sağ-elli olduğundan +z'ye bakınca +x solda kalır).
 import * as THREE from 'three';
 
@@ -198,6 +198,7 @@ function stepTruck(dt) {
   const y = [...players.values()].find((p) => p.seat === 2), yi = y ? y.inp : null; // yolcunun şoföre işareti: 1 sol, 2 sağ, 3 yavaş
   T.sig = yi ? yi.sg || ((yi.mx || 0) > 0.5 ? 1 : (yi.mx || 0) < -0.5 ? 2 : (yi.mz || 0) < -0.5 ? 3 : 0) : 0;
   if (T.state === 'lobby') { T.v = 0; T.pax = T.paz = 0; return; }
+  if (T.state === 'run' && T.cd > 0) { T.cd -= dt; T.v = 0; T.pax = T.paz = 0; T.gas = T.br = 0; if (T.cd > 0) return; T.cd = 0; T.v = 8; say('Yola çıktınız! Kamyon durmasın'); } // başlangıç geri sayımı: kamyon bekler
   T.t += dt; T.msgT -= dt;
   const d = [...players.values()].find((p) => p.seat === 1), run = T.state === 'run';
   const si = d ? clamp(d.inp.mx || 0, -1, 1) : 0; let gas = d && run ? Math.max(0, d.inp.mz || 0) : 0; const br = d ? Math.max(0, -(d.inp.mz || 0)) : run ? 0 : 1;
@@ -223,9 +224,9 @@ function stepTruck(dt) {
   if (T.Z >= LEN) { T.state = 'win'; T.why = 'Hedefe ulaştınız! 🏁'; }
   else if (T.t > 6 && T.v < 0.4) { T.state = 'over'; T.why = T.fuel <= 0 ? 'Yakıt bitti, kamyon durdu!' : 'Kamyon durdu!'; }
 }
-function startGame() { resetGame(); T.state = 'run'; T.v = 8; say('Yola çıktınız! Kamyon durmasın'); }
+function startGame() { resetGame(); T.state = 'run'; T.v = 0; T.cd = 5; }
 function resetGame() {
-  Object.assign(T, { X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], state: 'lobby', t: 0, nextFlat: rnd(25, 40), msg: '', msgT: 0, why: '', sig: 0 });
+  Object.assign(T, { X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], state: 'lobby', t: 0, cd: 0, nextFlat: rnd(25, 40), msg: '', msgT: 0, why: '', sig: 0 });
   Object.assign(TKS, { st: 0, z: -50, valve: 0, vp: 0 }); NZ.holder = null; NZ.dock = false; AH.holder = null; AH.p = AIR.slice(); for (const o of OBS) o.hit = false;
 }
 function simStep(dt) { stepAir(dt);
@@ -234,7 +235,7 @@ function simStep(dt) { stepAir(dt);
   for (let a = 0; a < L.length; a++) for (let b = a + 1; b < L.length; b++) { const p = L[a], q = L[b]; if (p.seat || q.seat || p.dead > 0 || q.dead > 0) continue; for (const k of [0, 1]) { const i = k * 3, dx = q.P[i] - p.P[i], dy = q.P[i + 1] - p.P[i + 1], dz = q.P[i + 2] - p.P[i + 2], d = Math.hypot(dx, dy, dz) || 1e-6; if (d < 0.56) { const s = ((0.56 - d) / d) * 0.5; p.P[i] -= dx * s; p.P[i + 2] -= dz * s; q.P[i] += dx * s; q.P[i + 2] += dz * s; } } }
 }
 const r2 = (v) => Math.round(v * 100) / 100;
-const snap = () => ({ t: 's', T: { X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, s: T.state, m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], p: [...players.values()].map((p) => ({ id: p.id, n: p.name, c: p.ci, s: p.seat, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, P: Array.from(p.P, r2) })) });
+const snap = () => ({ t: 's', T: { X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], p: [...players.values()].map((p) => ({ id: p.id, n: p.name, c: p.ci, s: p.seat, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, P: Array.from(p.P, r2) })) });
 
 // ---------- görüntü ----------
 const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
@@ -282,8 +283,8 @@ const glow = (c, op) => MB(c, { transparent: true, opacity: op, blending: THREE.
 const tex = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
 const seg = (g, mat, a, b, r) => { const m = new THREE.Mesh(CG, mat); v1.set(a[0], a[1], a[2]); v2.set(b[0], b[1], b[2]); const L = v1.distanceTo(v2); m.position.copy(v1).add(v2).multiplyScalar(0.5); m.scale.set(r, L, r); m.quaternion.setFromUnitVectors(UP, v2.sub(v1).divideScalar(L)); g.add(m); return m; };
 const quad = (par, mat, a, b, c, d) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([...a, ...b, ...c, ...d], 3)); g.setIndex([0, 1, 2, 2, 1, 3]); const m = new THREE.Mesh(g, mat); par.add(m); return m; };
-bar.add(new THREE.AmbientLight(0x5a5070, 1.3));
-const barLamp = [-2.3, 2.3].map((x) => { const l = new THREE.PointLight(0xffa550, 9, 11, 2); l.position.set(x, 2.75, 0.4); bar.add(l);
+bar.add(new THREE.AmbientLight(0x5a5070, 1.9));
+const barLamp = [-2.3, 2.3].map((x) => { const l = new THREE.PointLight(0xffa550, 12, 11, 2); l.position.set(x, 2.75, 0.4); bar.add(l);
   add(bar, new THREE.ConeGeometry(0.3, 0.26, 14, 1, true), M(0x1d3a2a, { side: THREE.DoubleSide }), x, 2.95, 0.4); add(bar, SG, MB(0xffe2b0, { fog: false }), x, 2.86, 0.4, 0.07); add(bar, CG, M(0x111111), x, 4.0, 0.4, 0.012, 2, 0.012); return l; });
 add(bar, BG, M(0x2a1a10), 0, -0.05, -2, 18, 0.1, 18); add(bar, BG, M(0x1c130d), 0, 2.5, 2.7, 18, 5.2, 0.2); add(bar, BG, M(0x1c130d), -7, 2.5, -2, 0.2, 5.2, 18); add(bar, BG, M(0x1c130d), 7, 2.5, -2, 0.2, 5.2, 18);
 for (let z = -6; z < 2.6; z += 0.9) add(bar, BG, M(0x1f130b), 0, 0.003, z, 14, 0.01, 0.03); // döşeme tahtası araları
@@ -291,7 +292,7 @@ add(bar, BG, M(0x3a2415), 0, 0.55, 0.45, 12, 1.1, 0.8); add(bar, BG, M(0x7a4d28)
 // arka raf: şişeler, neon
 add(bar, BG, M(0x24170e), 0, 1.5, 2.45, 9, 3, 0.3); for (const y of [1.45, 2.05, 2.65]) add(bar, BG, M(0x5a3a20), 0, y, 2.25, 8.6, 0.05, 0.3);
 { const BC = [0x2f6b3a, 0x6b3a1a, 0x9a7a2a, 0x3a5a7a, 0x8a2a2a, 0xd8d0b0]; let n = 0; for (const y of [1.45, 2.05]) for (let x = -4; x <= 4; x += 0.36 + srnd() * 0.2) { const c = M(BC[n++ % 6]), hh = 0.26 + srnd() * 0.14; add(bar, CG, c, x, y + 0.03 + hh / 2, 2.22, 0.055, hh, 0.055); add(bar, CG, c, x, y + 0.08 + hh, 2.22, 0.02, 0.12, 0.02); } }
-const neon = add(bar, new THREE.PlaneGeometry(4.4, 1.1), MB(0xffffff, { transparent: true, fog: false, map: tex(512, 128, (g, w, h) => { g.font = '900 50px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#ff2d6f'; g.shadowBlur = 22; g.fillStyle = '#ff8fb3'; for (let i = 0; i < 3; i++) g.fillText('KÖR KAMYON BAR', w / 2, h / 2); }) }), 0, 3.5, 2.28); neon.rotation.y = Math.PI;
+const neon = add(bar, new THREE.PlaneGeometry(4.4, 1.1), MB(0xffffff, { transparent: true, fog: false, map: tex(512, 128, (g, w, h) => { g.font = '900 50px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#ff2d6f'; g.shadowBlur = 22; g.fillStyle = '#ff8fb3'; for (let i = 0; i < 3; i++) g.fillText('ROAD HOGS BAR', w / 2, h / 2); }) }), 0, 3.5, 2.28); neon.rotation.y = Math.PI;
 { const l = new THREE.PointLight(0xff3070, 7, 8, 2); l.position.set(0, 3.4, 1.6); bar.add(l); }
 // yan duvarlarda panjurlu pencereler: ışık sağdan ve soldan vurur
 for (const s of [-1, 1]) { const x = s * 6.88, z0 = -3.0, z1 = -0.8;
@@ -320,7 +321,7 @@ function faceParts(h, k, sk, col, hr) { // kafa yarıçapı 0.21 kabul edilir; +
 // Duruşlar (yerel eksen: +z kişinin baktığı yön). ry: gövde dönüşü (0 = bara dönük), hy: kafanın gövdeye göre dönüşü.
 const LEG = (s) => [[s * 0.21, 0.87, 0.45], [s * 0.21, 0.36, 0.38]];
 const POSE = [
-  { ry: Math.PI, z: -0.5, hy: 0.25, lean: -0.1, legs: [[[0.25, 0.5, 0.4], [0.28, 0.08, 0.62]], LEG(-1)], arms: [[[0.6, 1.27, -0.42], [0.76, 1.22, -0.2]], [[-0.6, 1.27, -0.42], [-0.76, 1.22, -0.2]]], mug: [-0.95, -0.75] }, // sırtı barda, bir ayağı yerde
+  { ry: Math.PI, z: -0.5, hy: 0.25, lean: -0.1, legs: [[[0.25, 0.5, 0.4], [0.28, 0.08, 0.62]], LEG(-1)], arms: [[[0.53, 1.26, 0.1], [0.46, 1.2, 0.5]], [[-0.6, 1.27, -0.42], [-0.76, 1.22, -0.2]]], mug: [-0.95, -0.75], ball: 1 }, // sırtı barda, bir ayağı yerde, elinde beyzbol topu
   { ry: -Math.PI / 2, z: -0.7, hy: -1.1, lean: 0, legs: [LEG(1), LEG(-1)], arms: [[[0.66, 1.25, 0.02], [0.74, 1.24, 0.3]], [[-0.52, 1.3, 0.12], [-0.25, 1.02, 0.42]]], mug: [0.92, 0.42] }, // yan oturmuş, dirseği tezgâhta, bakıyor
   { ry: 0.5, z: -0.7, hy: 1.75, lean: 0.06, legs: [LEG(1), LEG(-1)], arms: [[[0.54, 1.3, 0.3], [0.28, 1.23, 0.72]], [[-0.54, 1.3, 0.3], [-0.28, 1.23, 0.72]]], mug: [0.3, 1.1] }, // bara dönük, omzunun üstünden bakıyor
   { ry: Math.PI, z: -0.7, hy: 0, lean: 0, legs: [[[0.3, 0.87, 0.42], [0.34, 0.36, 0.36]], [[-0.3, 0.87, 0.42], [-0.34, 0.36, 0.36]]], arms: [[[0.52, 1.3, 0.2], [-0.1, 1.4, 0.42]], [[-0.52, 1.3, 0.2], [0.1, 1.33, 0.44]]], mug: [0.6, -0.95] }, // salona dönük, kollar bağlı
@@ -336,7 +337,8 @@ function trucker(ci, name) {
   const h = new THREE.Group(); h.position.set(0, 2.05 + Y, 0.02); b.add(h); add(h, SG, sk, 0, 0, 0, 0.21, 0.235, 0.21); faceParts(h, k, sk, col, hr);
   add(g, CG, M(0xe9a824, { transparent: true, opacity: 0.85 }), ps.mug[0], 1.25, ps.mug[1], 0.07, 0.18, 0.07); add(g, CG, M(0xffffff), ps.mug[0], 1.355, ps.mug[1], 0.072, 0.035, 0.072);
   const ns = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false, fog: false, map: tex(256, 64, (c, w, hh) => { c.font = '900 34px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#000'; c.strokeText(name, w / 2, hh / 2); c.fillStyle = '#' + COL[k].toString(16).padStart(6, '0'); c.fillText(name, w / 2, hh / 2); }) })); ns.position.set(0, 2.62, 0); ns.scale.set(1.3, 0.325, 1); g.add(ns);
-  g.rotation.y = ps.ry; g.userData = { h, belly, k, ps }; return g;
+  let ball = null; if (ps.ball) { const A = ps.arms[0][1]; ball = new THREE.Group(); ball.userData.y0 = A[1] + Y + 0.125; ball.position.set(A[0], ball.userData.y0, A[2] + 0.02); b.add(ball); add(ball, SG, M(0xf4efe2), 0, 0, 0, 0.045); for (const r of [0.6, -0.6]) add(ball, new THREE.TorusGeometry(0.04, 0.004, 4, 16), M(0xc0392b), 0, 0, 0).rotation.set(r, r, 0); } // beyzbol topu
+  g.rotation.y = ps.ry; g.userData = { h, belly, k, ps, ball }; return g;
 }
 const truckers = new Map(); let barT = 0;
 function drawBar(V, dt) {
@@ -345,12 +347,13 @@ function drawBar(V, dt) {
   const ids = new Set(), mid = (V.p.length - 1) / 2;
   V.p.forEach((p, i) => { ids.add(p.id); let g = truckers.get(p.id); if (!g) { g = trucker(p.c, p.n); truckers.set(p.id, g); bar.add(g); }
     const u = g.userData; g.position.set((mid - i) * 1.7, 0, u.ps.z);
-    u.h.rotation.y = u.ps.hy + Math.sin(barT * 0.45 + u.k * 2.1) * 0.22; u.h.rotation.x = 0.08 + Math.sin(barT * 0.3 + u.k) * 0.05; u.belly.scale.z = 0.33 * (1 + Math.sin(barT * 1.6 + u.k) * 0.05); });
+    u.h.rotation.y = u.ps.hy + Math.sin(barT * 0.45 + u.k * 2.1) * 0.22; u.h.rotation.x = 0.08 + Math.sin(barT * 0.3 + u.k) * 0.05; u.belly.scale.z = 0.33 * (1 + Math.sin(barT * 1.6 + u.k) * 0.05);
+    if (u.ball) { const t = Math.min(1, ((barT * 0.4) % 1) / 0.72); u.ball.position.y = u.ball.userData.y0 + 1.9 * t * (1 - t); u.ball.rotation.x = t * Math.PI * 2; } }); // topu yavaşça atıp tutar
   for (const [id, g] of truckers) if (!ids.has(id)) { bar.remove(g); truckers.delete(id); }
   smoke.forEach((s, i) => { const u = (barT * 0.22 + i / smoke.length) % 1; s.position.set(0.145 + Math.sin(u * 6 + i) * 0.12 * u + u * 0.15, 1.26 + u * 1.7, 0.5 + Math.cos(u * 4 + i * 2) * 0.08 * u); const z = 0.06 + u * 0.55; s.scale.set(z, z, 1); s.material.opacity = 0.34 * (1 - u) * Math.min(1, u * 10); });
   dust.position.set(Math.sin(barT * 0.13) * 0.15, Math.sin(barT * 0.2) * 0.12, 0);
   neon.material.opacity = Math.sin(barT * 31) > 0.97 || Math.sin(barT * 2.3) > 0.985 ? 0.35 : 1;
-  barLamp.forEach((l, i) => (l.intensity = 9 + Math.sin(barT * 9 + i * 3) * 0.5));
+  barLamp.forEach((l, i) => (l.intensity = 12 + Math.sin(barT * 9 + i * 3) * 0.5));
   ren.render(bar, barCam);
 }
 const pm = new Map();
@@ -405,6 +408,7 @@ function draw(V, dt) {
   const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Önünü göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görüyorsun: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · E kalk · T tanker çağır' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F vana · T tanker çağır';
   let af = '';
   if (t.s === 'lobby') af += `<div>Oda kodu: <span class="uyari">${odaKodu}</span> · ${V.p.length}/4 oyuncu</div><div style="font-size:18px">${isHost ? 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat' : 'Oda sahibinin başlatması bekleniyor'}</div><div style="font-size:16px">Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!</div>`;
+  if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>Yerlerinizi alın, kamyon kalkıyor!</div>`;
   if (t.s === 'over' || t.s === 'win') af += `<div class="buyuk">${t.s === 'win' ? '🏁 BAŞARDINIZ!' : '💥 OYUN BİTTİ'}</div><div>${t.why}</div><div style="font-size:18px">${isHost ? 'ENTER: yeniden' : ''}</div>`;
   if (t.m) af += `<div>${t.m}</div>`;
   if (t.s === 'run') { if (t.f < 25) af += `<div class="uyari">⛽ YAKIT AZ! ${ks ? '' : 'T ile tankeri ara'}</div>`; t.fl.forEach((f, i) => { if (f) af += `<div class="uyari">🛞 ${WHEEL[i][3]} lastik patlak — arkadaki basınç hortumunu TUT, lastiğin yanına götür</div>`; }); if (ks === 2) af += `<div style="font-size:18px">${V.n[3] ? (kv ? 'Yakıt doluyor…' : 'Hortum takılı: tankerin üstündeki vanayı F ile aç') : 'Tankerden sarı hortum ucunu TUT, sol öndeki depo ağzına bırak'}${V.k[4] > 0 ? ' · vana %' + Math.round(V.k[4] * 100) : ''}</div>`; }
