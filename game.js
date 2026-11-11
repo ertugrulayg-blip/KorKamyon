@@ -1,4 +1,4 @@
-// Kör Kamyon — 2-4 kişilik ortak oyun. Oda sahibi fiziği hesaplar, diğerleri girdi yollar (PeerJS).
+// Road Hogs — 2-4 kişilik ortak oyun. Oda sahibi fiziği hesaplar, diğerleri girdi yollar (PeerJS).
 // Eksenler (kamyon çerçevesi): +z ileri, +y yukarı, +x SOL (three sağ-elli olduğundan +z'ye bakınca +x solda kalır).
 import * as THREE from 'three';
 
@@ -291,7 +291,7 @@ add(bar, BG, M(0x3a2415), 0, 0.55, 0.45, 12, 1.1, 0.8); add(bar, BG, M(0x7a4d28)
 // arka raf: şişeler, neon
 add(bar, BG, M(0x24170e), 0, 1.5, 2.45, 9, 3, 0.3); for (const y of [1.45, 2.05, 2.65]) add(bar, BG, M(0x5a3a20), 0, y, 2.25, 8.6, 0.05, 0.3);
 { const BC = [0x2f6b3a, 0x6b3a1a, 0x9a7a2a, 0x3a5a7a, 0x8a2a2a, 0xd8d0b0]; let n = 0; for (const y of [1.45, 2.05]) for (let x = -4; x <= 4; x += 0.36 + srnd() * 0.2) { const c = M(BC[n++ % 6]), hh = 0.26 + srnd() * 0.14; add(bar, CG, c, x, y + 0.03 + hh / 2, 2.22, 0.055, hh, 0.055); add(bar, CG, c, x, y + 0.08 + hh, 2.22, 0.02, 0.12, 0.02); } }
-const neon = add(bar, new THREE.PlaneGeometry(4.4, 1.1), MB(0xffffff, { transparent: true, fog: false, map: tex(512, 128, (g, w, h) => { g.font = '900 50px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#ff2d6f'; g.shadowBlur = 22; g.fillStyle = '#ff8fb3'; for (let i = 0; i < 3; i++) g.fillText('KÖR KAMYON BAR', w / 2, h / 2); }) }), 0, 3.5, 2.28); neon.rotation.y = Math.PI;
+const neon = add(bar, new THREE.PlaneGeometry(4.4, 1.1), MB(0xffffff, { transparent: true, fog: false, map: tex(512, 128, (g, w, h) => { g.font = '900 50px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#ff2d6f'; g.shadowBlur = 22; g.fillStyle = '#ff8fb3'; for (let i = 0; i < 3; i++) g.fillText('ROAD HOGS BAR', w / 2, h / 2); }) }), 0, 3.5, 2.28); neon.rotation.y = Math.PI;
 { const l = new THREE.PointLight(0xff3070, 7, 8, 2); l.position.set(0, 3.4, 1.6); bar.add(l); }
 // yan duvarlarda panjurlu pencereler: ışık sağdan ve soldan vurur
 for (const s of [-1, 1]) { const x = s * 6.88, z0 = -3.0, z1 = -0.8;
