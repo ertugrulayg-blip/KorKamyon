@@ -330,11 +330,14 @@ const playAudio = (id, s) => { let a = document.getElementById('au' + id); if (!
 const callPeer = (id) => { const c = peer.call(id, mic); if (c) c.on('stream', (s) => playAudio(id, s)); };
 const durum = (m) => ($('durum').textContent = m);
 function begin() { $('menu').style.display = 'none'; $('hud').style.display = 'block'; let last = performance.now(), acc = 0, fc = 0;
-  const frame = (now) => { requestAnimationFrame(frame); const dt = Math.min(0.1, (now - last) / 1000); last = now; fc++; const I = readInput();
+  const frame = (now) => { const dt = Math.min(0.1, (now - last) / 1000); last = now; fc++; const I = readInput();
     if (isHost) { const me = players.get(myId); if (me) me.inp = I; acc += dt; while (acc >= 1 / 60) { simStep(1 / 60); acc -= 1 / 60; } V = snap(); if (fc % 3 === 0) for (const id in conns) if (conns[id].open) conns[id].send(V); }
     else if (hostConn && hostConn.open && fc % 2 === 0) hostConn.send({ t: 'i', ...I });
-    if (V) draw(V, dt); };
-  requestAnimationFrame(frame); }
+    if (V && !document.hidden) draw(V, dt); };
+  const loop = (now) => { requestAnimationFrame(loop); frame(now); }; requestAnimationFrame(loop);
+  // Sekme arka plandayken tarayıcı çizim döngüsünü durdurur; oda sahibi dursa herkes donar. İşçi zamanlayıcısı kısılmaz.
+  try { const w = new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),33)'], { type: 'text/javascript' }))); w.onmessage = () => document.hidden && frame(performance.now()); } catch (e) {}
+  addEventListener('blur', () => { for (const k in key) key[k] = 0; mouseL = false; }); }
 async function go(kod, host) {
   const name = ($('ad').value.trim() || 'Oyuncu').slice(0, 12); localStorage.setItem('kk-ad', name); if (!mic) { durum('Mikrofon izni isteniyor…'); await getMic(); } durum('Bağlanıyor…');
   if (location.search.includes('tek')) { isHost = true; myId = 'ben'; odaKodu = 'TEK'; mkPlayer(myId, name); $('kod').value = ''; return begin(); } // ağsız tek kişilik deneme
