@@ -20,8 +20,8 @@
   #rol{position:absolute;left:12px;top:10px;font-size:14px;line-height:1.5;max-width:46vw}
   #rol b{font-size:20px}
   #sag{position:absolute;right:12px;top:10px;text-align:right;font-size:15px;font-weight:700}
-  #yakit{width:180px;height:16px;border:2px solid #fff;border-radius:9px;overflow:hidden;margin:4px 0 4px auto;background:rgba(0,0,0,.3)}
-  #yakit i{display:block;height:100%;background:#7bd389}
+  #yakit,#can{width:180px;height:16px;border:2px solid #fff;border-radius:9px;overflow:hidden;margin:4px 0 4px auto;background:rgba(0,0,0,.3)}
+  #yakit i,#can i{display:block;height:100%;background:#7bd389}
   #afis{position:absolute;left:0;right:0;top:22%;text-align:center;font-size:26px;font-weight:900}
   #afis div{margin:6px 0}
   #afis .uyari{color:#ffe14d}#afis .buyuk{font-size:54px}
@@ -61,7 +61,7 @@
   #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}
   @media (pointer:coarse){#dok{display:block}
     #rol{font-size:18px;line-height:1.35;max-width:52vw}#rol b{font-size:26px}
-    #sag{font-size:20px}#yakit{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
+    #sag{font-size:20px}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
     #tumsek{font-size:24px;padding:10px 18px;top:21%;max-width:92vw;white-space:normal;text-align:center}
     #afis{font-size:28px;top:33%}#afis div[style]{font-size:21px !important}
     #isaret{font-size:76px;top:40%}#isaret.sofor{font-size:120px}}
@@ -80,7 +80,7 @@
 </div></div>
 <div id="hud">
   <div id="rol"></div>
-  <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="bilgi"></div></div>
+  <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div></div>
   <div id="tumsek"></div>
   <div id="isaret"></div>
   <div id="afis"></div>
@@ -103,6 +103,6 @@
     <b data-k="sl" class="ok">⬅<br>SOLA DÖN</b><b data-k="yv" class="ok">🐢<br>YAVAŞLA</b><b data-k="sr" class="ok">➡<br>SAĞA DÖN</b>
   </div>
 </div>
-<script type="module" src="game.js?v=17"></script>
+<script type="module" src="game.js?v=18"></script>
 </body>
 </html>
