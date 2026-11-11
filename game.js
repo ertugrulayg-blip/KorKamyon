@@ -103,14 +103,15 @@ function stepPlayer(pl, dt) {
   const g = stand ? 0.25 : pinned ? 0.04 : 0.02, tv = 4.3 * dt;
   for (const i of [0, 3]) { P[i] += (mx * tv - (P[i] - Q[i])) * g; P[i + 2] += (mz * tv - (P[i + 2] - Q[i + 2])) * g; }
   if (stand) {
-    { const c = ((P[16] + P[19]) / 2 + 0.5 - P[1]) * 0.3; P[1] += c; Q[1] += c * 0.65; } // Q'ya da uygula: yay enerji pompalamasın (inişte zıplatıyordu)
-    P[3] += (P[0] + mx * 0.1 - P[3]) * 0.15; { const c = (P[1] + 0.4 - P[4]) * 0.3; P[4] += c; Q[4] += c * 0.65; } P[5] += (P[2] + mz * 0.1 - P[5]) * 0.15;
+    const wd = -Math.cos(pl.phase) * 0.14 * ml; // yalpa: gövde basan ayağın üstüne yatar
+    { const c = (Math.min(P[16], P[19]) + 0.5 - P[1]) * 0.3; P[1] += c; Q[1] += c * 0.65; } // Q'ya da uygula: yay enerji pompalamasın (inişte zıplatıyordu)
+    P[3] += (P[0] + mx * 0.1 + lx * wd - P[3]) * 0.15; { const c = (P[1] + 0.4 - P[4]) * 0.3; P[4] += c; Q[4] += c * 0.65; } P[5] += (P[2] + mz * 0.1 + lz * wd - P[5]) * 0.15;
     P[6] += (P[3] - P[6]) * 0.12; { const c = (P[4] + 0.36 - P[7]) * 0.3; P[7] += c; Q[7] += c * 0.65; } P[8] += (P[5] - P[8]) * 0.12;
-    pl.phase += ml * dt * 10;
+    pl.phase += ml * dt * 9;
     for (let s = 0; s < 2; s++) {
       const i = 15 + s * 3, sd = s ? -1 : 1, ph = pl.phase + s * Math.PI, sw = Math.sin(ph) * 0.28 * ml;
       P[i] += (P[0] + lx * sd * 0.17 + fx * sw - P[i]) * 0.35; P[i + 2] += (P[2] + lz * sd * 0.17 + fz * sw - P[i + 2]) * 0.35;
-      if (ml > 0.1 && Math.cos(ph) > 0) P[i + 1] += 0.02;
+      const up = Math.cos(ph); if (ml > 0.1 && up > 0) { const c = (P[34 - i] + up * 0.16 - P[i + 1]) * 0.4; P[i + 1] += c; Q[i + 1] += c; } // kalkan ayak: konum düzeltmesi, hız eklemez (eskiden zıplatıyordu)
     }
     if (I.j && !pl.lj) { for (let i = 1; i < 21; i += 3) Q[i] = P[i] - 6.6 * dt; pl.jumpT = 0.3; pl.gndT = 0; }
   }
@@ -194,7 +195,8 @@ function stepTruck(dt) {
   let bias = 0, vmax = 20; for (let w = 0; w < 4; w++) if (T.flat[w]) { vmax -= 6; bias += Math.sign(WHEEL[w][0]) * 0.2 + Math.sin(T.t * 7) * 0.05; }
   if (T.fuel <= 0) gas = 0; T.gas = gas; T.br = br;
   const off = Math.abs(T.X - cx(T.Z)) > 7;
-  let a = gas * 3.2 - br * 7 - 0.5 - T.v * 0.02 - (off ? 5 : 0) - (T.v > vmax ? 4 : 0); if (!run) a = -6;
+  const slow = T.v < 8.4; // ~30 km/s altı: kendi kendine neredeyse hiç yavaşlamaz, fren yumuşak
+  let a = gas * 3.2 - br * (slow ? 2.5 : 7) - (slow ? 0.06 : 0.5 + T.v * 0.02) - (off ? (slow ? 1 : 5) : 0) - (T.v > vmax ? 4 : 0); if (!run) a = -6;
   const ov = T.v; T.v = Math.max(0, T.v + a * dt); if (run && T.t < 6) T.v = Math.max(T.v, 7);
   const om = (T.steer + bias) * T.v * 0.05 * (12 / (12 + T.v)); // hız arttıkça direksiyon yumuşar
   const oz = T.Z; T.th += om * dt; T.X += Math.sin(T.th) * T.v * dt; T.Z += Math.cos(T.th) * T.v * dt;
