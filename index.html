@@ -33,28 +33,33 @@
   #isaret.sofor{font-size:110px}
   #afis{top:28%}
   /* dokunmatik kontroller: rol başına bir panel */
-  #dok{--S:min(88vw,56vh,360px)}
+  #dok{--S:min(94vw,78vh,440px)}
   #dok .pan{display:none;position:absolute;left:0;right:0;bottom:0;top:0}
   #dok[data-r="0"] #pk,#dok[data-r="1"] #ps,#dok[data-r="2"] #py{display:block}
-  #dok b{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:18px;background:rgba(0,0,0,.4);border:3px solid rgba(255,255,255,.7);font-size:15px;font-weight:900;line-height:1.1}
+  #dok b{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:18px;background:rgba(0,0,0,.4);border:3px solid rgba(255,255,255,.7);font-size:18px;font-weight:900;line-height:1.1}
   #dok b.bas{background:rgba(255,225,77,.75);color:#1a1a1a;text-shadow:none}
   #halka{position:absolute;left:50%;bottom:10px;width:var(--S);height:var(--S);transform:translateX(-50%)}
-  #halka b{left:50%;top:50%;width:calc(var(--S)*.23);height:calc(var(--S)*.23);border-radius:50%;font-size:13px;transform:translate(-50%,-50%) rotate(var(--a)) translateX(calc(var(--S)*.385)) rotate(calc(-1*var(--a)))}
+  #halka b{left:50%;top:50%;width:calc(var(--S)*.25);height:calc(var(--S)*.25);border-radius:50%;font-size:calc(var(--S)*.043);transform:translate(-50%,-50%) rotate(var(--a)) translateX(calc(var(--S)*.375)) rotate(calc(-1*var(--a)))}
   #joy{position:absolute;left:28%;top:28%;width:44%;height:44%;border-radius:50%;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.7);pointer-events:auto}
   #joy i{position:absolute;left:30%;top:30%;width:40%;height:40%;border-radius:50%;background:rgba(255,255,255,.8)}
-  #joy span{position:absolute;left:0;right:0;bottom:6%;text-align:center;font-size:11px;font-weight:900;opacity:.8}
-  #ps .pedal{bottom:14px;width:min(24vw,130px);height:min(42vh,220px);font-size:20px}
+  #joy span{position:absolute;left:0;right:0;bottom:6%;text-align:center;font-size:13px;font-weight:900;opacity:.8}
+  #ps .pedal{bottom:14px;width:min(25vw,180px);height:min(56vh,280px);font-size:26px}
   #ps .fren{left:12px;background:rgba(216,67,47,.55)} #ps .gaz{right:12px;background:rgba(80,180,100,.55)}
   #ps .fren.bas{background:#ff5a5f;color:#fff}#ps .gaz.bas{background:#7bd389}
-  #dir{position:absolute;left:50%;bottom:14px;width:min(46vw,52vh,300px);height:min(46vw,52vh,300px);transform:translateX(-50%);pointer-events:auto}
+  #dir{position:absolute;left:50%;bottom:14px;width:min(44vw,64vh,340px);height:min(44vw,64vh,340px);transform:translateX(-50%);pointer-events:auto}
   #dir i{position:absolute;inset:0;border-radius:50%;border:16px solid rgba(20,20,20,.75);box-sizing:border-box;background:linear-gradient(rgba(20,20,20,.75),rgba(20,20,20,.75)) center/100% 14px no-repeat,linear-gradient(#d8432f,#d8432f) 50% 0/14px 50% no-repeat}
-  #dir span{position:absolute;left:0;right:0;top:-22px;text-align:center;font-size:12px;font-weight:900}
-  #ps .kucuk,#py .kucuk{width:90px;height:52px;font-size:14px}
-  #ps .kucuk{left:12px;bottom:calc(min(42vh,220px) + 26px)}
-  #py .ok{bottom:14px;width:30vw;height:min(24vh,140px);font-size:22px}
+  #dir span{position:absolute;left:0;right:0;top:-26px;text-align:center;font-size:16px;font-weight:900}
+  #ps .kucuk,#py .kucuk{width:120px;height:66px;font-size:19px}
+  #ps .kucuk{left:12px;bottom:calc(min(56vh,280px) + 26px)}
+  #py .ok{bottom:14px;width:30vw;height:min(36vh,190px);font-size:28px}
   #py .ok[data-k="sl"]{left:2vw}#py .ok[data-k="yv"]{left:35vw}#py .ok[data-k="sr"]{right:2vw}
-  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(min(24vh,140px) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 100px);bottom:calc(min(24vh,140px) + 24px)}
-  @media (pointer:coarse){#dok{display:block}}
+  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(min(36vh,190px) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 132px);bottom:calc(min(36vh,190px) + 24px)}
+  @media (pointer:coarse){#dok{display:block}
+    #rol{font-size:18px;line-height:1.35;max-width:52vw}#rol b{font-size:26px}
+    #sag{font-size:20px}#yakit{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
+    #tumsek{font-size:24px;padding:10px 18px;top:21%;max-width:92vw;white-space:normal;text-align:center}
+    #afis{font-size:28px;top:33%}#afis div[style]{font-size:21px !important}
+    #isaret{font-size:76px;top:40%}#isaret.sofor{font-size:120px}}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
