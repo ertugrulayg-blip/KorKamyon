@@ -14,9 +14,9 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Model altyapısı (`src/models.js`, `assets/`), grafik kalite seviyeleri (`?kalite=0|1|2`)
 - ✅ Çevre: orman, çadır, köy karoları; banket ve yol kenar çizgileri
 - ✅ Güneş gölgeleri, darbe sarsıntısı, teker tozu
-- ✅ Polis: beyaza boyanmış kamyonet modeli
-- 🔨 Kalan modeller: kamyon ve dorse, tanker, karakterler, engeller, sandık/alet kutuları
-  - 🙋 kenney.nl otomatik indirmeyi reddediyor. `Car Kit` ve `Nature Kit` zip dosyalarını indirip depoya (`assets-ham/`) yüklemek sahibin işi
+- ✅ Polis arabası (Car Kit), engeller: arızalı arabalar ve koniler
+- ✅ Yol kenarı süsleri: ağaç, kaya, çalı, çiçek, kütük (Nature Kit, toplu çizim)
+- 🔨 Kalan modeller: kamyon ve dorse (koddan güzelleştirilecek), tanker, karakterler, sandık/alet kutuları
 - ⬜ Kıvılcım, egzoz dumanı, fren izi, su/yağ sıçraması
 - ⬜ Kalite ayarının menüden seçilmesi; telefonda performans ölçümü — 🙋 gerçek telefonda deneme
 - ⬜ Gerçek ses kayıtları ve müzik (CC0 ya da satın alınmış) — 🙋 kulak onayı

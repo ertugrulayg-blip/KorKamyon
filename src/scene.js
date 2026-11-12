@@ -1,6 +1,6 @@
 // Sahne: three.js nesneleri (kamyon, dünya, araçlar). Çizim döngüsü hud.js içinde.
 import * as THREE from 'three';
-import { KENNEY, loadModel, morBeyaz, recolor, spawn } from './models.js';
+import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
 import { BOX, BUMP, HZ, INLET, LEN, OBS, POLZ, TK, WHEEL, clamp, cx, srnd } from './world.js';
 import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT } from './sim.js';
@@ -48,7 +48,7 @@ export const glass = add(cabIn, new THREE.PlaneGeometry(10, 4), new THREE.MeshBa
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })() }), 0, 4.7, 3.52); glass.visible = false; glass.renderOrder = 4;
 add(truck, CG, M(0x2a3d2f), OILB[0], 1.65, OILB[2] - 0.1, 0.26, 0.7, 0.26); add(truck, CG, M(0xffd23f), OILB[0], 1.65, OILB[2] - 0.1, 0.27, 0.14, 0.27); add(truck, CG, M(0x111111), OILB[0], 2.01, OILB[2] - 0.1, 0.2, 0.02, 0.2); // yağ varili
 export function mkPolice(g) { const kutu = new THREE.Group(), isik = []; g.add(kutu); // model gelene kadar kutu gövde görünür
-  loadModel(KENNEY + 'racing/vehicle-truck-purple.glb').then((m) => { if (!m) return; const c = recolor(m.clone(), 'polis', morBeyaz); c.scale.setScalar(1.45); g.add(c); kutu.visible = false; add(g, BG, M(0x1f3a6b), 0, 0.82, 0, 2.2, 0.16, 4.0); isik.forEach((l) => l.position.set(l.position.x, 2.0, 0.15)); });
+  loadModel(KENNEY + 'car/police.glb').then((m) => { if (!m) return; const c = m.clone(); c.scale.setScalar(1.45); g.add(c); kutu.visible = false; isik.forEach((l) => { l.position.set(l.position.x * 0.8, 2.02, -0.25); l.scale.set(0.5, 0.14, 0.26); }); });
   add(kutu, BG, M(0xf2f2f2), 0, 0.875, 0, 2.0, 0.85, 4.4); add(kutu, BG, M(0x1f3a6b), 0, 0.9, 0, 2.03, 0.24, 4.43); add(kutu, BG, M(0x26364f), 0, 1.575, -0.4, 1.7, 0.55, 1.8); add(kutu, BG, M(0x222222), 0, 0.75, 2.26, 1.9, 0.5, 0.14);
   for (const x of [-1, 1]) for (const z of [-1.4, 1.4]) add(kutu, CG, M(0x222222), x, 0.42, z, 0.42, 0.3, 0.42).rotation.z = Math.PI / 2;
   isik.push(add(g, BG, new THREE.MeshBasicMaterial({ color: 0xff2d2d }), 0.36, 1.94, -0.4, 0.62, 0.16, 0.3), add(g, BG, new THREE.MeshBasicMaterial({ color: 0x2d6bff }), -0.36, 1.94, -0.4, 0.62, 0.16, 0.3)); return isik; }
@@ -79,6 +79,14 @@ export const pivot = new THREE.Group(), world = new THREE.Group(); pivot.add(wor
   for (let i = 0; i < nk; i++) for (let sd = 0; sd < 2; sd++) { const z = -80 + i * 4, x0 = cx(z), x1 = cx(z + 4); o.position.set((x0 + x1) / 2 + (sd ? -6.1 : 6.1), 0.02, z + 2); o.rotation.y = Math.atan2(x1 - x0, 4); o.scale.set(0.16, 0.02, Math.hypot(4, x1 - x0) + 0.03); o.updateMatrix(); kenar.setMatrixAt(i * 2 + sd, o.matrix); } world.add(kenar); }
 { const cnt = Math.floor((LEN + 200) / 9), im = new THREE.InstancedMesh(BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), cnt), o = new THREE.Object3D(); for (let i = 0; i < cnt; i++) { const z = -80 + i * 9; o.position.set(cx(z), 0.02, z); o.scale.set(0.25, 0.02, 3.5); o.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); o.updateMatrix(); im.setMatrixAt(i, o.matrix); } world.add(im);
 }
+// yol kenarı süsleri: bariyerle manzara karoları arasındaki şeride ağaç, kaya, çalı, çiçek (Nature Kit). Düşük kalitede yok.
+if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 1013904223) >>> 0; return t2 / 4294967296; }, N = KENNEY + 'nature/', yer = {};
+  const TUR = [['grass_large', 16, 3.2, 0], ['grass', 10, 3.2, 0], ['plant_bush', 7, 4, 0], ['plant_bushLarge', 5, 4.5, 0], ['plant_bushDetailed', 4, 4, 0], ['flower_redA', 4, 3.4, 0], ['flower_yellowA', 4, 3.4, 0], ['flower_purpleA', 4, 3.4, 0], ['rock_smallA', 3, 3, 0], ['rock_smallB', 3, 3, 0], ['rock_smallC', 2, 3, 0], ['rock_largeA', 2, 3.2, 1], ['rock_largeB', 2, 3.2, 1], ['stump_round', 2, 3.5, 0], ['log_stack', 1.5, 3.5, 1], ['mushroom_redGroup', 1.5, 3, 0], ['tree_oak', 2.5, 5.2, 1], ['tree_default', 2.5, 4.6, 1], ['tree_detailed', 2, 4.8, 1], ['tree_fat', 2, 5, 1], ['tree_pineRoundA', 2.5, 5.2, 1], ['tree_pineTallA', 2, 5.2, 1]];
+  const top = TUR.reduce((a, t) => a + t[1], 0) / (ui.kalite > 1 ? 0.62 : 0.34); // geri kalan olasılık: boş
+  for (let z = -60; z < LEN + 140; z += 2.6) for (const sd of [-1, 1]) { let u = r() * top; const d = 10.7 + r() * 3.6, ry = r() * 6.28, bs = 0.8 + r() * 0.45;
+    if (sd < 0 && POLZ.some((p) => Math.abs(p - z) < 9)) continue; // radar polisinin önünü kapatma
+    for (const t of TUR) { if ((u -= t[1]) < 0) { (yer[t[0]] = yer[t[0]] || []).push([cx(z) + sd * (t[3] ? Math.max(d, 11.6) : d), 0, z, t[2] * bs, ry]); break; } } }
+  for (const t of TUR) if (yer[t[0]]) scatter(N + t[0] + '.glb', world, yer[t[0]], { golge: !!t[3] }); }
 // yol kenarı manzarası: Kenney karoları (orman, çadır, boş arazi) ve yer yer küçük köyler. Modeller gelene kadar boş görünür.
 { const R = KENNEY + 'racing/', C = KENNEY + 'city/', KARO = [R + 'decoration-forest.glb', R + 'decoration-forest.glb', R + 'decoration-forest.glb', R + 'decoration-empty.glb', R + 'decoration-tents.glb'], BINA = ['building-small-a', 'building-small-b', 'building-small-c', 'building-small-d', 'building-garage'];
   for (let z = -70; z < LEN + 160; z += 16.5) for (const sd of [-1, 1]) { const ry = Math.atan2(cx(z + 1) - cx(z), 1), koy = ((z / 16.5) | 0) % 19 === (sd > 0 ? 6 : 14);
@@ -97,7 +105,10 @@ export const polPark = POLZ.map((z) => { const g = new THREE.Group(); g.position
 export const oilM = Array.from({ length: 5 }, () => { const m = add(world, CG, new THREE.MeshBasicMaterial({ color: 0x15110d, transparent: true, opacity: 0.85 }), 0, 0.03, 0, 2.3, 0.02, 2.9); m.visible = false; return m; });
 export const obsMesh = OBS.map((o) => { const g = new THREE.Group(); g.position.set(o.x, 0, o.z);
   if (o.gate) { add(g, BG, M(0xd8232a), 0, 0.9, 0, 7.4, 1.8, 0.6); for (const k of [-2.6, -0.85, 0.9, 2.65]) add(g, BG, M(0xffffff), k, 0.9, -0.02, 0.85, 1.8, 0.6); add(g, BG, M(0xffd23f), 0, 2.3, 0, 7.4, 0.5, 0.2);
-    for (let k = 1; k <= 9; k++) { const z = o.z - k * 6; add(world, new THREE.ConeGeometry(0.28, 0.75, 8), M(0xff7a1a), cx(z), 0.38, z); } world.add(g); return g; } add(g, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(g, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; });
+    for (let k = 1; k <= 9; k++) { const z = o.z - k * 6; spawn(KENNEY + 'car/cone.glb', world, cx(z), 0, z, 1.5); } world.add(g); return g; }
+  { const kutu = new THREE.Group(), i = OBS.indexOf(o), sd = i % 2 ? 1 : -1; g.add(kutu); // arızalı araba: yola yan durmuş, önünde koniler (model gelmezse kırmızı-beyaz bariyer kalır)
+    spawn(KENNEY + 'car/' + ['sedan', 'taxi', 'van', 'suv', 'hatchback-sports'][i % 5] + '.glb', g, 0, 0, 0, 1.5, sd * (Math.PI / 2 + 0.25)).then((c) => { if (!c) return; kutu.visible = false; for (const x of [-2.4, 0, 2.4]) spawn(KENNEY + 'car/cone.glb', g, x, 0, -2.6, 1.5); });
+    add(kutu, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(kutu, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; } add(g, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(g, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; });
 { const c = cx(LEN); add(world, BG, M(0x222222), c + 10, 4, LEN, 0.5, 8, 0.5); add(world, BG, M(0x222222), c - 10, 4, LEN, 0.5, 8, 0.5); add(world, BG, M(0xffe14d), c, 7.5, LEN, 20.5, 1.4, 0.4); }
 for (const z of BUMP) { const g = new THREE.Group(); g.position.set(cx(z), 0, z); g.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); for (let k = -3; k <= 3; k++) add(g, BG, M(k % 2 ? 0x222222 : 0xffd23f), k * 1.9, 0.08, 0, 1.9, 0.16, 0.9); world.add(g);
   const zs = z - 35, xs = cx(zs) - 10.4; add(world, BG, M(0x888888), xs, 1.2, zs, 0.12, 2.4, 0.12); const lv = add(world, BG, M(0xffd23f), xs, 2.7, zs, 1.1, 1.1, 0.08); lv.rotation.z = Math.PI / 4; }

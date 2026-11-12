@@ -6,6 +6,8 @@ Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 Görseller Kenney'nin ücretsiz, kamu malı (CC0) modelleriyle yapılıyor; ilk parti GitHub'daki başlangıç kitlerinden alındı (`assets/kenney/KAYNAK.md`).
 Neden: sahibi "şimdilik bedava kaynaklarla ilerleyelim" dedi; Kenney'nin tüm paketleri aynı tarzda olduğu için tutarlı görünüyor.
 Kısıt: kenney.nl otomatik indirmeyi reddediyor; başka paket gerekirse sahibi indirip depoya yükler.
+Sahibi Car Kit 3.1 ve Nature Kit 2.1'i indirip yükledi; depoya yalnızca kullanılan modeller alınıyor (zip'ler depoda tutulmuyor, gerekirse yeniden yüklenir).
+Nature Kit'in nane yeşili malzemeleri `models.js`'te koyu yeşile çevriliyor; eski paketlerin metalik=1 değeri sıfırlanıyor.
 Kamyonun kendisi model değil, koddan çizilmeye devam ediyor: çarpışma kutuları (kasa, korkuluk, koltuklar) görüntüyle birebir örtüşmek zorunda.
 
 ## 2026-11-12 — Grafik kalite seviyeleri
