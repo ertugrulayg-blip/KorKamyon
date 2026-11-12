@@ -26,6 +26,7 @@
   #afis div{margin:6px 0}
   #afis .uyari{color:#ffe14d}#afis .buyuk{font-size:54px}
   #dok{position:fixed;inset:0;display:none;pointer-events:none}
+  #ileri{position:absolute;right:12px;top:122px;display:none;box-sizing:border-box;border:3px solid #fff;border-radius:10px;font-size:13px;font-weight:800;padding:3px 7px;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,.4)}
   #tumsek{position:absolute;left:50%;top:17%;transform:translateX(-50%);display:none;background:#ffd23f;color:#1a1a1a;text-shadow:none;font-weight:900;font-size:18px;padding:8px 16px;border-radius:12px;border:3px solid #1a1a1a;white-space:nowrap}
   #tumsek.hizli{background:#ff5a5f;color:#fff;animation:yan .4s infinite alternate}
   @keyframes yan{to{transform:translateX(-50%) scale(1.08)}}
@@ -58,7 +59,7 @@
   #ps .kucuk{left:12px;bottom:calc(var(--PH) + 26px)}
   #py .ok{bottom:14px;width:30vw;height:var(--OH);font-size:calc(26px*var(--k))}
   #py .ok[data-k="sl"]{left:2vw}#py .ok[data-k="yv"]{left:35vw}#py .ok[data-k="sr"]{right:2vw}
-  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}
+  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="w"]{left:calc(2vw + 240px*var(--k));bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}
   @media (pointer:coarse){#dok{display:block}
     #rol{font-size:18px;line-height:1.35;max-width:52vw}#rol b{font-size:26px}
     #sag{font-size:20px}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
@@ -81,7 +82,7 @@
 <div id="hud">
   <div id="rol"></div>
   <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div></div>
-  <div id="tumsek"></div>
+  <div id="tumsek"></div><div id="ileri">👀 İLERİSİ</div>
   <div id="isaret"></div>
   <div id="afis"></div>
 </div>
@@ -99,10 +100,10 @@
     <b data-k="ga" class="pedal gaz">GAZ</b>
   </div>
   <div id="py" class="pan">
-    <b data-k="s" class="kucuk">KALK</b><b data-k="c" class="kucuk">TANKER</b>
+    <b data-k="s" class="kucuk">KALK</b><b data-k="c" class="kucuk">TANKER</b><b data-k="w" class="kucuk">SİLECEK</b>
     <b data-k="sl" class="ok">⬅<br>SOLA DÖN</b><b data-k="yv" class="ok">🐢<br>YAVAŞLA</b><b data-k="sr" class="ok">➡<br>SAĞA DÖN</b>
   </div>
 </div>
-<script type="module" src="game.js?v=20"></script>
+<script type="module" src="game.js?v=21"></script>
 </body>
 </html>
