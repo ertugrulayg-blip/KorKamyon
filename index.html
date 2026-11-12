@@ -26,7 +26,9 @@
   #afis div{margin:6px 0}
   #afis .uyari{color:#ffe14d}#afis .buyuk{font-size:54px}
   #dok{position:fixed;inset:0;display:none;pointer-events:none}
-  #ileri{position:absolute;right:12px;top:122px;display:none;box-sizing:border-box;border:3px solid #fff;border-radius:10px;font-size:13px;font-weight:800;padding:3px 7px;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+  #gorev{margin-top:8px;font-size:14px;line-height:1.3;max-width:46vw;margin-left:auto}
+  #gorev div{width:fit-content;margin:4px 0 0 auto;padding:3px 9px;border-radius:9px;background:rgba(0,0,0,.5);color:#ffe14d;text-shadow:none}#gorev .k{background:rgba(190,30,40,.8);color:#fff}
+  #ileri{position:absolute;left:12px;top:175px;display:none;box-sizing:border-box;border:3px solid #fff;border-radius:10px;font-size:13px;font-weight:800;padding:3px 7px;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,.4)}
   #tumsek{position:absolute;left:50%;top:17%;transform:translateX(-50%);display:none;background:#ffd23f;color:#1a1a1a;text-shadow:none;font-weight:900;font-size:18px;padding:8px 16px;border-radius:12px;border:3px solid #1a1a1a;white-space:nowrap}
   #tumsek.hizli{background:#ff5a5f;color:#fff;animation:yan .4s infinite alternate}
   @keyframes yan{to{transform:translateX(-50%) scale(1.08)}}
@@ -61,10 +63,10 @@
   #py .ok[data-k="sl"]{left:2vw}#py .ok[data-k="yv"]{left:35vw}#py .ok[data-k="sr"]{right:2vw}
   #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="w"]{left:calc(2vw + 240px*var(--k));bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}
   @media (pointer:coarse){#dok{display:block}
-    #rol{font-size:18px;line-height:1.35;max-width:52vw}#rol b{font-size:26px}
-    #sag{font-size:20px}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
+    #rol{font-size:16px;line-height:1.35;max-width:46vw}#rol b{font-size:26px}
+    #sag{font-size:17px}#gorev{font-size:14px;max-width:44vw}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
     #tumsek{font-size:24px;padding:10px 18px;top:21%;max-width:92vw;white-space:normal;text-align:center}
-    #afis{font-size:28px;top:33%}#afis div[style]{font-size:21px !important}
+    #afis{font-size:20px;top:27%;left:2vw;right:46vw}#afis.orta{left:0;right:0;font-size:28px;top:33%}#afis div[style]{font-size:21px !important}
     #isaret{font-size:76px;top:40%}#isaret.sofor{font-size:120px}}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -81,7 +83,7 @@
 </div></div>
 <div id="hud">
   <div id="rol"></div>
-  <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div></div>
+  <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div><div id="gorev"></div></div>
   <div id="tumsek"></div><div id="ileri">👀 İLERİSİ</div>
   <div id="isaret"></div>
   <div id="afis"></div>
@@ -104,6 +106,6 @@
     <b data-k="sl" class="ok">⬅<br>SOLA DÖN</b><b data-k="yv" class="ok">🐢<br>YAVAŞLA</b><b data-k="sr" class="ok">➡<br>SAĞA DÖN</b>
   </div>
 </div>
-<script type="module" src="game.js?v=21"></script>
+<script type="module" src="game.js?v=22"></script>
 </body>
 </html>

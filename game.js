@@ -639,7 +639,7 @@ function draw(V, dt) {
   { const m = ch ? 'c' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
   glass.visible = false; fogS.visible = seat === 1 && !ch && t.s === 'run'; fogS.position.z = 150 + (t.rn && !t.wp ? 5.8 : 7.6);
   if (t.s === 'lobby') drawBar(V, dt); else ren.render(scene, cam);
-  { const pip = seat === 2 && !ch && t.s === 'run', el = $('ileri'); if (pip) { const W = innerWidth, H = innerHeight, w = Math.round(Math.min(340, W * 0.34)), h = Math.round(w * 0.62), x = W - w - 12, y = TOUCH ? 170 : 150; fogS.visible = false;
+  { const pip = seat === 2 && !ch && t.s === 'run', el = $('ileri'); if (pip) { const W = innerWidth, H = innerHeight, w = Math.round(Math.min(340, W * 0.34)), h = Math.round(w * 0.62), x = 12, y = TOUCH ? 150 : 175; fogS.visible = false;
       ren.setScissorTest(true); ren.setViewport(x, H - y - h, w, h); ren.setScissor(x, H - y - h, w, h); cam2.aspect = w / h; cam2.updateProjectionMatrix(); ren.render(scene, cam2); ren.setScissorTest(false); ren.setViewport(0, 0, W, H);
       if (el.style.display !== 'block') el.style.display = 'block'; el.style.width = w + 'px'; el.style.height = h + 'px'; el.style.top = y + 'px'; } else if (el.style.display !== 'none') el.style.display = 'none'; }
   if ((hudT -= dt) > 0) return; hudT = 0.1;
@@ -653,17 +653,21 @@ function draw(V, dt) {
   if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>Yerlerinizi alın, kamyon kalkıyor!</div>`;
   if (t.s === 'over' || t.s === 'win') af += `<div class="buyuk">${t.s === 'win' ? '🏁 BAŞARDINIZ!' : '💥 OYUN BİTTİ'}</div><div>${t.why}</div><div style="font-size:18px">${isHost ? 'ENTER: yeniden' : ''}</div>`;
   if (t.m) af += `<div>${t.m}</div>`;
-  if (ch) af += `<div class="uyari">🚓 POLİS PEŞİNİZDE · Polis %${qhp}</div><div style="font-size:18px">Kamyon kendi gidiyor. Arkadaki varilin yanında ${TOUCH ? 'KULLAN' : 'F'} ile yağ dök${qo ? ' (' + qo + ' sn)' : ''} ya da polis arabasının üstüne atla</div>`;
-  else if (t.s === 'run' && seat !== 1) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) af += `<div class="uyari">🚓 ${Math.max(0, Math.round(d))} m ileride radar — hız sınırı 50 km/s${t.v > LIMIT ? ' · YAVAŞLA!' : ''}</div>`; }
+  let gv = ''; const cap = (s) => s[0].toUpperCase() + s.slice(1), U = TOUCH ? 'KULLAN' : 'F'; // görev listesi: sağda, kısa satırlar
   if (t.s === 'run' && !t.cd) { const hy = V.p.some((p) => p.bt);
-    if (t.sl) af += `<div class="uyari">🌡 MOTOR STOP ETTİ — kabinde koltukların arasındaki mavi kapağın yanında ${TOUCH ? 'KULLAN' : 'F'} ile su dök</div>`; else if (t.ht >= 70) af += `<div class="uyari">🌡 Motor hararet yapıyor %${t.ht} — kabindeki mavi kapağın yanında ${TOUCH ? 'KULLAN' : 'F'} ile su dök</div>`;
-    if (V.fr) af += `<div class="uyari">🔥 Kasada yangın — sağ öndeki kırmızı söndürücüyü TUT, ateşe götür</div>`;
-    if (hy) af += `<div class="uyari">🥷 Haydut kasada, sandıkları atıyor — ŞAPLAK ile kov</div>`;
-    if (t.rn) af += `<div style="font-size:18px">🌧 Yağmur: yük daha kolay kayar${seat === 2 ? ' · ' + (TOUCH ? 'SİLECEK' : 'W') + ' ile sileceği çalıştır' + (t.wp ? ' ✓' : '') : seat === 1 ? (t.wp ? ' · silecek çalışıyor ✓' : ' · görüşün kısaldı, yolcu silecek çalıştırsın') : ''}</div>`;
-    if (seat === 2 && !ch) { const g = GATE.find((g) => g.z > t.Z + 4 && g.z < t.Z + 230); if (g) af += `<div class="uyari">🚧 ${Math.round(g.z - t.Z)} m ileride yol ayrımı: ${g.open > 0 ? '⬅ SOL' : 'SAĞ ➡'} şerit açık</div>`; } }
-  if (t.s === 'run') { if (t.f < 25) af += `<div class="uyari">⛽ YAKIT AZ! ${ks ? '' : 'T ile tankeri ara'}</div>`; t.fl.forEach((f, i) => { if (f) af += `<div class="uyari">🛞 ${WHEEL[i][3]} lastik patlak — arkadaki basınç hortumunu TUT, lastiğin yanına götür</div>`; }); t.dm.forEach((d, i) => { if (d) af += `<div class="uyari">🔧 ${SPOT[i][3]} hasarlı — arkadaki sarı kutudan matkabı TUT, turuncu işarete götür</div>`; }); if (ks === 2) af += `<div style="font-size:18px">${V.n[3] ? (kv ? 'Yakıt doluyor…' : 'Hortum takılı: tankerin üstündeki vanayı F ile aç') : 'Tankerden sarı hortum ucunu TUT, sol öndeki depo ağzına bırak'}${V.k[4] > 0 ? ' · vana %' + Math.round(V.k[4] * 100) : ''}</div>`; }
-  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = rol + af + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
-  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">⏱ Koltuk fırlatmasına ${(sl / 60) | 0}:${String(sl % 60).padStart(2, '0')}</span>` : '') + (micOk ? '<br>🎙 M: mikrofon aç/kapa' : '<br>🔇 mikrofon yok') + (TOUCH ? '' : '<br>🎵 N: müzik aç/kapa'); $('afis').innerHTML = af; $('afis').className = t.s === 'lobby' ? 'alt' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').textContent = `🔧 %${hp} · 🌡 %${t.ht} · 📦 ${V.cr.filter((c) => c).length}/4 · Kalan ${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} km/s`; $('oda').textContent = 'Oda ' + odaKodu; }
+    if (ch) gv += `<div class="k">🚓 Polis %${qhp}</div>`;
+    else if (seat !== 1) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) gv += `<div${t.v > LIMIT ? ' class="k"' : ''}>🚓 Radar ${Math.max(0, Math.round(d))} m</div>`; }
+    if (seat === 2 && !ch) { const g = GATE.find((g) => g.z > t.Z + 4 && g.z < t.Z + 230); if (g) gv += `<div>🚧 ${Math.round(g.z - t.Z)} m ${g.open > 0 ? '⬅ SOL' : 'SAĞ ➡'}</div>`; }
+    if (t.sl) gv += `<div class="k">🌡 Motor stop</div>`; else if (t.ht >= 70) gv += `<div>🌡 Hararet %${t.ht}</div>`;
+    if (V.fr) gv += `<div class="k">🔥 Yangın</div>`;
+    if (hy) gv += `<div class="k">🥷 Haydut</div>`;
+    if (t.rn) gv += `<div>🌧 ${seat === 2 ? 'Silecek' + (t.wp ? ' ✓' : TOUCH ? '' : ' (W)') : 'Yağmur'}</div>`;
+    if (t.f < 25) gv += `<div class="k">⛽ Yakıt az</div>`;
+    if (ks === 2) gv += `<div>⛽ ${V.n[3] ? (kv ? 'Doluyor' : 'Vanayı aç') : 'Hortumu tak'}${V.k[4] > 0 ? ' %' + Math.round(V.k[4] * 100) : ''}</div>`;
+    t.fl.forEach((f, i) => { if (f) gv += `<div>🛞 ${cap(WHEEL[i][3])}</div>`; });
+    t.dm.forEach((d, i) => { if (d) gv += `<div>🔧 ${cap(SPOT[i][3].replace(' yan', ''))} −${d}</div>`; }); }
+  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
+  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">⏱ Koltuk fırlatmasına ${(sl / 60) | 0}:${String(sl % 60).padStart(2, '0')}</span>` : '') + (micOk ? '<br>🎙 M: mikrofon aç/kapa' : '<br>🔇 mikrofon yok') + (TOUCH ? '' : '<br>🎵 N: müzik aç/kapa'); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧%${hp} 🌡%${t.ht} 📦${V.cr.filter((c) => c).length}/4<br>${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} km/s`; $('oda').textContent = 'Oda ' + odaKodu; }
 }
 const fit = () => { ren.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 80 : 62; cam.updateProjectionMatrix(); }; addEventListener('resize', fit); fit();
 
