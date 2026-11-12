@@ -9,7 +9,7 @@ const PORT = 8791, OUT = path.join(__dirname, 'out'); fs.mkdirSync(OUT, { recurs
   const ok = (ad, kosul, ek = '') => { console.log((kosul ? '  ✓ ' : '  ✗ ') + ad + (ek ? '  ' + ek : '')); if (!kosul) fail.push(ad); };
   const ev = (f, a) => p.evaluate(f, a), bekle = (ms) => p.waitForTimeout(ms), shot = (n) => p.screenshot({ path: path.join(OUT, n + '.png') });
   try {
-    await p.goto(`http://localhost:${PORT}/?debug&tek`); await bekle(1200); await p.click('#kur'); await bekle(1500);
+    await p.goto(`http://localhost:${PORT}/?debug&tek&kalite=0`); await bekle(1200); await p.click('#kur'); await bekle(1500);
     ok('lobi açıldı', await ev(() => G.T.state === 'lobby' && G.players.size === 1)); await shot('1-lobi');
     await p.keyboard.press('Enter'); await bekle(2000); ok('geri sayım: kamyon bekliyor', await ev(() => G.T.state === 'run' && G.T.cd > 0 && G.T.v === 0));
     await bekle(3800); ok('kamyon yola çıktı', await ev(() => G.T.v > 6 && G.T.Z > 1), await ev(() => 'v=' + G.T.v.toFixed(1)));
@@ -20,7 +20,7 @@ const PORT = 8791, OUT = path.join(__dirname, 'out'); fs.mkdirSync(OUT, { recurs
     await ev(() => { G.T.nBot = 0; }); await bekle(1500); ok('haydut geldi', await ev(() => !!G.BOT));
     await ev(() => { const me = G.players.get('ben'); for (let i = 0; i < 3; i++) G.hitPlayer(me, G.BOT, 1, 0); }); await bekle(2500); ok('üç şaplakta haydut gitti', await ev(() => !G.BOT)); await sabit();
     await ev(() => { G.T.heat = 99.9; }); await bekle(800); ok('hararetten motor stop etti', await ev(() => G.T.stall)); await sabit(); await ev(() => { G.T.stall = false; });
-    await ev(() => { const T = G.T; G.PC.used = []; T.Z = 480; T.X = G.cx(480); T.th = Math.atan2(G.cx(481) - G.cx(479), 2); T.phi = 0; T.v = 16; }); await bekle(6500); ok('hız sınırı aşıldı: polis kovalıyor', await ev(() => G.PC.st === 2), await ev(() => 'st=' + G.PC.st)); await shot('3-polis');
+    await ev(() => { const T = G.T; G.PC.used = []; T.Z = 480; T.X = G.cx(480); T.th = Math.atan2(G.cx(481) - G.cx(479), 2); T.phi = 0; T.v = 16; }); for (let i = 0; i < 30 && !(await ev(() => G.PC.st === 2)); i++) await bekle(500); ok('hız sınırı aşıldı: polis kovalıyor', await ev(() => G.PC.st === 2), await ev(() => 'st=' + G.PC.st)); await shot('3-polis');
     await ev(() => G.pourOil(G.players.get('ben'))); await bekle(500); ok('yağda polis kaydı', await ev(() => G.PC.slip > 0 && G.PC.hp < 100)); await ev(() => { G.PC.hp = 0; }); await bekle(4500); ok('polis saf dışı', await ev(() => G.PC.st === 3 || G.PC.st === 0));
     await sabit(); await ev(() => { const me = G.players.get('ben'); me.dead = 0; me.seatCd = 0; G.place(me, 0.7, 2.1, 1.2); }); await bekle(400); await p.keyboard.press('KeyE'); await bekle(1000); ok('şoför koltuğuna oturdu', await ev(() => G.players.get('ben').seat === 1)); await shot('4-sofor');
     await ev(() => { G.players.get('ben').seatT = 119.5; }); await bekle(1500); ok('2 dakikada koltuk fırlattı', await ev(() => G.players.get('ben').seat === 0));

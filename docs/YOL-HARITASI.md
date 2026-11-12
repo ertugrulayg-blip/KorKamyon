@@ -10,9 +10,15 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ⬜ Kodun okunurluğu: uzun satırları açmak, `sim.js`'i alt dosyalara ayırmak (dokundukça)
 
 ## 2. Dikey dilim: tek harita, tam cilalı
-- ⬜ Sanat yönü kararı ve model paketi seçimi (bkz. KARARLAR)
-- ⬜ Kamyon, dorse, karakterler, polis, tanker, çevre modelleri
-- ⬜ Işık, gölge, toz/duman/kıvılcım efektleri, ekran sarsıntısı
+- ✅ Sanat yönü: ücretsiz (CC0) Kenney low-poly modelleri (bkz. KARARLAR)
+- ✅ Model altyapısı (`src/models.js`, `assets/`), grafik kalite seviyeleri (`?kalite=0|1|2`)
+- ✅ Çevre: orman, çadır, köy karoları; banket ve yol kenar çizgileri
+- ✅ Güneş gölgeleri, darbe sarsıntısı, teker tozu
+- ✅ Polis: beyaza boyanmış kamyonet modeli
+- 🔨 Kalan modeller: kamyon ve dorse, tanker, karakterler, engeller, sandık/alet kutuları
+  - 🙋 kenney.nl otomatik indirmeyi reddediyor. `Car Kit` ve `Nature Kit` zip dosyalarını indirip depoya (`assets-ham/`) yüklemek sahibin işi
+- ⬜ Kıvılcım, egzoz dumanı, fren izi, su/yağ sıçraması
+- ⬜ Kalite ayarının menüden seçilmesi; telefonda performans ölçümü — 🙋 gerçek telefonda deneme
 - ⬜ Gerçek ses kayıtları ve müzik (CC0 ya da satın alınmış) — 🙋 kulak onayı
 - ⬜ Ana menü, ayarlar (ses, grafik, tuşlar), "nasıl oynanır"
 - ⬜ Gamepad desteği

@@ -2,6 +2,7 @@
 import { net, ui } from './state.js';
 import { $, BUMP, DBG, GATE, INLET, OBS, ODA, POLZ, RAIN, WHEEL, cx } from './world.js';
 import { AH, AIR, BLIM, BOT, CR, DH, DRL, EX, FIRE, NZ, OIL, PC, SPOT, T, TKS, eject, hitPlayer, jolt, mkPlayer, place, players, pourOil, simStep, snap, startGame } from './sim.js';
+import { ren, scene } from './scene.js';
 import { initSnd } from './audio.js';
 import { cnt, key, readInput } from './input.js';
 import { draw } from './hud.js';
@@ -39,4 +40,4 @@ export async function go(kod, host) {
     else { hostConn = peer.connect(ODA + net.odaKodu, { serialization: 'json' }); hostConn.on('open', () => hostConn.send({ t: 'hi', name })); hostConn.on('data', (d) => { if (d.t === 's') V = d; else if (d.t === 'w') { d.peers.forEach(callPeer); begin(); } else if (d.t === 'full') durum('Oda dolu (4 kişi)'); }); hostConn.on('close', () => { $('menu').style.display = 'flex'; durum('Oda sahibi ayrıldı'); }); } });
 }
 $('ad').value = localStorage.getItem('kk-ad') || ''; $('kur').onclick = () => { const k = $('kod').value.trim().toUpperCase(); go(k.length === 4 ? k : '', true); }; $('katil').onclick = () => { const k = $('kod').value.trim().toUpperCase(); if (k.length === 4) go(k, false); else durum('4 harfli oda kodunu yaz'); };
-if (DBG) window.G = { cx, hitPlayer, CR, FIRE, EX, GATE, RAIN, jolt, get BOT() { return BOT; }, PC, OIL, POLZ, pourOil, eject, T, TKS, NZ, AH, AIR, DH, DRL, SPOT, BLIM, players, OBS, BUMP, key, cnt, startGame, mkPlayer, place, simStep, WHEEL, INLET, get V() { return V; }, set cam(v) { ui.camMode = v; } };
+if (DBG) window.G = { ren, scene, cx, hitPlayer, CR, FIRE, EX, GATE, RAIN, jolt, get BOT() { return BOT; }, PC, OIL, POLZ, pourOil, eject, T, TKS, NZ, AH, AIR, DH, DRL, SPOT, BLIM, players, OBS, BUMP, key, cnt, startGame, mkPlayer, place, simStep, WHEEL, INLET, get V() { return V; }, set cam(v) { ui.camMode = v; } };

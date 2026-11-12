@@ -1,7 +1,7 @@
 // Çizim döngüsü ve ekran yazıları: oda sahibinden gelen durumu (V) ekrana yansıtır.
 import * as THREE from 'three';
 import { net, ui } from './state.js';
-import { $, BUMP, BUMP_V, GATE, HZ, LEN, LIMIT, POLZ, WHEEL } from './world.js';
+import { $, BUMP, BUMP_V, GATE, HZ, LEN, LIMIT, POLZ, WHEEL, cx } from './world.js';
 import { SPOT } from './sim.js';
 import { BG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, cabG, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, v1, v2, valve, wheels, world } from './scene.js';
 import { drawBar, limbV, playerMesh, pm, qY } from './bar.js';
@@ -9,6 +9,7 @@ import { sfx, sm } from './audio.js';
 import { TOUCH, joy, tb } from './input.js';
 
 export let rainK = 0; export let hose = null;
+const fx = { m: '', shake: 0, acc: 0, i: 0 }, dust = Array.from({ length: 28 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xb9b2a6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; }); // darbe sarsıntısı, teker tozu
 export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 9.5, -10.5), camL = new THREE.Vector3(0, 1.5, -1); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
 export function draw(V, dt) {
@@ -52,6 +53,12 @@ export function draw(V, dt) {
   if (ch) { v1.set(0, 14, -25); v2.set(0, 1, -5.5); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
   else { v1.set(0, 9.5, -10.5); v2.set(0, 1.5, -1); } // herkes yukarıdan bakar; şoförün ilerisi sisli, yolcunun ileri penceresi var
   { const m = ch ? 'c' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
+  // darbe sarsıntısı ve teker tozu
+  if (t.m !== fx.m) { fx.m = t.m; if (/GÜM|PAT!|vurdu|atladı/.test(t.m)) fx.shake = 0.55; }
+  if (fx.shake > 0) { fx.shake = Math.max(0, fx.shake - dt * 1.6); cam.position.x += (Math.random() - 0.5) * fx.shake; cam.position.y += (Math.random() - 0.5) * fx.shake * 0.7; }
+  { const run = t.s === 'run' && !t.cd, off = Math.abs(t.X - cx(t.Z)) > 6.3; fx.acc += run ? dt * t.v * (off ? 3.2 : 0.55) : 0;
+    while (fx.acc > 1) { fx.acc -= 1; const d = dust[fx.i++ % dust.length], w = WHEEL[2 + (fx.i & 1)]; d.visible = true; d.userData.t = 0; d.userData.L = off ? 0.9 : 0.5; d.userData.s = off ? 1 : 0.45; d.position.set(w[0] * 0.97 + (Math.random() - 0.5) * 0.3, 0.15, w[2] - 0.5); d.userData.vx = (Math.random() - 0.5) * 1.2 + Math.sign(w[0]) * 0.5; d.userData.vz = -t.v * 0.55; d.material.color.setHex(off ? 0x8a7350 : 0xb9b2a6); }
+    for (const d of dust) if (d.visible) { const u = (d.userData.t += dt) / d.userData.L; if (u >= 1) { d.visible = false; continue; } d.position.x += d.userData.vx * dt; d.position.y += dt * 1.1; d.position.z += d.userData.vz * dt; d.scale.setScalar((0.18 + u * 0.75) * d.userData.s); d.material.opacity = (d.userData.s < 1 ? 0.3 : 0.5) * (1 - u); } }
   glass.visible = false; fogS.visible = seat === 1 && !ch && t.s === 'run'; fogS.position.z = 150 + (t.rn && !t.wp ? 5.8 : 7.6);
   if (t.s === 'lobby') drawBar(V, dt); else ren.render(scene, cam);
   { const pip = seat === 2 && !ch && t.s === 'run', el = $('ileri'); if (pip) { const W = innerWidth, H = innerHeight, w = Math.round(Math.min(340, W * 0.34)), h = Math.round(w * 0.62), x = 12, y = TOUCH ? 150 : 175; fogS.visible = false;

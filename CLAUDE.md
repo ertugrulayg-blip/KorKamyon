@@ -23,8 +23,11 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/scene.js` — three.js nesneleri. `src/bar.js` — lobi ve karakter modeli. `src/audio.js` — sentez ses.
 - `src/input.js` — klavye/dokunmatik. `src/hud.js` — `draw(V, dt)`: çizim ve ekran yazıları.
 - `src/main.js` — PeerJS ağı, mikrofon, ana döngü. `src/state.js` — paylaşılan `net` ve `ui`.
-- `lib/` — three.js ve PeerJS kopyaları. `desktop/` — Electron sarmalayıcı.
-- Modüller sırayla bağımlıdır: world → sim → scene → bar → audio → input → hud → main. Geri yönde import ekleme.
+- `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
+- `lib/` — three.js, GLTFLoader ve PeerJS kopyaları. `desktop/` — Electron sarmalayıcı.
+- Modüller sırayla bağımlıdır: world → sim → models → scene → bar → audio → input → hud → main. Geri yönde import ekleme.
+- Grafik kalitesi `ui.kalite` (0/1/2, `?kalite=N`). Yazılım GL'de yüksek kalite ~4 kare/sn: testler `kalite=0` ile koşar, ekran görüntüsü için `kalite=2` kullan ve uzun bekle.
+- Dış siteler bu ortamdan kapalı; GitHub'daki açık depolar `git clone` ile alınabiliyor. kenney.nl robotları reddediyor (zorlama).
 
 ## Bilinmesi gerekenler
 - Koordinatlar kamyon (dorse) çerçevesindedir: +z ileri, +y yukarı, **+x SOL**. Dünya kamyonun altında kayar.
