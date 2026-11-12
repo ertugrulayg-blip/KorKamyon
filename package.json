@@ -1,0 +1,26 @@
+{
+  "name": "road-hogs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Road Hogs — 2-4 kişilik ortak kamyon oyunu",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "node serve.js",
+    "test": "node test/smoke.cjs",
+    "desktop": "electron .",
+    "dist": "electron-builder --win portable --publish never"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0",
+    "playwright": "^1.63.0"
+  },
+  "build": {
+    "appId": "com.roadhogs.game",
+    "productName": "Road Hogs",
+    "files": ["index.html", "src/**", "lib/**", "desktop/**"],
+    "directories": { "output": "dist" },
+    "win": { "target": "portable" },
+    "portable": { "artifactName": "RoadHogs-${version}.exe" }
+  }
+}

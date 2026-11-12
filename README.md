@@ -4,4 +4,6 @@
 
 - Canlı: https://ertugrulayg-blip.github.io/KorKamyon/
 - Tek kişilik deneme: `?debug&tek`
-- three.js + PeerJS (CDN), derleme yok — `index.html` + `game.js`.
+- three.js + PeerJS (`lib/` altında), derleme yok — `index.html` + `src/`.
+- Yerelde: `node serve.js` · Test: `npm test` · Masaüstü: `npm run desktop`
+- Plan: [docs/YOL-HARITASI.md](docs/YOL-HARITASI.md) · Kararlar: [docs/KARARLAR.md](docs/KARARLAR.md)
