@@ -62,7 +62,7 @@
   #py .ok{bottom:14px;width:23vw;height:var(--OH);font-size:calc(26px*var(--k))}
   #py .ok[data-k="sl"]{left:2vw}#py .ok[data-k="yv"]{left:26.5vw}#py .ok[data-k="hz"]{left:51vw}#py .ok[data-k="sr"]{right:2vw}
   #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}
-  @media (pointer:coarse){#dok{display:block}
+  @media (pointer:coarse){#egitim{bottom:auto;top:52px;font-size:14px}body.egitimde #rol{display:none}#dok{display:block}
     #rol{font-size:16px;line-height:1.35;max-width:46vw}#rol b{font-size:26px}
     #sag{font-size:17px}#gorev{font-size:14px;max-width:44vw}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
     #tumsek{font-size:24px;padding:10px 18px;top:21%;max-width:92vw;white-space:normal;text-align:center}
@@ -94,6 +94,31 @@
   .kay .kip{display:flex;gap:6px;flex-wrap:wrap}.kay .kip button{border:2px solid #39445a;background:none;color:#9aa4b5;border-radius:8px;padding:4px 9px;font-weight:800;cursor:pointer}.kay .kip button.secili{background:#d8432f;border-color:#d8432f;color:#fff}
   #eylem{position:fixed;left:50%;bottom:22%;transform:translateX(-50%);display:none;background:rgba(15,20,30,.78);border:2px solid #ffd23f;color:#ffe14d;border-radius:12px;padding:7px 14px;font-weight:900;font-size:18px;white-space:nowrap;text-shadow:none;pointer-events:none}
   #eylem kbd{display:inline-block;background:#ffd23f;color:#141a26;border-radius:6px;padding:0 7px;margin-right:6px;font:900 15px system-ui,Arial}
+  /* aşama seçimi */
+  #asama{position:fixed;left:50%;bottom:calc(3% + 128px);transform:translateX(-50%);display:none;z-index:5;background:rgba(15,20,30,.82);border:2px solid #39445a;border-radius:16px;padding:10px 12px;text-align:center;width:min(94vw,640px);text-shadow:none}
+  #asama .baslik{font-weight:900;font-size:14px;color:#ffd23f;margin-bottom:6px;letter-spacing:.5px}
+  #asama .kutular{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+  #asama .kutular button{border:2px solid #39445a;background:#1d2433;color:#fff;border-radius:10px;padding:5px 8px;min-width:62px;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+  #asama .kutular button b{font-size:18px}#asama .kutular button span{font-size:11px;color:#9aa4b5}
+  #asama .kutular button.secili{background:#d8432f;border-color:#ffd23f}#asama .kutular button.secili span{color:#fff}
+  #asama .kutular button.kilitli{opacity:.45;cursor:default}#asama .kutular button:disabled:not(.kilitli){cursor:default}
+  #asama .ipucu{font-size:12px;color:#ffe14d;margin-top:6px}
+  #asama .basla{margin-top:8px;border:0;border-radius:10px;background:#7bd389;color:#10241a;font-weight:900;font-size:16px;padding:7px 22px;cursor:pointer}
+  /* eğitim yazısı */
+  #egitim{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:none;width:min(92vw,620px);background:rgba(10,30,20,.86);border:2px solid #7bd389;border-radius:14px;padding:9px 14px;font-size:16px;line-height:1.4;text-align:center;text-shadow:none}
+  #egitim b{display:block;color:#7bd389;font-size:13px;letter-spacing:.5px;margin-bottom:2px}
+  /* puan balonu */
+  .balon{position:absolute;left:50%;top:44%;transform:translateX(-50%);font-weight:900;font-size:34px;animation:balon 1.6s ease-out forwards;pointer-events:none}
+  .balon.arti{color:#7bd389}.balon.eksi{color:#ff5a5f}
+  @keyframes balon{from{opacity:1;margin-top:0}to{opacity:0;margin-top:-70px}}
+  /* final tablosu */
+  #afis .yildiz{font-size:46px;color:#ffd23f;letter-spacing:6px}#afis .yildiz i{color:rgba(255,255,255,.25);font-style:normal}
+  #afis table.tablo{margin:10px auto 6px;border-collapse:collapse;font-size:16px;background:rgba(10,14,22,.72);border-radius:12px;overflow:hidden;max-width:94vw}
+  #afis .tablo td{padding:6px 10px;border-top:1px solid rgba(255,255,255,.08);text-align:left;vertical-align:middle}
+  #afis .tablo .sira{font-size:22px;text-align:center}#afis .tablo .ad{font-weight:900;font-size:18px}#afis .tablo .pu{font-weight:900;font-size:20px;color:#ffe14d;white-space:nowrap}#afis .tablo .pu small{font-size:11px;color:#9aa4b5}
+  #afis .tablo .cip{font-size:12px;font-weight:700;max-width:46vw}#afis .tablo .cip span{display:inline-block;margin:2px 3px;padding:2px 6px;border-radius:7px;background:rgba(255,255,255,.1)}#afis .tablo .cip span.neg{background:rgba(220,60,60,.35)}
+  .konfeti{position:fixed;top:-12px;width:9px;height:14px;z-index:20;pointer-events:none;animation:konfeti linear forwards}
+  @keyframes konfeti{to{top:105vh;transform:rotate(720deg)}}
 </style>
 <script src="lib/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
@@ -112,9 +137,10 @@
   <div id="rol"></div>
   <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div><div id="gorev"></div></div>
   <div id="tumsek"></div><div id="ileri" data-t="ileri"></div>
-  <div id="isaret"></div><div id="eylem"></div>
+  <div id="egitim"></div><div id="isaret"></div><div id="eylem"></div>
   <div id="afis"></div>
 </div>
+<div id="asama"></div>
 <div id="dugmeler"><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
 <div id="ayar" class="panel kapali"><div class="kart2">
   <h2 data-t="ayarlar"></h2>
@@ -199,6 +225,6 @@
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=39"></script>
+<script type="module" src="src/main.js?v=41"></script>
 </body>
 </html>

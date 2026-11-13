@@ -47,6 +47,13 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Sesli sohbet isteğe bağlı (varsayılan kapalı), açık mikrofon ya da bas-konuş (V); her oyuncunun sesi ayrı ayarlanır (WebAudio, iPhone dahil)
 - 🙋 Sesli sohbet ve kopma: gerçek iki-üç cihazla denenmeli
 
+## Aşamalar, eğitim, puan (13.11 geri bildirimi)
+- ✅ Aşamalar: Eğitim, 100, 500, 1000, 1500, 2000, 2500 m. Her aşama yeni olaylar açar, bitirince sonraki açılır (`ASAMA` world.js, `kk-acik`)
+- ✅ Eğitim: 9 adım, her işi tek tek tetikleyip öğretir; kamyon kendi gider, oyun bitmez (`src/egitim.js`)
+- ✅ Olaylar daha geç başlar ve üst üste binmez (yangın, haydut, lastik, polis birbirini bekler)
+- ✅ Oyuncu puanları ve sayaçlar; anlık "+50" balonu; final: yıldızlar, konfeti, madalyalı sıralama tablosu
+- 🙋 Puan değerleri ve aşama zorluğu: oynayıp ayarlanmalı
+
 ## 3. Steam hesabı ve mağaza sayfası
 - 🙋 Steamworks hesabı, vergi formu (W-8BEN tamamlandı), banka bilgisi, kayıt ücreti
 - 🙋 İsim kontrolü: "Road Hogs" adında oyun/marka var mı (Overwatch'taki "Roadhog" karakterine dikkat)

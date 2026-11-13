@@ -17,7 +17,7 @@ const DIL = process.argv[2] || 'en', OUT = path.join(__dirname, 'raw'), PORT = 8
   await ev((a) => a.forEach((n, i) => G.mkPlayer('p' + i, n)), adlar);
   await cek('1-bar', 14000);
   // yola çık: dört kişi, koltuklar dolu, kasada iş var
-  await ev(() => { G.startGame(); G.T.cd = 0.01; const T = G.T; T.autoT = 9999; T.nFire = T.nBot = T.nextFlat = 999; G.PC.used = [1, 1, 1, 1, 1]; T.Z = 300; T.X = G.cx(300); }); await bekle(2500);
+  await ev(() => { G.startGame(6); G.T.cd = 0.01; const T = G.T; T.autoT = 9999; T.nFire = T.nBot = T.nextFlat = 999; G.PC.used = [1, 1, 1, 1, 1]; T.Z = 300; T.X = G.cx(300); }); await bekle(2500);
   const yerles = () => ev(() => { const P = (id) => G.players.get(id), ben = [...G.players.keys()][0];
     const s1 = P('p0'), s2 = P('p1'); s1.seat = 1; s1.seatT = 0; s2.seat = 2; s2.seatT = 0; for (const q of G.players.values()) q.seatCd = 0;
     G.place(P(ben), 0.6, 1.95, -2.3); G.place(P('p2'), -0.5, 1.95, -3.8); });

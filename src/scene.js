@@ -141,6 +141,9 @@ export const obsMesh = OBS.map((o) => { const g = new THREE.Group(); g.position.
   { const kutu = new THREE.Group(), i = OBS.indexOf(o), sd = i % 2 ? 1 : -1; g.add(kutu); // arızalı araba: yola yan durmuş, önünde koniler (model gelmezse kırmızı-beyaz bariyer kalır)
     spawn(KENNEY + 'car/' + ['sedan', 'taxi', 'van', 'suv', 'hatchback-sports'][i % 5] + '.glb', g, 0, 0, 0, 1.5, sd * (Math.PI / 2 + 0.25)).then((c) => { if (!c) return; kutu.visible = false; for (const x of [-2.4, 0, 2.4]) spawn(KENNEY + 'car/cone.glb', g, x, 0, -2.6, 1.15); });
     add(kutu, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(kutu, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; } add(g, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(g, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; });
-{ const c = cx(LEN); add(world, BG, M(0x222222), c + 10, 4, LEN, 0.5, 8, 0.5); add(world, BG, M(0x222222), c - 10, 4, LEN, 0.5, 8, 0.5); add(world, BG, M(0xffe14d), c, 7.5, LEN, 20.5, 1.4, 0.4); }
+// hedef çizgisi: aşamanın uzunluğuna göre hud.js taşır
+export const bitis = new THREE.Group(); world.add(bitis);
+add(bitis, BG, M(0x222222), 10, 4, 0, 0.5, 8, 0.5); add(bitis, BG, M(0x222222), -10, 4, 0, 0.5, 8, 0.5); add(bitis, BG, M(0xffe14d), 0, 7.5, 0, 20.5, 1.4, 0.4);
+add(bitis, new THREE.PlaneGeometry(13, 1.6), new THREE.MeshBasicMaterial({ map: tex(256, 32, (g, w, h) => { for (let x = 0; x < 16; x++) for (let y = 0; y < 2; y++) { g.fillStyle = (x + y) % 2 ? '#111' : '#f2f2ea'; g.fillRect(x * 16, y * 16, 16, 16); } }) }), 0, 0.03, 0).rotation.x = -Math.PI / 2;
 for (const z of BUMP) { const g = new THREE.Group(); g.position.set(cx(z), 0, z); g.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); for (let k = -3; k <= 3; k++) add(g, BG, M(k % 2 ? 0x222222 : 0xffd23f), k * 1.9, 0.08, 0, 1.9, 0.16, 0.9); world.add(g);
   const zs = z - 35, xs = cx(zs) - 10.4; add(world, BG, M(0x888888), xs, 1.2, zs, 0.12, 2.4, 0.12); const lv = add(world, BG, M(0xffd23f), xs, 2.7, zs, 1.1, 1.1, 0.08); lv.rotation.z = Math.PI / 4; }

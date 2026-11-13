@@ -14,6 +14,23 @@ const S = {
     menuAciklama: 'Şoför önünü göremez, yolcu tarif eder, kasadakiler yakıt, lastik, yangın ve polisle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.',
     haydutAd: 'HAYDUT', adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
     tuslar: '⌨ Tuşlar', ayarlar: '⚙ Ayarlar', kapat: 'Kapat (Esc)', ses: 'SES', oyuncular: 'OYUNCULAR', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 İLERİSİ',
+    // aşamalar, eğitim, puan
+    asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
+    asamaAd: (n, m) => (n ? 'Aşama ' + n : '🎓 Eğitim') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Eğitim ' + i + '/' + n,
+    eg: [
+      'Herkes yerine! Şoför sol koltuğa, yolcu sağ koltuğa otursun (yanına git, E). Şoför yolu göremez: yolcu A/D ile yön, S ile yavaşla, W ile hızlan gösterir. Kamyon şimdilik kendi gidiyor.',
+      '🛞 Lastik patladı! Kasanın arkasındaki mavi kompresörden hortumu TUT (J), sarı işaretli lastiğin yanına götür ve bekle.',
+      '🔧 Kasa hasar aldı! Sarı kutudan matkabı TUT, turuncu işaretin yanına götür.',
+      '🌡 Motor ısındı! Kabinde iki koltuğun arasındaki mavi işaretin yanına git, F\'ye basılı tut.',
+      '🔥 Kasada yangın! Sağ öndeki kırmızı söndürücüyü TUT ve ateşe götür.',
+      '📦 Sert virajda sandıklar kayar. Bir sandığa TUT ile yapış, basılı tutup yürüyerek taşı.',
+      '⛽ Yakıt azaldı! Yolcu T ile tankeri çağırsın. Sarı hortumu depo ağzına (sol ön) bırak, tankerin üstüne çıkıp vanada F\'ye bas.',
+      '🥷 Haydut kasaya atladı! Yanına git ve 3 kez şaplak at (K).',
+      '🏁 Hazırsınız! Şoför koltuğa geçsin ve hedef çizgisine sürün.',
+    ],
+    asamaTamam: (n) => '🏁 AŞAMA ' + n + ' TAMAMLANDI!', egitimTamam: '🎓 EĞİTİM TAMAMLANDI!', yeniAsama: (m) => '🔓 Yeni aşama açıldı: ' + m + ' m',
+    sonraki: 'ENTER: sonraki aşama', puanAd: 'puan',
+    ist: { surus: (v) => '🚚 ' + dk(v) + ' sürüş', yolcu: (v) => '👀 ' + dk(v) + ' yolculuk', temiz: (v) => '🛡 ' + v + ' sn çarpmasız', lastik: (v) => '🛞 ' + v + ' lastik', hasar: (v) => '🔧 ' + v + ' tamir', yangin: (v) => '🔥 ' + v + ' yangın', su: (v) => '🌡 ' + v + ' soğutma', yakit: (v) => '⛽ ' + v + ' yakıt işi', haydut: (v) => '🥷 ' + v + ' haydut', polis: (v) => '🚓 ' + v + ' polis', carpma: (v) => '💥 ' + v + ' çarpma', dusme: (v) => '🤕 ' + v + ' düşme', firlama: (v) => '🪑 ' + v + ' fırlama', ceza: (v) => '🚨 ' + v + ' hız cezası' },
     ses_mod: 'Sesli sohbet', mod_kapali: 'Kapalı', mod_acik: 'Açık mikrofon', mod_bas: 'Bas-konuş (V)',
     mik_kapali: '🎙 Sohbete katıl', mik_acik: '🎙 Mikrofon açık', mik_sessiz: '🔇 Susturuldu', mik_bas: '🎙 Bas-konuş: V', mik_konus: '🔴 Konuşuyor', mik_izin: '🚫 Mikrofon izni yok',
     koptun: 'Oda sahibiyle bağlantı koptu.',
@@ -41,7 +58,8 @@ const S = {
     koltukSure: (s) => '⏱ Koltuk fırlatmasına ' + s, mikVar: '🎙 M: mikrofon aç/kapa', mikYok: '🔇 mikrofon yok', muzikTus: '🎵 N: müzik aç/kapa', oda: 'Oda', kmh: 'km/s', yuzde,
     // oyun mesajları (oda sahibinden kodla gelir)
     m: {
-      yolaCiktiniz: 'Yola çıktınız! Kamyon durmasın', hortumTak: 'Hortum depoya takıldı! Vanayı aç', firladi: (a) => a + ' koltuktan fırladı! 🪑',
+      egTamam: '✅ Tamam! Sıradaki görev', yolaCiktiniz: 'Yola çıktınız! Kamyon durmasın',
+ hortumTak: 'Hortum depoya takıldı! Vanayı aç', firladi: (a) => a + ' koltuktan fırladı! 🪑',
       yagKaydi: (a) => a + ' yola yağ döktü — polis kaydı! 🛢', yag: (a) => a + ' yola yağ döktü 🛢', haydutUctu: '🥷 Haydut kamyondan uçtu! 👋', direksiyon: (a) => a + ' direksiyona geçti!',
       tankerYolcu: '📻 Tankeri yalnız yolcu telsizle çağırabilir', tankerDolu: 'Depo yarıdan dolu: tanker gelmez (%50 altında çağır)', tankerCagirdi: (a) => a + ' tankeri çağırdı ☎',
       vanaAcildi: 'Vana açıldı ⛽', dustu: (a) => a + ' kamyondan düştü!', havaKurtuldu: 'Basınç hortumu elinden kurtuldu!', lastikSisirdi: (a) => a + ' lastiği şişirdi 🛞',
@@ -62,6 +80,22 @@ const S = {
     menuAciklama: "The driver can't see the road, the passenger gives directions, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
     haydutAd: 'BANDIT', adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
     tuslar: '⌨ Controls', ayarlar: '⚙ Settings', kapat: 'Close (Esc)', ses: 'SOUND', oyuncular: 'PLAYERS', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 AHEAD',
+    asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
+    asamaAd: (n, m) => (n ? 'Stage ' + n : '🎓 Tutorial') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Tutorial ' + i + '/' + n,
+    eg: [
+      "Take your places! The driver sits on the left, the passenger on the right (walk up, press E). The driver can't see the road: the passenger signals with A/D, S to slow down, W to speed up. For now the truck drives itself.",
+      '🛞 Flat tyre! GRAB (J) the air hose from the blue compressor at the back, take it to the tyre with the yellow marker and hold it there.',
+      '🔧 The truck is damaged! GRAB the drill from the yellow box and take it to the orange marker.',
+      '🌡 The engine is overheating! In the cab, stand by the blue marker between the seats and hold F.',
+      '🔥 Fire in the back! GRAB the red extinguisher at the front right and take it to the flames.',
+      '📦 Crates slide in hard turns. GRAB a crate and keep holding while you walk to carry it.',
+      '⛽ Fuel is low! The passenger calls the tanker with T. Drop the yellow nozzle into the filler cap (front left), climb on the tanker and press F at the valve.',
+      '🥷 A bandit jumped on! Walk up to him and slap him 3 times (K).',
+      "🏁 You're ready! Driver, take the wheel and drive to the finish line.",
+    ],
+    asamaTamam: (n) => '🏁 STAGE ' + n + ' COMPLETE!', egitimTamam: '🎓 TUTORIAL COMPLETE!', yeniAsama: (m) => '🔓 New stage unlocked: ' + m + ' m',
+    sonraki: 'ENTER: next stage', puanAd: 'pts',
+    ist: { surus: (v) => '🚚 ' + dk(v) + ' driving', yolcu: (v) => '👀 ' + dk(v) + ' navigating', temiz: (v) => '🛡 ' + v + ' s crash-free', lastik: (v) => '🛞 ' + v + ' tyres', hasar: (v) => '🔧 ' + v + ' repairs', yangin: (v) => '🔥 ' + v + ' fires', su: (v) => '🌡 ' + v + ' cool-downs', yakit: (v) => '⛽ ' + v + ' refuel jobs', haydut: (v) => '🥷 ' + v + ' bandits', polis: (v) => '🚓 ' + v + ' police hits', carpma: (v) => '💥 ' + v + ' crashes', dusme: (v) => '🤕 ' + v + ' falls', firlama: (v) => '🪑 ' + v + ' ejections', ceza: (v) => '🚨 ' + v + ' speeding' },
     ses_mod: 'Voice chat', mod_kapali: 'Off', mod_acik: 'Open mic', mod_bas: 'Push to talk (V)',
     mik_kapali: '🎙 Join voice chat', mik_acik: '🎙 Mic on', mik_sessiz: '🔇 Muted', mik_bas: '🎙 Push to talk: V', mik_konus: '🔴 Talking', mik_izin: '🚫 No mic permission',
     koptun: 'Lost connection to the host.',
@@ -86,7 +120,8 @@ const S = {
     g_doluyor: 'Filling', g_vana: 'Open the valve', g_hortum: 'Connect the hose', g_lastik: (i) => '🛞 ' + buyuk(teker.en[i]), g_hasar: (i, d) => '🔧 ' + buyuk(yan.en[i]) + ' −' + d,
     koltukSure: (s) => '⏱ Seat ejects in ' + s, mikVar: '🎙 M: mute/unmute mic', mikYok: '🔇 no microphone', muzikTus: '🎵 N: music on/off', oda: 'Room', kmh: 'km/h', yuzde,
     m: {
-      yolaCiktiniz: "You're on the road! Don't let the truck stop", hortumTak: 'Hose connected! Open the valve', firladi: (a) => a + ' got ejected from the seat! 🪑',
+      egTamam: '✅ Done! Next task', yolaCiktiniz: "You're on the road! Don't let the truck stop",
+ hortumTak: 'Hose connected! Open the valve', firladi: (a) => a + ' got ejected from the seat! 🪑',
       yagKaydi: (a) => a + ' spilled oil — the police car skids! 🛢', yag: (a) => a + ' spilled oil on the road 🛢', haydutUctu: '🥷 The bandit flew off the truck! 👋', direksiyon: (a) => a + ' took the wheel!',
       tankerYolcu: '📻 Only the passenger can radio the tanker', tankerDolu: "Tank is over half full: the tanker won't come (call below 50%)", tankerCagirdi: (a) => a + ' called the tanker ☎',
       vanaAcildi: 'Valve open ⛽', dustu: (a) => a + ' fell off the truck!', havaKurtuldu: 'The air hose slipped out of your hand!', lastikSisirdi: (a) => a + ' pumped up the tyre 🛞',
@@ -103,6 +138,7 @@ const S = {
     },
   },
 };
+const dk = (s) => ((s / 60) | 0) + ':' + String(s % 60).padStart(2, '0');
 function buyuk(s) { return s[0].toLocaleUpperCase(DIL === 'tr' ? 'tr' : 'en') + s.slice(1); }
 
 // Metni getirir; işlevse parametrelerle çağırır.

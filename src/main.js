@@ -2,7 +2,8 @@
 import { net, ui } from './state.js';
 import { L, dilSec, sayfayiCevir } from './dil.js';
 import { $, BUMP, DBG, GATE, INLET, OBS, ODA, POLZ, RAIN, WHEEL, cx } from './world.js';
-import { AH, AIR, BLIM, BOT, CR, DH, DRL, EX, FIRE, NZ, OIL, PC, SPOT, T, TKS, eject, hitPlayer, jolt, mkPlayer, place, players, pourOil, simStep, snap, startGame } from './sim.js';
+import { asamaSec, oyun, AH, AIR, BLIM, BOT, CR, DH, DRL, EX, FIRE, NZ, OIL, PC, SPOT, T, TKS, eject, hitPlayer, jolt, mkPlayer, place, players, pourOil, simStep, snap, startGame } from './sim.js';
+import { stepEgitim } from './egitim.js';
 import { cam, ren, scene } from './scene.js';
 import { initSnd } from './audio.js';
 import { cnt, key, readInput } from './input.js';
@@ -31,7 +32,7 @@ function dusur(id) {
 }
 export function begin() { $('menu').style.display = 'none'; $('hud').style.display = 'block'; $('dugmeler').style.display = 'flex'; initPanel({ getV: () => V, kick }); sesleriUygula(); sonDurum = 0; let last = performance.now(), acc = 0, fc = 0;
   const frame = (now) => { const dt = Math.min(0.1, (now - last) / 1000); last = now; fc++; const I = readInput();
-    if (net.isHost) { if (now - sonKontrol > 1000) { sonKontrol = now; const su = performance.now(); for (const id in conns) if (su - (conns[id].son || su) > ZAMAN_ASIMI) dusur(id); } const me = players.get(net.myId); if (me) me.inp = I; acc += dt; while (acc >= 1 / 60) { simStep(1 / 60); acc -= 1 / 60; } V = snap(); if (fc % 3 === 0) for (const id in conns) if (conns[id].open) conns[id].send(V); }
+    if (net.isHost) { if (now - sonKontrol > 1000) { sonKontrol = now; const su = performance.now(); for (const id in conns) if (su - (conns[id].son || su) > ZAMAN_ASIMI) dusur(id); } const me = players.get(net.myId); if (me) me.inp = I; acc += dt; while (acc >= 1 / 60) { simStep(1 / 60); stepEgitim(1 / 60); acc -= 1 / 60; } V = snap(); if (fc % 3 === 0) for (const id in conns) if (conns[id].open) conns[id].send(V); }
     else { if (hostConn && hostConn.open && fc % 2 === 0) hostConn.send({ t: 'i', ...I }); if (sonDurum && performance.now() - sonDurum > 9000) { try { sessionStorage.setItem('kk-mesaj', 'koptun'); } catch (e) {} location.reload(); } } // oda sahibinden 9 sn haber yok: bağlantı koptu
     if (V && !document.hidden) draw(V, dt); };
   const loop = (now) => { requestAnimationFrame(loop); frame(now); }; requestAnimationFrame(loop);
@@ -56,4 +57,4 @@ export async function go(kod, host) {
 }
 sayfayiCevir(); for (const b of document.querySelectorAll('[data-dil]')) b.onclick = () => dilSec(b.dataset.dil); // dil seçimi: menüde ve ayarlarda
 $('ad').value = localStorage.getItem('kk-ad') || ''; try { const msj = sessionStorage.getItem('kk-mesaj'); if (msj) { durum(L(msj)); sessionStorage.removeItem('kk-mesaj'); } } catch (e) {} $('kur').onclick = () => { const k = $('kod').value.trim().toUpperCase(); go(k.length === 4 ? k : '', true); }; $('katil').onclick = () => { const k = $('kod').value.trim().toUpperCase(); if (k.length === 4) go(k, false); else durum(L('kodYaz')); };
-if (DBG) window.G = { dusur, conns, get barSahne() { return import('./bar.js'); }, kick, kamera: cam, ren, scene, cx, hitPlayer, CR, FIRE, EX, GATE, RAIN, jolt, get BOT() { return BOT; }, PC, OIL, POLZ, pourOil, eject, T, TKS, NZ, AH, AIR, DH, DRL, SPOT, BLIM, players, OBS, BUMP, key, cnt, startGame, mkPlayer, place, simStep, WHEEL, INLET, get V() { return V; }, set cam(v) { ui.camMode = v; } };
+if (DBG) window.G = { oyun, asamaSec, dusur, conns, get barSahne() { return import('./bar.js'); }, kick, kamera: cam, ren, scene, cx, hitPlayer, CR, FIRE, EX, GATE, RAIN, jolt, get BOT() { return BOT; }, PC, OIL, POLZ, pourOil, eject, T, TKS, NZ, AH, AIR, DH, DRL, SPOT, BLIM, players, OBS, BUMP, key, cnt, startGame, mkPlayer, place, simStep, WHEEL, INLET, get V() { return V; }, set cam(v) { ui.camMode = v; } };

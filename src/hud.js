@@ -2,14 +2,14 @@
 import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
-import { $, BUMP, BUMP_V, COL, GATE, HZ, LEN, LIMIT, POLZ, WHEEL, cx } from './world.js';
-import { OILB, RAD, SPOT } from './sim.js';
-import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
+import { $, ASAMA, BUMP, BUMP_V, COL, GATE, HZ, LEN, LIMIT, POLZ, WHEEL, cx } from './world.js';
+import { OILB, RAD, SPOT, asamaSec } from './sim.js';
+import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
 import { drawBar, limbV, playerMesh, pm, qY } from './bar.js';
 import { sfx, sm } from './audio.js';
-import { TOUCH, joy, tb } from './input.js';
+import { TOUCH, hostStart, joy, tb } from './input.js';
 
 export let rainK = 0; export let hose = null;
 const RH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }; // iskelet hedefleri: eller ve ayaklar
@@ -34,12 +34,56 @@ function polDarbe(qs, qd, hp, dt) {
 const isaretMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, depthWrite: false });
 const radIsaret = add(cabIn, CG, isaretMat(0x3fa7ff), RAD[0], 1.33, RAD[2], 0.55, 0.03, 0.55), yagIsaret = add(truck, CG, isaretMat(0xffd23f), OILB[0] - 0.05, 1.32, OILB[2] + 0.5, 0.5, 0.03, 0.5), vanaIsaret = add(tanker, CG, isaretMat(0xff5a5f), 0, 2.03, -2, 0.6, 0.03, 0.6);
 const EV = new THREE.Vector3();
+// ---------- aşama seçimi, eğitim, puan, final ----------
+function asamaPanel(t) {
+  const el = $('asama'), goster = t.s === 'lobby';
+  if (!goster) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
+  const iz = [t.lv, t.ac, net.isHost, DIL].join(); if (el.dataset.iz === iz && el.style.display === 'block') return; el.dataset.iz = iz; el.style.display = 'block';
+  let h = `<div class="baslik">${L(net.isHost ? 'asamaSec' : 'sadeceSahip')}</div><div class="kutular">`;
+  ASAMA.forEach((a, i) => { const kilit = i > t.ac; h += `<button data-lv="${i}" class="${i === t.lv ? 'secili' : ''}${kilit ? ' kilitli' : ''}" ${!net.isHost || kilit ? 'disabled' : ''}><b>${i || '🎓'}</b><span>${kilit ? '🔒' : i ? a.m + ' m' : L('egitimKisa')}</span></button>`; });
+  h += '</div>' + (t.ac <= 1 ? `<div class="ipucu">${L('ilkKez')}</div>` : '') + (net.isHost ? `<button class="basla">${L('basla')}</button>` : '');
+  el.innerHTML = h;
+  for (const b of el.querySelectorAll('button[data-lv]')) b.onclick = () => asamaSec(+b.dataset.lv);
+  const bb = el.querySelector('.basla'); if (bb) bb.onclick = () => hostStart();
+}
+function egitimYazi(t) {
+  const el = $('egitim'), on = t.s === 'run' && t.eg >= 0 && !t.cd, metin = on ? `<b>${L('egBaslik', t.eg + 1, L('eg').length)}</b>${L('eg')[t.eg]}` : '';
+  if (el.dataset.m !== metin + DIL) { el.dataset.m = metin + DIL; el.innerHTML = metin; el.style.display = on ? 'block' : 'none'; document.body.classList.toggle('egitimde', on); }
+}
+let sonPuan = null;
+function puanBalon(t, me) { // puan değişince "+50" balonu (sürüşteki küçük artışlar için değil)
+  if (!me || t.s !== 'run') { sonPuan = null; return; }
+  const p = me.pu || 0; if (sonPuan === null) sonPuan = p; const d = p - sonPuan; sonPuan = p;
+  if (Math.abs(d) < 5) return;
+  const b = document.createElement('div'); b.className = 'balon ' + (d > 0 ? 'arti' : 'eksi'); b.textContent = (d > 0 ? '+' : '−') + Math.abs(d); $('hud').appendChild(b); setTimeout(() => b.remove(), 1600);
+}
+let sonDurumKonfeti = '';
+function konfeti(t) {
+  if (t.s === sonDurumKonfeti) return; sonDurumKonfeti = t.s; if (t.s !== 'win') return;
+  const r = ['#ffd23f', '#ff6a3d', '#3fa7ff', '#7bd389', '#ff5a5f', '#ffffff'];
+  for (let i = 0; i < 110; i++) { const k = document.createElement('i'); k.className = 'konfeti'; k.style.left = Math.random() * 100 + 'vw'; k.style.background = r[i % r.length]; k.style.animationDelay = Math.random() * 1.2 + 's'; k.style.animationDuration = 2.4 + Math.random() * 1.6 + 's'; document.body.appendChild(k); setTimeout(() => k.remove(), 4500); }
+}
+const NEG = ['carpma', 'dusme', 'firlama', 'ceza'], SIRA = ['surus', 'yolcu', 'temiz', 'lastik', 'hasar', 'yangin', 'su', 'yakit', 'haydut', 'polis', 'carpma', 'dusme', 'firlama', 'ceza'];
+function sonEkran(t, V) {
+  const win = t.s === 'win', yaz = L('ist');
+  let h = `<div class="buyuk">${win ? (t.lv === 0 ? L('egitimTamam') : L('asamaTamam', t.lv)) : L('oyunBitti')}</div>`;
+  if (win && t.lv > 0) h += `<div class="yildiz">${'★'.repeat(t.yz || 1)}<i>${'★'.repeat(3 - (t.yz || 1))}</i></div>`;
+  h += `<div>${mesaj(t.why)}</div>`;
+  if (win && t.lv > 0 && t.ac === t.lv + 1) h += `<div class="uyari">${L('yeniAsama', ASAMA[t.lv + 1].m)}</div>`;
+  const oy = V.p.filter((p) => !p.bt).sort((a, b) => (b.pu || 0) - (a.pu || 0));
+  h += '<table class="tablo">' + oy.map((p, i) => {
+    const ist = p.ist || {}, cip = SIRA.filter((k) => ist[k] > 0 && (k !== 'temiz' || ist[k] >= 5)).map((k) => `<span class="${NEG.includes(k) ? 'neg' : ''}">${yaz[k](ist[k])}</span>`).join('');
+    return `<tr><td class="sira">${['🥇', '🥈', '🥉'][i] || i + 1 + '.'}</td><td class="ad" style="color:#${COL[p.c % 4].toString(16).padStart(6, '0')}">${p.n}</td><td class="pu">${p.pu || 0} <small>${L('puanAd')}</small></td><td class="cip">${cip}</td></tr>`;
+  }).join('') + '</table>';
+  return h + `<div style="font-size:18px">${net.isHost ? (win ? L('sonraki') : L('enterYeniden')) : ''}</div>`;
+}
 const SARS = ['bariyer', 'kapaliSerit', 'engel', 'tumsekPat', 'lastikPat', 'polisVurdu', 'polisAtladi']; // ekranı sarsan olaylar
 const fx = { m: '', shake: 0, acc: 0, i: 0, eg: 0, j: 0 }, dust = Array.from({ length: 28 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xb9b2a6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; }); // darbe sarsıntısı, teker tozu
 export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 9.5, -10.5), camL = new THREE.Vector3(0, 1.5, -1); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
 export function draw(V, dt) {
   const t = V.T, [qs, qx, qz, qhp, qsl, qu, qo, qd = 0] = V.q, ch = t.s === 'run' && (qs === 1 || qs === 2); sfx(V, dt);
+  { const hd = t.hd || LEN; bitis.position.set(cx(hd), 0, hd); bitis.rotation.y = Math.atan2(cx(hd + 1) - cx(hd - 1), 2); }
   cabG.rotation.y = t.ph; cpD = Math.cos(t.ph); spD = Math.sin(t.ph);
   pol.visible = qs > 0 && t.s !== 'lobby'; pol.position.set(qx, 0, qz); pol.rotation.y = qsl ? pol.rotation.y + dt * 7 : qs === 3 ? 0.6 : 0;
   polDarbe(qs, qd, qhp, dt); { const f = Math.sin(performance.now() / 90) > 0; polL[0].visible = f; polL[1].visible = !f; }
@@ -117,6 +161,7 @@ export function draw(V, dt) {
       else if (yagGerek && yak(OILB[0], OILB[2], 1.7)) ey = L('ey_yag') + (qo ? L('ey_bekle', qo) : '');
       else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) ey = L('ey_vana'); }
     const el = $('eylem'), metin = ey ? `<kbd>${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; } }
+  asamaPanel(t); egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
@@ -124,9 +169,9 @@ export function draw(V, dt) {
   { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = L('isaret')[sg || 0]; }
   const rol = t.s === 'lobby' ? L('rolBar') : seat === 1 ? L('rolSofor') : seat === 2 ? L('rolYolcu') : L('rolKasa');
   let af = '';
-  if (t.s === 'lobby') af += `<div>${L('odaKodu')}: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 ${L('kisi')}</div><div style="font-size:18px">${net.isHost ? L('baslatHost') : L('baslatBekle')}</div><div style="font-size:16px">${L('lobiIpucu')}</div>`;
+  if (t.s === 'lobby') af += `<div class="uyari">${L('asamaAd', t.lv, ASAMA[t.lv].m)}</div><div>${L('odaKodu')}: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 ${L('kisi')}</div><div style="font-size:18px">${net.isHost ? L('baslatHost') : L('baslatBekle')}</div><div style="font-size:16px">${L('lobiIpucu')}</div>`;
   if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>${L('geriSayim')}</div>`;
-  if (t.s === 'over' || t.s === 'win') af += `<div class="buyuk">${t.s === 'win' ? L('basardiniz') : L('oyunBitti')}</div><div>${mesaj(t.why)}</div><div style="font-size:18px">${net.isHost ? L('enterYeniden') : ''}</div>`;
+  if (t.s === 'over' || t.s === 'win') af += sonEkran(t, V);
   if (t.m) af += `<div>${mesaj(t.m)}</div>`;
   let gv = ''; // görev listesi: sağda, kısa satırlar
   if (t.s === 'run' && !t.cd) { const hy = V.p.some((p) => p.bt);
@@ -141,7 +186,7 @@ export function draw(V, dt) {
     if (ks === 2) gv += `<div>⛽ ${V.n[3] ? (kv ? L('g_doluyor') : L('g_vana')) : L('g_hortum')}${V.k[4] > 0 ? ' ' + L('yuzde', Math.round(V.k[4] * 100)) : ''}</div>`;
     t.fl.forEach((f, i) => { if (f) gv += `<div>${L('g_lastik', i)}</div>`; });
     t.dm.forEach((d, i) => { if (d) gv += `<div>${L('g_hasar', i, d)}</div>`; }); }
-  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = DIL + rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
-  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">${L('koltukSure', ((sl / 60) | 0) + ':' + String(sl % 60).padStart(2, '0'))}</span>` : '') + (TOUCH ? '' : '<br>' + L('muzikTus')); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧${L('yuzde', hp)} 🌡${L('yuzde', t.ht)} 📦${V.cr.filter((c) => c).length}/4<br>${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} ${L('kmh')}`; $('oda').textContent = L('oda') + ' ' + net.odaKodu; }
+  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = DIL + (me ? me.pu : 0) + rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
+  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">${L('koltukSure', ((sl / 60) | 0) + ':' + String(sl % 60).padStart(2, '0'))}</span>` : '') + (TOUCH ? '' : '<br>' + L('muzikTus')); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧${L('yuzde', hp)} 🌡${L('yuzde', t.ht)} 📦${V.cr.filter((c) => c).length}/4<br>${Math.max(0, Math.round((t.hd || LEN) - t.Z))} m · ⭐${me ? me.pu || 0 : 0} · ${Math.round(t.v * 3.6)} ${L('kmh')}`; $('oda').textContent = L('oda') + ' ' + net.odaKodu; }
 }
 export const fit = () => { ren.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 80 : 62; cam.updateProjectionMatrix(); }; addEventListener('resize', fit); fit();

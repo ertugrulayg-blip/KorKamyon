@@ -17,13 +17,14 @@ const PORT = 8791, OUT = path.join(__dirname, 'out'); fs.mkdirSync(OUT, { recurs
     await ev(() => G.mkPlayer('misafir', 'Misafir')); await bekle(800); ok('oyuncu listesinde çıkar düğmesi', await olana(() => !!document.querySelector('#oyuncular .cikar')));
     await ev(() => G.kick('misafir')); ok('oyuncu çıkarıldı', await olana(() => !G.players.has('misafir'))); await p.keyboard.press('Escape');
     ok('lobi açıldı', await olana(() => G.T.state === 'lobby' && G.players.size === 1)); await shot('1-lobi');
+    ok('lobide aşama seçimi görünür', await olana(() => document.getElementById('asama').style.display === 'block')); await ev(() => { G.oyun.acik = 6; G.asamaSec(6); });
     await p.keyboard.press('Enter'); await bekle(2000); ok('geri sayım: kamyon bekliyor', await olana(() => G.T.state === 'run' && G.T.cd > 0 && G.T.v === 0));
     await bekle(3800); ok('kamyon yola çıktı', await olana(() => G.T.v > 6 && G.T.Z > 1), await ev(() => 'v=' + G.T.v.toFixed(1)));
     const sabit = () => ev(() => { const T = G.T; T.state = 'run'; T.why = ''; T.autoT = 9999; T.nextFlat = T.nFire = T.nBot = 999; T.fuel = 90; T.heat = 0; T.dmg = [0, 0, 0, 0]; T.flat = [0, 0, 0, 0]; G.PC.used = [1, 1, 1, 1, 1]; for (const c of G.CR) Object.assign(c, { lost: false, x: c.x0, z: c.z0, vx: 0, vz: 0 }); });
     await sabit(); await shot('2-yol');
     await ev(() => G.jolt(6, 0)); await bekle(1200); ok('sert sarsıntıda sandık düşer', await olana(() => G.CR.filter((c) => c.lost).length >= 1)); await sabit();
     await ev(() => { G.T.nFire = 0; }); await bekle(600); ok('yangın çıktı', await olana(() => G.FIRE.on)); await ev(() => { G.FIRE.hp = 0.1; G.EX.holder = 'ben'; G.EX.p = [G.FIRE.x, 1.8, G.FIRE.z]; G.players.get('ben').inp.g = 1; });
-    await ev(() => { G.T.nBot = 0; }); await bekle(1500); ok('haydut geldi', await olana(() => !!G.BOT));
+    await ev(() => { G.FIRE.on = false; G.T.nFire = 999; G.T.nBot = 0; }); await bekle(1500); ok('haydut geldi', await olana(() => !!G.BOT));
     await ev(() => { const me = G.players.get('ben'); for (let i = 0; i < 3; i++) G.hitPlayer(me, G.BOT, 1, 0); }); await bekle(2500); ok('üç şaplakta haydut gitti', await olana(() => !G.BOT)); await sabit();
     await ev(() => { G.T.heat = 99.9; }); await bekle(800); ok('hararetten motor stop etti', await olana(() => G.T.stall)); await sabit(); await ev(() => { G.T.stall = false; });
     await ev(() => { const T = G.T; G.PC.used = []; T.Z = 480; T.X = G.cx(480); T.th = Math.atan2(G.cx(481) - G.cx(479), 2); T.phi = 0; T.v = 16; }); for (let i = 0; i < 30 && !(await ev(() => G.PC.st === 2)); i++) await bekle(500); ok('hız sınırı aşıldı: polis kovalıyor', await olana(() => G.PC.st === 2), await ev(() => 'st=' + G.PC.st)); await shot('3-polis');
