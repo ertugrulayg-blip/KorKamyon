@@ -66,33 +66,110 @@ export function trucker(ci, name) {
   const eller = [];
   ps.arms.forEach((A, i) => { const s = i ? -1 : 1, e = [A[0][0], A[0][1] + Y, A[0][2]], hnd = [A[1][0], A[1][1] + Y, A[1][2]]; add(b, SG, leather, s * 0.42, 1.68 + Y, 0, 0.15); seg(b, leather, [s * 0.44, 1.66 + Y, 0], e, 0.115); seg(b, leather, e, hnd, 0.1); eller.push(add(b, SG, sk, hnd[0], hnd[1], hnd[2] + 0.02, 0.085)); });
   const h = new THREE.Group(); h.position.set(0, 2.05 + Y, 0.02); b.add(h); add(h, SG, sk, 0, 0, 0, 0.21, 0.235, 0.21); faceParts(h, k, sk, col, hr);
-  add(g, CG, M(0xe9a824, { transparent: true, opacity: 0.85 }), ps.mug[0], 1.25, ps.mug[1], 0.07, 0.18, 0.07); add(g, CG, M(0xffffff), ps.mug[0], 1.355, ps.mug[1], 0.072, 0.035, 0.072);
+  const kupa = new THREE.Group(); kupa.position.set(ps.mug[0], 1.25, ps.mug[1]); g.add(kupa); add(kupa, CG, M(0xe9a824, { transparent: true, opacity: 0.85 }), 0, 0, 0, 0.07, 0.18, 0.07); add(kupa, CG, M(0xffffff), 0, 0.105, 0, 0.072, 0.035, 0.072);
   const ns = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false, fog: false, map: tex(256, 64, (c, w, hh) => { c.font = '900 34px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#000'; c.strokeText(name, w / 2, hh / 2); c.fillStyle = '#' + COL[k].toString(16).padStart(6, '0'); c.fillText(name, w / 2, hh / 2); }) })); ns.position.set(0, 2.62, 0); ns.scale.set(1.3, 0.325, 1); g.add(ns);
   let ball = null; if (ps.ball) { const A = ps.arms[0][1]; ball = new THREE.Group(); ball.userData.y0 = A[1] + Y + 0.125; ball.position.set(A[0], ball.userData.y0, A[2] + 0.02); b.add(ball); add(ball, SG, M(0xf4efe2), 0, 0, 0, 0.045); for (const r of [0.6, -0.6]) add(ball, new THREE.TorusGeometry(0.04, 0.004, 4, 16), M(0xc0392b), 0, 0, 0).rotation.set(r, r, 0); } // beyzbol topu
-  g.rotation.y = ps.ry; g.userData = { h, belly, k, ps, ball, eller };
+  g.rotation.y = ps.ry; g.userData = { ns, h, belly, k, ps, ball, eller, kupa, kupa0: kupa.position.clone() };
   // iskeletli model: yüklenince eski kutu gövde gizlenir (top, kupa, tabure ve isim kalır)
   makeRig(ci, g).then((r) => { if (!r) return; for (const m of bacak) m.visible = false; for (const c of b.children) if (c !== ball) c.visible = false; g.userData.rig = r; g.userData.b = b; });
   return g;
 }
 export const truckers = new Map(); export let barT = 0;
-// barda oturan iskeletli karakter: kalça taburede, eller eski pozun el noktalarında, bacaklar taburede sarkar
-const BK = new THREE.Vector3(), BQ = new THREE.Quaternion(), BH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() };
-function barRig(u, g) {
-  const b = u.b; b.updateWorldMatrix(true, false);
-  BK.set(0, 0.06, 0); b.localToWorld(BK); b.getWorldQuaternion(BQ);
+// ---------- barda iskeletli karakterler: kemiklerle hareket ----------
+// Kalça taburede, bacaklar sarkar. Üstüne zamanla değişen katmanlar: nefes, etrafa bakma, top atıp tutma (bilekle),
+// biradan yudum alma (kupayı ağzına götürür, başını geriye atar), kollar bağlıyken arada bir gülme.
+const BK = new THREE.Vector3(), BQ = new THREE.Quaternion(), BH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }, AG = new THREE.Vector3(), ON = new THREE.Vector3(), EK = { egil: 0, basEg: 0, bilek: [0, 0] };
+const yumusak = (x) => x * x * (3 - 2 * x), aralik = (x, a, b) => yumusak(Math.min(1, Math.max(0, (x - a) / (b - a))));
+// top: döngü 2,5 sn; u<0.72 havada. El atışta yukarı fırlar (bilek bükülür), inişte topu karşılayıp yumuşatır.
+export function topEli(t) {
+  const u = (t * 0.4) % 1;
+  const atis = u < 0.06 ? Math.sin((u / 0.06) * Math.PI) : 0; // ani yukarı itiş
+  const karsila = u > 0.6 && u < 0.9 ? Math.sin(((u - 0.6) / 0.3) * Math.PI) : 0; // inen topa doğru kalkıp birlikte çöker
+  return { dy: atis * 0.1 + karsila * 0.05 - (u > 0.72 && u < 0.85 ? (0.85 - u) * 0.5 : 0), bilek: -atis * 0.9 + karsila * 0.35, u };
+}
+// Mavi (ince uzun) oturmaz: taburenin yanında, sırtını tezgâha yaslamış, kollar göğsünde bağlı, salona bakar.
+// oturanların bacakları: [uyluk, baldır] oranları (sol, sağ) — biraz farklı olsun ki cansız durmasın
+const OTUR = [[[0.95, 0.9], [1.0, 0.6]], null, [[0.95, 0.95], [0.9, 0.8]], [[0.95, 0.9], [0.95, 0.92]]];
+const AQ = new THREE.Quaternion(), AY = new THREE.Vector3(0, 1, 0), AX = new THREE.Vector3(1, 0, 0), AT = new THREE.Vector3();
+function ayakta(u, g, t) {
+  const r = u.rig, gx = g.position.x + 0.62, hy = r.hipY - 0.04;
+  AQ.setFromAxisAngle(AY, Math.PI + 0.35 + Math.sin(t * 0.21) * 0.06).multiply(BQ.setFromAxisAngle(AX, -0.12)); // salona dönük, hafif geriye yaslı
+  BK.set(gx, hy, -0.2);
+  const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(AQ).add(BK); // gövdeye göre konum → dünya
+  const nefes = Math.sin(t * 1.5) * 0.012;
+  BH.lf.set(gx + 0.1, 0.13, -0.5); BH.rf.set(gx - 0.18, 0.13, -0.42);
+  EK.egil = nefes; EK.basEg = 0.05 + Math.sin(t * 0.33) * 0.06; EK.bilek[0] = EK.bilek[1] = 0; EK.kolBagla = nefes || true; // kollar çapraz: her el öbür dirseğe
+  poseRig(r, BK, AQ, BH, u.h.rotation.y * 0.7 - 0.2, EK); EK.kolBagla = false;
+  u.ns.position.copy(g.worldToLocal(AT.set(gx, 2.55, -0.2))); // isim kendi başının üstünde
+}
+function barRig(u, g, t) {
+  if (u.k === 1) return ayakta(u, g, t);
+  const b = u.b, ps = u.ps, k = u.k; b.updateWorldMatrix(true, false);
+  // kalça: uyluklar minderin (üstü 0,82) hemen üstünde kalacak yükseklikte
+  BK.set(0, 0.04 + u.rig.kalcaBacak, 0); b.localToWorld(BK); b.getWorldQuaternion(BQ);
   u.eller[0].getWorldPosition(BH.lh); u.eller[1].getWorldPosition(BH.rh);
-  u.ps.legs.forEach((L, i) => { const s = i ? -1 : 1, yerde = L[1][1] < 0.2; (i ? BH.rf : BH.lf).set(...(yerde ? L[1] : [s * 0.2, 0.6, 0.3])); g.localToWorld(i ? BH.rf : BH.lf); });
-  poseRig(u.rig, BK, BQ, BH, u.h.rotation.y);
+  EK.otur = OTUR[k];
+  if (k === 2) { // sarı: tam yan dönük oturur; sağ dirseği tezgâhta, sol eli dizinde, kupası sağ elinin yanında
+    BQ.setFromAxisAngle(AY, Math.PI / 2); const gx = BK.x;
+    BH.rh.set(gx + 0.12, 1.21, 0.3); BH.lh.set(gx + 0.3, 0.98, -0.18);
+    u.kupa0.copy(g.worldToLocal(AT.set(gx + 0.32, 1.25, 0.38)));
+  }
+  if (k === 3) { // yeşil (yaşlı usta): rahat kamyoncu oturuşu — alçak, dizler açık, ayaklar halkada, dirsekler dizlerde, öne eğik
+    BK.y -= 0.06; EK.otur = null; EK.dizDisa = true;
+    const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(BQ).add(BK);
+    yer(BH.lf, 0.3, -0.5, 0.22); yer(BH.rf, -0.3, -0.5, 0.22); BH.lf.y = BH.rf.y = 0.43; // ayaklar taburenin halkasında (0,33) duruyor
+    EK.elDiz = true; // eller dizlerin üstünde (rig.js diz kemiğine göre yerleştirir)
+  }
+  // nefes ve hafif sallanma
+  EK.egil = Math.sin(t * 1.6 + k) * 0.025 + Math.sin(t * 0.37 + k * 2) * 0.04 + (k === 3 ? 0.28 : 0); EK.basEg = Math.sin(t * 0.3 + k) * 0.08; EK.bilek[0] = EK.bilek[1] = 0;
+  let bas = k === 2 ? 0.55 + Math.sin(t * 0.45 + 1) * 0.35 : u.h.rotation.y; // sarı arada salona (kameraya) ters ters bakar
+  // top atma (sol el)
+  if (u.ball) { const e = topEli(t); BH.lh.y += e.dy; EK.bilek[0] = e.bilek; bas = bas * 0.4 + 0.25; EK.basEg = -0.25 * (1 - Math.abs(e.u * 2 - 0.7)); } // gözü topta
+  // bira: kupaya en yakın el uzanır, ağza götürür
+  const el = u.ball || k === 2 ? 1 : 0, eh = el ? BH.rh : BH.lh, d = (t + k * 3.1) % 9; u.kupa.position.copy(u.kupa0);
+  if (k !== 3 && d < 3.6) {
+    const uzan = aralik(d, 0, 0.6) * (1 - aralik(d, 3.0, 3.6)), kaldir = aralik(d, 0.6, 1.3) * (1 - aralik(d, 2.5, 3.0));
+    AG.copy(u.kupa0); g.localToWorld(AG); AG.y += 0.12; eh.lerp(AG, uzan); // önce kupayı kavrar
+    u.rig.B.Head.getWorldPosition(AG); AG.y -= 0.02; AG.add(ON.set(0, 0, 0.24).applyQuaternion(BQ)); eh.lerp(AG, kaldir); // sonra ağza
+    if (uzan > 0.5) { const yerel = g.worldToLocal(eh.clone()); yerel.y -= 0.03; yerel.z += 0.06; u.kupa.position.copy(yerel); u.kupa.rotation.x = -kaldir * 0.7; } else u.kupa.rotation.x = 0;
+    EK.basEg -= kaldir * 0.45; bas *= 1 - kaldir; EK.bilek[el] = -kaldir * 0.6;
+  } else u.kupa.rotation.x = 0;
+  // kollar bağlı olan (yeşil): arada bir kahkaha, omuzlar sarsılır
+  if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); BH.lh.y += s; BH.rh.y += s; } } // gülerken omuzları sarsılır
+  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false; EK.elDiz = false;
+}
+// ---------- barmen: haydut tezgâhın arkasında ----------
+// Tezgâhı bezle siler, sinsi sinsi etrafa bakar, arada ellerini ovuşturur. Oturan oyuncuların arasında görünecek yerde durur.
+const barmen = { g: new THREE.Group(), rig: null, x: 0 };
+bar.add(barmen.g); const bez = add(barmen.g, BG, M(0xe8e2d0), 0, 0, 0, 0.16, 0.03, 0.12);
+makeRig(0, barmen.g, 'haydut.glb').then((r) => { barmen.rig = r; });
+const MK = new THREE.Vector3(), MQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI), MH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }, MEK = { egil: 0, basEg: 0, bilek: [0, 0] };
+function drawBarmen(t, n) {
+  const r = barmen.rig; bez.visible = !!r; if (!r) return;
+  barmen.x += ((n % 2 ? 0.85 : 0) - barmen.x) * 0.03; const x = barmen.x, z = 1.38; // oyuncu sayısına göre taburelerin arasına geçer
+  const ovus = (t % 11) > 8.2, k = ovus ? Math.min(1, (t % 11) - 8.2) * Math.min(1, 11 - (t % 11)) * 2 : 0; // son 2,8 sn: eller ovuşturulur
+  MK.set(x, r.hipY, z);
+  // sağ el (barmenin sağı ekranda sağ, +x'in tersi) tezgâhı daire çizerek siler; sol el tezgâha dayanır
+  const a = t * 2.4;
+  MH.rh.set(x - 0.32 + Math.cos(a) * 0.17, 1.2, 0.72 + Math.sin(a) * 0.1);
+  MH.lh.set(x + 0.34, 1.2, 0.8);
+  if (k > 0) { const o = Math.sin(t * 14) * 0.04; MH.rh.lerp(MK.clone().set(x - 0.06, 1.38 + o, z - 0.32), k); MH.lh.lerp(MK.clone().set(x + 0.06, 1.38 - o, z - 0.32), k); }
+  MH.lf.set(x + 0.14, 0.13, z + 0.02); MH.rf.set(x - 0.14, 0.13, z + 0.02);
+  MEK.egil = 0.22 * (1 - k) + Math.sin(t * 1.4) * 0.02; MEK.basEg = -0.12 + Math.sin(t * 0.9) * 0.05 - k * 0.15; MEK.bilek[0] = 0; MEK.bilek[1] = Math.sin(a) * 0.3 * (1 - k);
+  // sinsi bakışlar: arada hızla sağa sola döner
+  const g = t % 5, bas = g < 0.5 ? 0.6 * Math.sin((g / 0.5) * Math.PI) : g > 2.5 && g < 3 ? -0.6 * Math.sin(((g - 2.5) / 0.5) * Math.PI) : Math.sin(t * 0.5) * 0.12;
+  poseRig(r, MK, MQ, MH, bas, MEK);
+  bez.position.set(MH.rh.x, 1.165, MH.rh.z); bez.rotation.y = a * 0.3; bez.visible = k < 0.5;
 }
 export function drawBar(V, dt) {
   barT += dt; const a = innerWidth / innerHeight; if (barCam.aspect !== a) { barCam.aspect = a; barCam.fov = a < 1 ? 70 : 50; barCam.updateProjectionMatrix(); }
   const d = clamp(3.7 / (Math.tan(barCam.fov * Math.PI / 360) * a), 4.7, 12); barCam.position.set(Math.sin(barT * 0.15) * 0.35, 1.75, -0.6 - d); barCam.lookAt(0, 1.25, -0.4);
-  const ids = new Set(), mid = (V.p.length - 1) / 2;
+  const ids = new Set(), mid = (V.p.length - 1) / 2; drawBarmen(barT, V.p.length);
   V.p.forEach((p, i) => { ids.add(p.id); let g = truckers.get(p.id); if (!g) { g = trucker(p.c, p.n); truckers.set(p.id, g); bar.add(g); }
     const u = g.userData; g.position.set((mid - i) * 1.7, 0, u.ps.z);
     u.h.rotation.y = u.ps.hy + Math.sin(barT * 0.45 + u.k * 2.1) * 0.22; u.h.rotation.x = 0.08 + Math.sin(barT * 0.3 + u.k) * 0.05; u.belly.scale.z = 0.33 * (1 + Math.sin(barT * 1.6 + u.k) * 0.05);
-    if (u.rig) barRig(u, g);
-    if (u.ball) { const t = Math.min(1, ((barT * 0.4) % 1) / 0.72); u.ball.position.y = u.ball.userData.y0 + 1.9 * t * (1 - t); u.ball.rotation.x = t * Math.PI * 2; } }); // topu yavaşça atıp tutar
+    if (u.rig) barRig(u, g, barT);
+    if (u.ball) { const t = Math.min(1, ((barT * 0.4) % 1) / 0.72); u.ball.position.y = u.ball.userData.y0 + 1.9 * t * (1 - t) + (u.rig ? topEli(barT).dy * (t >= 1 || t <= 0.02 ? 1 : 0) : 0); u.ball.rotation.x = t * Math.PI * 2; } }); // topu yavaşça atıp tutar
   for (const [id, g] of truckers) if (!ids.has(id)) { bar.remove(g); truckers.delete(id); }
   smoke.forEach((s, i) => { const u = (barT * 0.22 + i / smoke.length) % 1; s.position.set(0.145 + Math.sin(u * 6 + i) * 0.12 * u + u * 0.15, 1.26 + u * 1.7, 0.5 + Math.cos(u * 4 + i * 2) * 0.08 * u); const z = 0.06 + u * 0.55; s.scale.set(z, z, 1); s.material.opacity = 0.34 * (1 - u) * Math.min(1, u * 10); });
   dust.position.set(Math.sin(barT * 0.13) * 0.15, Math.sin(barT * 0.2) * 0.12, 0);

@@ -22,7 +22,7 @@ export const RAD = [0, 1.9, 2.95]; // radyatör kapağı: kabinde, koltukların 
 export let BOT = null; // haydut
 export const diff = () => 1.25 - 0.6 * clamp(T.Z / LEN, 0, 1); // yol ilerledikçe olaylar sıklaşır
 export const held = (c) => { for (const p of players.values()) if ((p.pin[0] && p.pin[0].b === c.b) || (p.pin[1] && p.pin[1].b === c.b)) return true; return false; };
-export const jolt = (vx, vz) => { for (const c of CR) if (!c.lost && !held(c)) { c.vx += vx; c.vz += vz; } };
+export const jolt = (vx, vz) => { for (const c of CR) if (!c.lost && !held(c)) { const k = 0.55 + Math.random() * 0.45; c.vx += vx * k; c.vz += vz * k; } }; // her sandık biraz farklı savrulur
 export const loseCrate = (c, m) => { c.lost = true; c.b.on = false; say(m); };
 export const chase = () => PC.st === 1 || PC.st === 2;
 export const run0 = () => T.state === 'run';
@@ -210,14 +210,15 @@ export function stepExtras(dt) {
     if (!run) FIRE.on = false; }
   else if (run) { T.nFire -= dt; if (T.nFire <= 0) { const f = FSPOT[(Math.random() * FSPOT.length) | 0]; Object.assign(FIRE, { on: true, x: f[0], z: f[1], hp: 100, t: 0 }); say('🔥 Kasada yangın! Sağ öndeki söndürücüyü TUT, ateşe götür'); } }
   // yük sandıkları
-  const mu = T.rain ? 1.4 : 2.2;
+  const mu = T.rain ? 2.0 : 2.8; // sürtünme: sandıklar ağır, kolay kaymaz
   for (const c of CR) { if (c.lost) continue;
     if (held(c) || !run) c.vx = c.vz = 0;
-    else { const ax = T.pax, az = T.paz, sp = Math.hypot(c.vx, c.vz); if (sp < 0.05 && Math.hypot(ax, az) < mu) c.vx = c.vz = 0; else { c.vx += ax * dt; c.vz += az * dt; const s2 = Math.hypot(c.vx, c.vz), f = Math.min(s2, mu * 0.85 * dt); if (s2 > 0) { c.vx -= (c.vx / s2) * f; c.vz -= (c.vz / s2) * f; } } }
+    else { const ax = clamp(T.pax, -4.5, 4.5), az = clamp(T.paz, -4.5, 4.5), // ani sıçramalar yükü tümden savurmasın
+      sp = Math.hypot(c.vx, c.vz); if (sp < 0.05 && Math.hypot(ax, az) < mu) c.vx = c.vz = 0; else { c.vx += ax * dt; c.vz += az * dt; const s2 = Math.hypot(c.vx, c.vz), f = Math.min(s2, mu * 0.85 * dt); if (s2 > 0) { c.vx -= (c.vx / s2) * f; c.vz -= (c.vz / s2) * f; } } }
     c.x += c.vx * dt; c.z += c.vz * dt;
     for (const o of CR) if (o !== c && !o.lost && Math.abs(o.x - c.x) < 0.62 && Math.abs(o.z - c.z) < 0.62) { if (Math.abs(o.x - c.x) > Math.abs(o.z - c.z)) { c.x = o.x + Math.sign(c.x - o.x || 1) * 0.62; c.vx *= 0.3; } else { c.z = o.z + Math.sign(c.z - o.z || 1) * 0.62; c.vz *= 0.3; } }
     if (c.z < -4.8) { c.z = -4.8; c.vz = 0; } if (c.z > 0.55) { c.z = 0.55; c.vz = 0; }
-    if (Math.abs(c.x) > 1.05) { if (Math.abs(c.vx) > 1.5) loseCrate(c, '📦 Bir sandık yola düştü! Sandıkları TUT'); else { c.x = Math.sign(c.x) * 1.05; c.vx = 0; } }
+    if (Math.abs(c.x) > 1.05) { if (Math.abs(c.vx) > 2.6) loseCrate(c, '📦 Bir sandık yola düştü! Sandıkları TUT'); else { c.x = Math.sign(c.x) * 1.05; c.vx *= -0.25; } } // korkuluğa yavaş çarpan sandık geri seker
     c.b.o[0] = c.x; c.b.o[2] = c.z; c.b.on = !c.lost; }
   if (run && !CR.some((c) => !c.lost)) { T.state = 'over'; T.why = 'Bütün yük yola döküldü!'; }
   // haydut: kasaya atlar, sandıkları aşağı atar; şaplakla kovulur
@@ -286,7 +287,7 @@ export function stepTruck(dt) {
   { const c = cx(T.Z), e = T.X - c; T.hitCd -= dt; // yol kenarı bariyerleri: kamyon dışarı çıkamaz, çarptıkça hasar alır
     if (Math.abs(e) > BLIM) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
       T.X = c + sd * BLIM; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
-      if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; jolt(sd * 2.3, 0); say('GÜM! Bariyere çarptınız: ' + SPOT[w][3] + ' hasarlı'); for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }
+      if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say('GÜM! Bariyere çarptınız: ' + SPOT[w][3] + ' hasarlı'); for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }
   T.pax = -T.v * omt * 0.55 + (off ? Math.sin(T.t * 23) * 3 : 0); T.paz = -((T.v - ov) / dt) * 0.6;
   if (!run) return;
   T.fuel = Math.max(0, T.fuel - dt * (0.45 + gas * 0.75));

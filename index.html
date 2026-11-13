@@ -68,6 +68,24 @@
     #tumsek{font-size:24px;padding:10px 18px;top:21%;max-width:92vw;white-space:normal;text-align:center}
     #afis{font-size:20px;top:27%;left:2vw;right:46vw}#afis.orta{left:0;right:0;font-size:28px;top:33%}#afis div[style]{font-size:21px !important}
     #isaret{font-size:76px;top:40%}#isaret.sofor{font-size:120px}}
+  /* üst düğmeler, ayarlar ve tuş paneli */
+  #dugmeler{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:none;gap:8px;z-index:6}
+  #dugmeler b{pointer-events:auto;cursor:pointer;background:rgba(15,20,30,.62);border:2px solid rgba(255,255,255,.55);border-radius:12px;padding:5px 11px;font-size:15px;font-weight:800;text-shadow:none}
+  #dugmeler b:hover{background:rgba(216,67,47,.85)}
+  .panel{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:8;text-shadow:none}
+  .panel.kapali{display:none}
+  .panel .kart2{background:#141a26;border:2px solid #39445a;border-radius:18px;padding:18px 20px;width:min(94vw,560px);max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .panel h2{margin:0 0 10px;font-size:22px}.panel h3{margin:16px 0 6px;font-size:15px;color:#ffd23f;letter-spacing:.5px}
+  .panel .pkapat{margin-top:14px;width:100%;font-size:16px;font-weight:800;padding:10px;border-radius:10px;border:0;background:#d8432f;color:#fff;cursor:pointer}
+  .kay{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:14px}.kay span{width:120px}.kay input{flex:1;accent-color:#d8432f}.kay b{width:30px;text-align:right}
+  .oyuncu{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid #2a3245}.oyuncu .ad{font-weight:800;width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .oyuncu .kay{flex:1;margin:0}.oyuncu .kay span{width:auto}
+  .oyuncu .cikar{border:0;border-radius:8px;padding:6px 10px;background:#7a1f1f;color:#fff;font-weight:800;cursor:pointer}.oyuncu .cikar:disabled{opacity:.35;cursor:default}
+  .panel .not{font-size:12px;color:#9aa4b5;margin-top:6px}
+  .tus{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;font-size:14px}.tus div{display:flex;gap:8px;align-items:baseline}
+  kbd{display:inline-block;min-width:16px;text-align:center;background:#f2f2ea;color:#141a26;border-radius:5px;padding:1px 6px;font:800 12px system-ui,Arial;box-shadow:0 2px 0 #9aa4b5}
+  .gorevler{font-size:13px;line-height:1.55;color:#d7dce6}.gorevler b{color:#fff}
+  @media (max-width:520px){.tus{grid-template-columns:1fr}}
 </style>
 <script src="lib/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
@@ -88,6 +106,44 @@
   <div id="isaret"></div>
   <div id="afis"></div>
 </div>
+<div id="dugmeler"><b id="tusBtn" title="Tuşlar (H)">⌨ Tuşlar</b><b id="ayarBtn" title="Ayarlar (O)">⚙ Ayarlar</b></div>
+<div id="ayar" class="panel kapali"><div class="kart2">
+  <h2>⚙ Ayarlar</h2>
+  <h3>SES</h3><div id="sesler"></div>
+  <h3>OYUNCULAR</h3><div id="oyuncular"></div>
+  <button class="pkapat">Kapat (Esc)</button>
+</div></div>
+<div id="tuslar" class="panel kapali"><div class="kart2">
+  <h2>⌨ Tuşlar</h2>
+  <h3>KASADA</h3><div class="tus">
+    <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> yürü</div><div><kbd>Boşluk</kbd> zıpla · tutunurken tırman</div>
+    <div><kbd>J</kbd> / sol tık: TUT</div><div><kbd>K</kbd> / sağ tık: ŞAPLAK</div>
+    <div><kbd>F</kbd> kullan (vana, yağ, su)</div><div><kbd>E</kbd> koltuğa otur / kalk</div>
+    <div><kbd>T</kbd> tanker çağır (yakıt %50 altı)</div>
+  </div>
+  <h3>ŞOFÖR</h3><div class="tus">
+    <div><kbd>A</kbd> <kbd>D</kbd> direksiyon</div><div><kbd>W</kbd> gaz · <kbd>S</kbd> fren</div>
+    <div><kbd>E</kbd> koltuktan kalk</div>
+  </div>
+  <h3>YOLCU</h3><div class="tus">
+    <div><kbd>A</kbd> <kbd>D</kbd> sola / sağa işaret</div><div><kbd>S</kbd> yavaşla işareti</div>
+    <div><kbd>W</kbd> silecek</div><div><kbd>T</kbd> tanker çağır</div>
+  </div>
+  <h3>GENEL</h3><div class="tus">
+    <div><kbd>Enter</kbd> oyunu başlat (oda sahibi)</div><div><kbd>M</kbd> mikrofon · <kbd>N</kbd> müzik</div>
+    <div><kbd>H</kbd> bu ekran</div><div><kbd>O</kbd> ayarlar · <kbd>Esc</kbd> kapat</div>
+  </div>
+  <h3>NE YAPILIR</h3><div class="gorevler">
+    🛞 <b>Lastik patlarsa:</b> arkadaki mavi kompresörden hortumu TUT, sarı işaretli lastiğin yanına götür.<br>
+    🔧 <b>Hasar:</b> sarı kutudan matkabı TUT, turuncu işarete götür.<br>
+    🔥 <b>Yangın:</b> sağ öndeki kırmızı söndürücüyü TUT, ateşe götür.<br>
+    ⛽ <b>Yakıt:</b> tanker gelince sarı hortumu depo ağzına bırak, tankerin üstündeki vanayı F ile aç.<br>
+    🌡 <b>Hararet:</b> kabinde koltukların arasındaki mavi kapağın yanında F'ye bas.<br>
+    🥷 <b>Haydut:</b> üç şaplakta kamyondan uçar. 🚓 <b>Polis:</b> arkadaki varilin yanında F ile yağ dök ya da üstüne atla.<br>
+    📦 <b>Yük:</b> sert virajda ve çarpmada sandıklar kayar; TUT ile tutulan sandık kaymaz. Koltukta 2 dakikadan fazla kalan fırlar.
+  </div>
+  <button class="pkapat">Kapat (Esc)</button>
+</div></div>
 <div id="dok" data-r="0">
   <div id="boy"><b data-z="-1">A−</b><b data-z="1">A+</b></div>
   <div id="pk" class="pan"><div id="halka">
@@ -106,6 +162,6 @@
     <b data-k="sl" class="ok">⬅<br>SOLA DÖN</b><b data-k="yv" class="ok">🐢<br>YAVAŞLA</b><b data-k="sr" class="ok">➡<br>SAĞA DÖN</b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=28"></script>
+<script type="module" src="src/main.js?v=30"></script>
 </body>
 </html>
