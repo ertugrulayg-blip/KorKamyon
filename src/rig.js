@@ -62,12 +62,14 @@ export async function makeRig(ci, parent, dosya = null) {
   root.updateMatrixWorld(true);
   const bind = new Map(KEMIK.map((k) => [k, B[k].quaternion.clone()]));
   // ayakların köke göre duruşu: IK sonrası ayak tabanını yere paralel tutmak için
-  const ayak = {}; for (const k of ['LeftFoot', 'RightFoot']) ayak[k] = B[k].getWorldQuaternion(new THREE.Quaternion());
+  const kokQ = root.getWorldQuaternion(new THREE.Quaternion()).invert(), ayak = {}; // kök, döndürülmüş bir grubun içinde olabilir: ayak duruşu köke göre saklanır
+  for (const k of ['LeftFoot', 'RightFoot']) ayak[k] = kokQ.clone().multiply(B[k].getWorldQuaternion(new THREE.Quaternion()));
   const w = (k) => B[k].getWorldPosition(new THREE.Vector3());
   const boy = (a, b) => w(a).distanceTo(w(b)), hips = w('Hips');
   return {
     root, B, bind, ayak,
-    hipY: hips.y, // modelin ayak tabanından kalça kemiğine yükseklik (ölçek 1)
+    hipY: hips.y - root.getWorldPosition(new THREE.Vector3()).y, // modelin ayak tabanından kalça kemiğine yükseklik (ölçek 1)
+    kalcaBacak: hips.y - w('LeftUpLeg').y, // kalça kemiği ile uyluk başı arası
     kol: [boy('LeftArm', 'LeftForeArm'), boy('LeftForeArm', 'LeftHand')],
     bacak: [boy('LeftUpLeg', 'LeftLeg'), boy('LeftLeg', 'LeftFoot')],
   };
@@ -106,6 +108,8 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   if (disa) kutup.addScaledVector(sol, -2);
   if (hedef.rh) ik(r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh, kutup, r.kol[0], r.kol[1]);
   kutup.copy(ileri);
+  // oturuş: uyluk yatay öne, baldır dik aşağı (ek.otur: [sol, sağ] için [uyluk, baldır] oranları)
+  if (ek && ek.otur) for (const [k, h, i] of [['LeftUpLeg', hedef.lf, 0], ['RightUpLeg', hedef.rf, 1]]) { const o = ek.otur[i]; r.B[k].getWorldPosition(h).addScaledVector(ileri, r.bacak[0] * o[0]).addScaledVector(yukari, -r.bacak[1] * o[1]); kutup.copy(ileri).addScaledVector(yukari, 0.3); }
   if (hedef.lf) ik(r.B.LeftUpLeg, r.B.LeftLeg, r.B.LeftFoot, hedef.lf, kutup, r.bacak[0], r.bacak[1]);
   if (hedef.rf) ik(r.B.RightUpLeg, r.B.RightLeg, r.B.RightFoot, hedef.rf, kutup, r.bacak[0], r.bacak[1]);
   // ayak tabanı yere paralel kalsın

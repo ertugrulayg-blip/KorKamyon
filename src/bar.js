@@ -88,6 +88,8 @@ export function topEli(t) {
   return { dy: atis * 0.1 + karsila * 0.05 - (u > 0.72 && u < 0.85 ? (0.85 - u) * 0.5 : 0), bilek: -atis * 0.9 + karsila * 0.35, u };
 }
 // Mavi (ince uzun) oturmaz: taburenin yanında, sırtını tezgâha yaslamış, kollar göğsünde bağlı, salona bakar.
+// oturanların bacakları: [uyluk, baldır] oranları (sol, sağ) — biraz farklı olsun ki cansız durmasın
+const OTUR = [[[0.95, 0.9], [1.0, 0.6]], null, [[0.95, 0.95], [0.9, 0.8]], [[0.95, 0.9], [0.95, 0.92]]];
 const AQ = new THREE.Quaternion(), AY = new THREE.Vector3(0, 1, 0), AX = new THREE.Vector3(1, 0, 0), AT = new THREE.Vector3();
 function ayakta(u, g, t) {
   const r = u.rig, gx = g.position.x + 0.62, hy = r.hipY - 0.04;
@@ -103,16 +105,22 @@ function ayakta(u, g, t) {
 function barRig(u, g, t) {
   if (u.k === 1) return ayakta(u, g, t);
   const b = u.b, ps = u.ps, k = u.k; b.updateWorldMatrix(true, false);
-  BK.set(0, 0.06, 0); b.localToWorld(BK); b.getWorldQuaternion(BQ);
+  // kalça: uyluklar minderin (üstü 0,82) hemen üstünde kalacak yükseklikte
+  BK.set(0, 0.04 + u.rig.kalcaBacak, 0); b.localToWorld(BK); b.getWorldQuaternion(BQ);
   u.eller[0].getWorldPosition(BH.lh); u.eller[1].getWorldPosition(BH.rh);
-  ps.legs.forEach((L, i) => { const s = i ? -1 : 1, yerde = L[1][1] < 0.2; (i ? BH.rf : BH.lf).set(...(yerde ? L[1] : [s * 0.2, 0.6, 0.3])); g.localToWorld(i ? BH.rf : BH.lf); });
+  EK.otur = OTUR[k];
+  if (k === 2) { // sarı: tam yan dönük oturur; sağ dirseği tezgâhta, sol eli dizinde, kupası sağ elinin yanında
+    BQ.setFromAxisAngle(AY, Math.PI / 2); const gx = BK.x;
+    BH.rh.set(gx + 0.12, 1.21, 0.3); BH.lh.set(gx + 0.3, 0.98, -0.18);
+    u.kupa0.copy(g.worldToLocal(AT.set(gx + 0.32, 1.25, 0.38)));
+  }
   // nefes ve hafif sallanma
   EK.egil = Math.sin(t * 1.6 + k) * 0.025 + Math.sin(t * 0.37 + k * 2) * 0.04; EK.basEg = Math.sin(t * 0.3 + k) * 0.08; EK.bilek[0] = EK.bilek[1] = 0;
-  let bas = u.h.rotation.y;
+  let bas = k === 2 ? 0.55 + Math.sin(t * 0.45 + 1) * 0.35 : u.h.rotation.y; // sarı arada salona (kameraya) ters ters bakar
   // top atma (sol el)
   if (u.ball) { const e = topEli(t); BH.lh.y += e.dy; EK.bilek[0] = e.bilek; bas = bas * 0.4 + 0.25; EK.basEg = -0.25 * (1 - Math.abs(e.u * 2 - 0.7)); } // gözü topta
   // bira: kupaya en yakın el uzanır, ağza götürür
-  const el = u.ball ? 1 : 0, eh = el ? BH.rh : BH.lh, d = (t + k * 3.1) % 9; u.kupa.position.copy(u.kupa0);
+  const el = u.ball || k === 2 ? 1 : 0, eh = el ? BH.rh : BH.lh, d = (t + k * 3.1) % 9; u.kupa.position.copy(u.kupa0);
   if (k !== 3 && d < 3.6) {
     const uzan = aralik(d, 0, 0.6) * (1 - aralik(d, 3.0, 3.6)), kaldir = aralik(d, 0.6, 1.3) * (1 - aralik(d, 2.5, 3.0));
     AG.copy(u.kupa0); g.localToWorld(AG); AG.y += 0.12; eh.lerp(AG, uzan); // önce kupayı kavrar
@@ -122,7 +130,7 @@ function barRig(u, g, t) {
   } else u.kupa.rotation.x = 0;
   // kollar bağlı olan (yeşil): arada bir kahkaha, omuzlar sarsılır
   if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); EK.kolBagla = s || true; } else EK.kolBagla = true; } // kollar göğüste bağlı; gülerken sarsılır
-  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false;
+  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null;
 }
 // ---------- barmen: haydut tezgâhın arkasında ----------
 // Tezgâhı bezle siler, sinsi sinsi etrafa bakar, arada ellerini ovuşturur. Oturan oyuncuların arasında görünecek yerde durur.
