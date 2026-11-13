@@ -78,7 +78,7 @@ export const truckers = new Map(); export let barT = 0;
 // ---------- barda iskeletli karakterler: kemiklerle hareket ----------
 // Kalça taburede, bacaklar sarkar. Üstüne zamanla değişen katmanlar: nefes, etrafa bakma, top atıp tutma (bilekle),
 // biradan yudum alma (kupayı ağzına götürür, başını geriye atar), kollar bağlıyken arada bir gülme.
-const BK = new THREE.Vector3(), BQ = new THREE.Quaternion(), BH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }, AG = new THREE.Vector3(), ON = new THREE.Vector3(), EK = { egil: 0, basEg: 0, bilek: [0, 0] };
+const BK = new THREE.Vector3(), BQ = new THREE.Quaternion(), BH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }, AG = new THREE.Vector3(), ON = new THREE.Vector3(), AQ2 = new THREE.Vector3(), EK = { egil: 0, basEg: 0, bilek: [0, 0] };
 const yumusak = (x) => x * x * (3 - 2 * x), aralik = (x, a, b) => yumusak(Math.min(1, Math.max(0, (x - a) / (b - a))));
 // top: döngü 2,5 sn; u<0.72 havada. El atışta yukarı fırlar (bilek bükülür), inişte topu karşılayıp yumuşatır.
 export function topEli(t) {
@@ -127,17 +127,28 @@ function barRig(u, g, t) {
   if (u.ball) { const e = topEli(t); BH.lh.y += e.dy; EK.bilek[0] = e.bilek; bas = bas * 0.4 + 0.25; EK.basEg = -0.25 * (1 - Math.abs(e.u * 2 - 0.7)); } // gözü topta
   // bira: kupaya en yakın el uzanır, ağza götürür
   const el = u.ball || k === 2 ? 1 : 0, eh = el ? BH.rh : BH.lh, d = (t + k * 3.1) % 9; u.kupa.position.copy(u.kupa0);
-  if (k !== 3 && d < 3.6) {
-    const uzan = aralik(d, 0, 0.6) * (1 - aralik(d, 3.0, 3.6)), kaldir = aralik(d, 0.6, 1.3) * (1 - aralik(d, 2.5, 3.0));
-    AG.copy(u.kupa0); g.localToWorld(AG); AG.y += 0.12; eh.lerp(AG, uzan); // önce kupayı kavrar
-    u.rig.B.Head.getWorldPosition(AG); AG.y -= 0.02; AG.add(ON.set(0, 0, 0.24).applyQuaternion(BQ)); eh.lerp(AG, kaldir); // sonra ağza
-    if (uzan > 0.5) { const yerel = g.worldToLocal(eh.clone()); yerel.y -= 0.03; yerel.z += 0.06; u.kupa.position.copy(yerel); u.kupa.rotation.x = -kaldir * 0.7; } else u.kupa.rotation.x = 0;
-    EK.basEg -= kaldir * 0.45; bas *= 1 - kaldir; EK.bilek[el] = -kaldir * 0.6;
-  } else u.kupa.rotation.x = 0;
+  let ic = null; u.kupa.rotation.set(0, 0, 0);
+  const elde = k === 0; // kırmızının sırtı tezgâhta: kupayı hep sağ elinde, dizinin üstünde tutar
+  if (elde) eh.set(-0.24, -0.02, 0.3).applyQuaternion(BQ).add(BK);
+  if (k !== 3 && (d < 3.6 || elde)) {
+    const uzan = elde ? 1 : aralik(d, 0, 0.6) * (1 - aralik(d, 3.0, 3.6)), kaldir = d < 3.6 ? aralik(d, 0.6, 1.3) * (1 - aralik(d, 2.5, 3.0)) : 0;
+    const yan = ON.set(el ? -1 : 1, 0, 0).applyQuaternion(BQ), ileri = AQ2.set(0, 0, 1).applyQuaternion(BQ);
+    if (!elde) { AG.copy(u.kupa0); g.localToWorld(AG); AG.addScaledVector(yan, 0.06).y += 0.02; eh.lerp(AG, uzan); } // önce kupayı yanından kavrar
+    u.rig.B.Head.getWorldPosition(AG); AG.addScaledVector(ileri, 0.2).addScaledVector(yan, 0.09).y -= 0.08; eh.lerp(AG, kaldir); // sonra ağzın önüne, bilek yanda
+    EK.basEg -= kaldir * 0.4; bas *= 1 - kaldir; EK.kolDisa = true; ic = { el, uzan, kaldir };
+  }
   // kollar bağlı olan (yeşil): arada bir kahkaha, omuzlar sarsılır
   if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); BH.lh.y += s; BH.rh.y += s; } } // gülerken omuzları sarsılır
-  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false; EK.elDiz = false;
+  EK.avuc = u.ball ? [AVUC(), 0] : null; // topu tutan elin avucu yukarı baksın
+  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false; EK.elDiz = false; EK.kolDisa = false; EK.avuc = null;
+  // kupa elin içinde: bilekten parmaklara doğru biraz ileride; içerken ağzına doğru eğilir
+  if (ic && ic.uzan > 0.85) { const B = u.rig.B, h = ic.el ? B.RightHand : B.LeftHand, f = ic.el ? B.RightForeArm : B.LeftForeArm;
+    h.getWorldPosition(AG); f.getWorldPosition(AT); AT.subVectors(AG, AT).normalize(); AG.addScaledVector(AT, 0.07).y -= 0.03;
+    u.kupa.position.copy(g.worldToLocal(AG.clone())); u.kupa.rotation.x = -ic.kaldir * 0.9 * Math.cos(-u.ps.ry - (u.k === 2 ? Math.PI / 2 : 0)); u.kupa.rotation.z = ic.kaldir * 0.9 * Math.sin(-u.ps.ry - (u.k === 2 ? Math.PI / 2 : 0)); }
+  // top avuçta durur
+  if (u.ball) { const h = u.rig.B.LeftHand; h.getWorldPosition(AG); h.getWorldQuaternion(AQ); AT.set(0, 1, 0).applyQuaternion(AQ); u.avuc = (u.avuc || new THREE.Vector3()).copy(AG).addScaledVector(AT, 0.1); u.avuc.y += 0.06; } // avuç ortası: bilekten parmaklara doğru (kemik +y yönü)
 }
+const AVUC = () => -2.0; // sol ön kolu bu kadar çevirince avuç yukarı bakar (yakın çekimle bulundu)
 // ---------- barmen: haydut tezgâhın arkasında ----------
 // Tezgâhı bezle siler, sinsi sinsi etrafa bakar, arada ellerini ovuşturur. Oturan oyuncuların arasında görünecek yerde durur.
 const barmen = { g: new THREE.Group(), rig: null, x: 0 };
@@ -169,7 +180,9 @@ export function drawBar(V, dt) {
     const u = g.userData; g.position.set((mid - i) * 1.7, 0, u.ps.z);
     u.h.rotation.y = u.ps.hy + Math.sin(barT * 0.45 + u.k * 2.1) * 0.22; u.h.rotation.x = 0.08 + Math.sin(barT * 0.3 + u.k) * 0.05; u.belly.scale.z = 0.33 * (1 + Math.sin(barT * 1.6 + u.k) * 0.05);
     if (u.rig) barRig(u, g, barT);
-    if (u.ball) { const t = Math.min(1, ((barT * 0.4) % 1) / 0.72); u.ball.position.y = u.ball.userData.y0 + 1.9 * t * (1 - t) + (u.rig ? topEli(barT).dy * (t >= 1 || t <= 0.02 ? 1 : 0) : 0); u.ball.rotation.x = t * Math.PI * 2; } }); // topu yavaşça atıp tutar
+    if (u.ball) { const t = Math.min(1, ((barT * 0.4) % 1) / 0.72); u.ball.rotation.x = t * Math.PI * 2;
+      if (u.rig && u.avuc) { u.ball.position.copy(u.b.worldToLocal(u.avuc.clone())); u.ball.position.y += 1.9 * t * (1 - t); } // avuçtan kalkar, avuca iner
+      else u.ball.position.y = u.ball.userData.y0 + 1.9 * t * (1 - t); } }); // topu yavaşça atıp tutar
   for (const [id, g] of truckers) if (!ids.has(id)) { bar.remove(g); truckers.delete(id); }
   smoke.forEach((s, i) => { const u = (barT * 0.22 + i / smoke.length) % 1; s.position.set(0.145 + Math.sin(u * 6 + i) * 0.12 * u + u * 0.15, 1.26 + u * 1.7, 0.5 + Math.cos(u * 4 + i * 2) * 0.08 * u); const z = 0.06 + u * 0.55; s.scale.set(z, z, 1); s.material.opacity = 0.34 * (1 - u) * Math.min(1, u * 10); });
   dust.position.set(Math.sin(barT * 0.13) * 0.15, Math.sin(barT * 0.2) * 0.12, 0);

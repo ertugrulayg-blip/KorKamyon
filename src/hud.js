@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { net, ui } from './state.js';
 import { $, BUMP, BUMP_V, COL, GATE, HZ, LEN, LIMIT, POLZ, WHEEL, cx } from './world.js';
 import { SPOT } from './sim.js';
-import { BG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, cabG, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, v1, v2, valve, wheels, world } from './scene.js';
+import { BG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, cabG, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
 import { drawBar, limbV, playerMesh, pm, qY } from './bar.js';
@@ -54,14 +54,23 @@ export function draw(V, dt) {
     const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
     o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3])); o.s[2].rotation.y = o.s[3].rotation.y = p.y;
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
-    if (o.rig) { o.rig.root.visible = !p.d; if (!p.d) { RH.lh.set(P[9], P[10], P[11]); RH.rh.set(P[12], P[13], P[14]); RH.lf.set(P[15], P[16], P[17]); RH.rf.set(P[18], P[19], P[20]); poseRig(o.rig, B.position, B.quaternion, RH); } }
+    if (o.rig) { o.rig.root.visible = !p.d && !(p === me && camM === 's'); o.tag.visible = !(p === me && camM === 's'); if (!p.d) { RH.lh.set(P[9], P[10], P[11]); RH.rh.set(P[12], P[13], P[14]); RH.lf.set(P[15], P[16], P[17]); RH.rf.set(P[18], P[19], P[20]); poseRig(o.rig, B.position, B.quaternion, RH); } }
     for (let k = 0; k < 4; k++) { const sd = k % 2 ? -1 : 1; v1.set(sd * (k < 2 ? 0.38 : 0.15), k < 2 ? 0.62 : -0.04, 0).applyQuaternion(B.quaternion).add(B.position); v2.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3]); limbV(o.l[k], v1, v2, k < 2 ? 0.1 : 0.115); }
   }
   for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(id); delete RP[id]; }
   const seat = ui.camMode >= 0 ? ui.camMode : me ? me.s : 0;
   if (ch) { v1.set(0, 14, -25); v2.set(0, 1, -5.5); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
-  else { v1.set(0, 9.5, -10.5); v2.set(0, 1.5, -1); } // herkes yukarıdan bakar; şoförün ilerisi sisli, yolcunun ileri penceresi var
-  { const m = ch ? 'c' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
+  else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.62, 1.95); cabPt(v2, 0.7, 3.05, 14); } // şoför: boyu kısa, göz tablonun hizasında — gökyüzü ve ağaç tepeleri görünür, yol görünmez
+  else { v1.set(0, 9.5, -10.5); v2.set(0, 1.5, -1); } // diğerleri yukarıdan bakar; yolcunun ileri penceresi var
+  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
+  // koltuk fırlatma: koltuk yerinden fırlar, takla atar, birkaç saniye sonra yerine düşer
+  for (const s of [1, 2]) { const g = koltuk[s], u = g.userData, e = t.ej ? t.ej[s] : 0;
+    if (u.son === undefined) u.son = e; if (e !== u.son) { u.son = e; u.t = 0; }
+    if (u.t !== undefined) { u.t += dt; const a = u.t, ev = u.ev;
+      if (a < 2.2) { g.position.set(ev.x + a * 1.4 * Math.sign(ev.x), ev.y + 10 * a - 4.5 * a * a, ev.z - a * 2.6); g.rotation.set(-a * 6, a * 2.5, a * 3.5); g.visible = true; } // yaylanıp 5 m yükselir, takla atar
+      else if (a < 3.4) g.visible = false;
+      else if (a < 3.9) { const k = (a - 3.4) / 0.5; g.visible = true; g.position.set(ev.x, ev.y + 3 * (1 - k) * (1 - k), ev.z); g.rotation.set(0, (1 - k) * 2, 0); }
+      else { g.position.copy(ev); g.rotation.set(0, 0, 0); g.visible = true; delete u.t; } } } // yeni koltuk yukarıdan yerine düşer
   // darbe sarsıntısı ve teker tozu
   if (t.m !== fx.m) { fx.m = t.m; if (/GÜM|PAT!|vurdu|atladı/.test(t.m)) fx.shake = 0.55; }
   if (fx.shake > 0) { fx.shake = Math.max(0, fx.shake - dt * 1.6); cam.position.x += (Math.random() - 0.5) * fx.shake; cam.position.y += (Math.random() - 0.5) * fx.shake * 0.7; }
@@ -72,7 +81,7 @@ export function draw(V, dt) {
     while (fx.eg > 1) { fx.eg -= 1; const d = duman[fx.j++ % duman.length], b = BACA[fx.j & 1]; cabPt(d.position, b[0], b[1], b[2]); d.visible = true; d.userData.t = 0; d.userData.vz = -t.v * 0.35 - 0.3; }
     for (const d of duman) if (d.visible) { const u = (d.userData.t += dt) / 0.9; if (u >= 1) { d.visible = false; continue; } d.position.y += dt * 1.6; d.position.z += d.userData.vz * dt; d.scale.setScalar(0.12 + u * 0.4); d.material.opacity = 0.42 * (1 - u); }
     for (const d of dust) if (d.visible) { const u = (d.userData.t += dt) / d.userData.L; if (u >= 1) { d.visible = false; continue; } d.position.x += d.userData.vx * dt; d.position.y += dt * 1.1; d.position.z += d.userData.vz * dt; d.scale.setScalar((0.18 + u * 0.75) * d.userData.s); d.material.opacity = (d.userData.s < 1 ? 0.3 : 0.5) * (1 - u); } }
-  glass.visible = false; fogS.visible = seat === 1 && !ch && t.s === 'run'; fogS.position.z = 150 + (t.rn && !t.wp ? 5.8 : 7.6);
+  fogS.visible = false; glass.visible = camM === 's' && !!t.rn && !t.wp; // yağmurda şoförün camı buğulanır, silecek açar
   if (t.s === 'lobby') drawBar(V, dt); else ren.render(scene, cam);
   { const pip = seat === 2 && !ch && t.s === 'run', el = $('ileri'); if (pip) { const W = innerWidth, H = innerHeight, w = Math.round(Math.min(340, W * 0.34)), h = Math.round(w * 0.62), x = 12, y = TOUCH ? 150 : 175; fogS.visible = false;
       ren.setScissorTest(true); ren.setViewport(x, H - y - h, w, h); ren.setScissor(x, H - y - h, w, h); cam2.aspect = w / h; cam2.updateProjectionMatrix(); ren.render(scene, cam2); ren.setScissorTest(false); ren.setViewport(0, 0, W, H);
@@ -82,7 +91,7 @@ export function draw(V, dt) {
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
     el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = '⚠ TÜMSEK ' + Math.max(0, Math.round(d)) + ' m' + (hz ? ' — YAVAŞLA! (' + Math.round(BUMP_V * 3.6) + ' km/s altı)' : ' — hız uygun'); } }
   { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = ['', '⬅ SOLA', 'SAĞA ➡', '🐢 YAVAŞ'][sg || 0]; }
-  const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Sis içindesin: yalnız kamyonun burnunu görürsün, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>İlerisini sağdaki pencereden yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W silecek · E kalk · T tanker çağır' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su) · T tanker çağır';
+  const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>İlerisini sağdaki pencereden yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W silecek · Q korna · R çivi · E kalk · T tanker' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su) · T tanker çağır';
   let af = '';
   if (t.s === 'lobby') af += `<div>Oda kodu: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 oyuncu</div><div style="font-size:18px">${net.isHost ? 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat' : 'Oda sahibinin başlatması bekleniyor'}</div><div style="font-size:16px">Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!</div>`;
   if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>Yerlerinizi alın, kamyon kalkıyor!</div>`;

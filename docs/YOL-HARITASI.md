@@ -24,6 +24,10 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Ayarlar: müzik / efekt / oyuncu sesi, oyuncu başına ses, lobide oyuncu çıkarma; bilgisayarda tuş rehberi (H)
 - ✅ Yük dengesi: normal çarpmada sandık düşmez, yalnız hızlı sert çarpmada 0–3 sandık gider
 - ✅ Mavi karakter (Meshy)
+- ✅ Şoför görüşü: göz tablonun hizasında (gökyüzü ve ağaç tepeleri görünür, yol görünmez); yağmurda cam buğulanır
+- ✅ Koltuk 1 dakika; fırlayan koltuk yaylanıp uçar, yenisi yerine düşer
+- ✅ Yolcu: korna (haydudu irkiltir), çivi (kovalayan polise), silecek hatası düzeltildi
+- ✅ Bar: kupa elde, avuç yukarı top
 - ✅ Dört kamyoncu ve haydut (Meshy); haydut lobide barmen, mavi taburenin yanında ayakta, kolları bağlı — 🙋 Meshy'de üretmek; şu an hepsi aynı kamyoncunun boyanmış hali
 - ⬜ Haydut için ayrı model; sandık ve alet kutuları; bar sahnesinin cilası
 - ⬜ Kıvılcım, egzoz dumanı, fren izi, su/yağ sıçraması
