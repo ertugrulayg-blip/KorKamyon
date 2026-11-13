@@ -115,6 +115,15 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   if (hedef.lf) ik(r.B.LeftUpLeg, r.B.LeftLeg, r.B.LeftFoot, hedef.lf, kutup, r.bacak[0], r.bacak[1]);
   if (dizDisa) kutup.addScaledVector(sol, -2.2);
   if (hedef.rf) ik(r.B.RightUpLeg, r.B.RightLeg, r.B.RightFoot, hedef.rf, kutup, r.bacak[0], r.bacak[1]);
+  // ek.elDiz: eller dizlerin üstüne konur (bacaklar yerleştikten sonra diz kemiğine göre, kollar yeniden IK)
+  if (ek && ek.elDiz) {
+    kutup.copy(ileri).multiplyScalar(-0.3).addScaledVector(yukari, -0.6).addScaledVector(sol, 0.8);
+    r.B.LeftLeg.getWorldPosition(hedef.lh).addScaledVector(yukari, 0.09).addScaledVector(ileri, -0.03);
+    ik(r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh, kutup, r.kol[0], r.kol[1]);
+    kutup.addScaledVector(sol, -1.6);
+    r.B.RightLeg.getWorldPosition(hedef.rh).addScaledVector(yukari, 0.09).addScaledVector(ileri, -0.03);
+    ik(r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh, kutup, r.kol[0], r.kol[1]);
+  }
   // ayak tabanı yere paralel kalsın
   for (const k of ['LeftFoot', 'RightFoot']) { const f = r.B[k]; q2.copy(yon).multiply(r.ayak[k]); f.parent.getWorldQuaternion(q1); f.quaternion.copy(q1.invert().multiply(q2)); f.updateMatrixWorld(true); }
   if (bas) turn(r.B.Head, yukari, bas);

@@ -118,7 +118,7 @@ function barRig(u, g, t) {
     BK.y -= 0.06; EK.otur = null; EK.dizDisa = true;
     const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(BQ).add(BK);
     yer(BH.lf, 0.3, -0.5, 0.22); yer(BH.rf, -0.3, -0.5, 0.22); BH.lf.y = BH.rf.y = 0.43; // ayaklar taburenin halkasında (0,33) duruyor
-    yer(BH.lh, 0.22, 0.02, 0.36); yer(BH.rh, -0.2, 0.04, 0.38); // eller dizlerin üstünde sarkar
+    EK.elDiz = true; // eller dizlerin üstünde (rig.js diz kemiğine göre yerleştirir)
   }
   // nefes ve hafif sallanma
   EK.egil = Math.sin(t * 1.6 + k) * 0.025 + Math.sin(t * 0.37 + k * 2) * 0.04 + (k === 3 ? 0.28 : 0); EK.basEg = Math.sin(t * 0.3 + k) * 0.08; EK.bilek[0] = EK.bilek[1] = 0;
@@ -136,7 +136,7 @@ function barRig(u, g, t) {
   } else u.kupa.rotation.x = 0;
   // kollar bağlı olan (yeşil): arada bir kahkaha, omuzlar sarsılır
   if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); BH.lh.y += s; BH.rh.y += s; } } // gülerken omuzları sarsılır
-  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false;
+  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false; EK.elDiz = false;
 }
 // ---------- barmen: haydut tezgâhın arkasında ----------
 // Tezgâhı bezle siler, sinsi sinsi etrafa bakar, arada ellerini ovuşturur. Oturan oyuncuların arasında görünecek yerde durur.
