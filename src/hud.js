@@ -82,7 +82,7 @@ export function draw(V, dt) {
     while (fx.eg > 1) { fx.eg -= 1; const d = duman[fx.j++ % duman.length], b = BACA[fx.j & 1]; cabPt(d.position, b[0], b[1], b[2]); d.visible = true; d.userData.t = 0; d.userData.vz = -t.v * 0.35 - 0.3; }
     for (const d of duman) if (d.visible) { const u = (d.userData.t += dt) / 0.9; if (u >= 1) { d.visible = false; continue; } d.position.y += dt * 1.6; d.position.z += d.userData.vz * dt; d.scale.setScalar(0.12 + u * 0.4); d.material.opacity = 0.42 * (1 - u); }
     for (const d of dust) if (d.visible) { const u = (d.userData.t += dt) / d.userData.L; if (u >= 1) { d.visible = false; continue; } d.position.x += d.userData.vx * dt; d.position.y += dt * 1.1; d.position.z += d.userData.vz * dt; d.scale.setScalar((0.18 + u * 0.75) * d.userData.s); d.material.opacity = (d.userData.s < 1 ? 0.3 : 0.5) * (1 - u); } }
-  fogS.visible = false; glass.visible = camM === 's' && !!t.rn && !t.wp; // yağmurda şoförün camı buğulanır, silecek açar
+  fogS.visible = false; glass.visible = camM === 's' && !!t.rn; // yağmurda şoförün camı buğulanır
   if (t.s === 'lobby') drawBar(V, dt); else ren.render(scene, cam);
   { const pip = false, el = $('ileri'); if (pip) { const W = innerWidth, H = innerHeight, w = Math.round(Math.min(340, W * 0.34)), h = Math.round(w * 0.62), x = 12, y = TOUCH ? 150 : 175; fogS.visible = false;
       ren.setScissorTest(true); ren.setViewport(x, H - y - h, w, h); ren.setScissor(x, H - y - h, w, h); cam2.aspect = w / h; cam2.updateProjectionMatrix(); ren.render(scene, cam2); ren.setScissorTest(false); ren.setViewport(0, 0, W, H);
@@ -92,7 +92,7 @@ export function draw(V, dt) {
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
     el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = '⚠ TÜMSEK ' + Math.max(0, Math.round(d)) + ' m' + (hz ? ' — YAVAŞLA! (' + Math.round(BUMP_V * 3.6) + ' km/s altı)' : ' — hız uygun'); } }
   { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = ['', '⬅ SOLA', 'SAĞA ➡', '🐢 YAVAŞ', '⏩ HIZLAN'][sg || 0]; }
-  const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · V silecek · Q korna · R çivi · E kalk · T tanker' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su)';
+  const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · T tanker çağır · E kalk' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su)';
   let af = '';
   if (t.s === 'lobby') af += `<div>Oda kodu: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 oyuncu</div><div style="font-size:18px">${net.isHost ? 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat' : 'Oda sahibinin başlatması bekleniyor'}</div><div style="font-size:16px">Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!</div>`;
   if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>Yerlerinizi alın, kamyon kalkıyor!</div>`;
@@ -106,7 +106,7 @@ export function draw(V, dt) {
     if (t.sl) gv += `<div class="k">🌡 Motor stop</div>`; else if (t.ht >= 70) gv += `<div>🌡 Hararet %${t.ht}</div>`;
     if (V.fr) gv += `<div class="k">🔥 Yangın</div>`;
     if (hy) gv += `<div class="k">🥷 Haydut</div>`;
-    if (t.rn) gv += `<div>🌧 ${seat === 2 ? 'Silecek' + (t.wp ? ' ✓' : TOUCH ? '' : ' (V)') : 'Yağmur'}</div>`;
+    if (t.rn) gv += `<div>🌧 Yağmur</div>`;
     if (t.f < 25) gv += `<div class="k">⛽ Yakıt az · yolcu tanker çağırsın</div>`;
     if (ks === 2) gv += `<div>⛽ ${V.n[3] ? (kv ? 'Doluyor' : 'Vanayı aç') : 'Hortumu tak'}${V.k[4] > 0 ? ' %' + Math.round(V.k[4] * 100) : ''}</div>`;
     t.fl.forEach((f, i) => { if (f) gv += `<div>🛞 ${cap(WHEEL[i][3])}</div>`; });

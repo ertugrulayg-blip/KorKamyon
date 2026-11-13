@@ -26,7 +26,7 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Mavi karakter (Meshy)
 - ✅ Şoför görüşü: göz tablonun hizasında (gökyüzü ve ağaç tepeleri görünür, yol görünmez); yağmurda cam buğulanır
 - ✅ Koltuk 30 saniye; fırlayan koltuk yaylanıp uçar, yenisi yerine düşer
-- ✅ Yolcu: korna (haydudu irkiltir), çivi (kovalayan polise), silecek hatası düzeltildi
+- ✅ Yolcu yalnız yön anlatır (sola, sağa, yavaşla, hızlan) ve tanker çağırır; korna, çivi ve silecek kaldırıldı
 - ✅ Yolcu kendi koltuğundan yolu görür (ileri penceresi kalktı); tankeri yalnız yolcu çağırır
 - ✅ Bar: kupa elde, avuç yukarı top
 - ✅ Dört kamyoncu ve haydut (Meshy); haydut lobide barmen, mavi taburenin yanında ayakta, kolları bağlı — 🙋 Meshy'de üretmek; şu an hepsi aynı kamyoncunun boyanmış hali
