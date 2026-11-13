@@ -69,14 +69,38 @@ export const valve = add(tanker, new THREE.TorusGeometry(0.22, 0.05, 8, 16), M(0
 export const nozzle = add(scene, CG, M(0xffd23f), 0, -5, 0, 0.08, 0.35, 0.08); export const hoseMat = M(0x222222);
 export const pivot = new THREE.Group(), world = new THREE.Group(); pivot.add(world); scene.add(pivot);
 { const zemin = add(world, new THREE.PlaneGeometry(900, LEN + 900), M(ZEMIN), 0, -0.05, LEN / 2); zemin.rotation.x = -Math.PI / 2; zemin.castShadow = false; }
+// Yol boyunca uzanan tekrar eden parçaları (çizgi, ray, direk) z'ye göre 200 m'lik dilimlere böler.
+// Her dilim ayrı bir InstancedMesh olur; three.js görüş alanı dışındaki dilimleri çizmez.
+class Dilimli {
+  constructor(geo, mat, { golge = false, boy = 200 } = {}) { this.geo = geo; this.mat = mat; this.golge = golge; this.boy = boy; this.dilim = new Map(); }
+  ekle(o) { // o: konumu, dönüşü ve ölçeği ayarlanmış Object3D
+    o.updateMatrix(); const k = Math.floor(o.position.z / this.boy);
+    if (!this.dilim.has(k)) this.dilim.set(k, []);
+    this.dilim.get(k).push(o.matrix.clone());
+  }
+  bitir(parent) {
+    for (const L of this.dilim.values()) {
+      const im = new THREE.InstancedMesh(this.geo, this.mat, L.length); L.forEach((m, i) => im.setMatrixAt(i, m));
+      im.castShadow = this.golge; im.receiveShadow = true; im.computeBoundingSphere(); parent.add(im);
+    }
+  }
+}
 { const pos = [], idx = []; let n = 0; for (let z = -80; z <= LEN + 120; z += 4, n++) { const c = cx(z); pos.push(c + 6.5, 0, z, c - 6.5, 0, z); if (n) { const a = n * 2; idx.push(a - 2, a, a - 1, a - 1, a, a + 1); } }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); const yol = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x4a4d55, side: THREE.DoubleSide })); yol.receiveShadow = true; world.add(yol);
   // banket (toprak şerit) ve kenar çizgileri
   const bp = [], bi = []; let k = 0; for (let z = -80; z <= LEN + 120; z += 4, k++) { const c = cx(z); bp.push(c + 8.2, -0.02, z, c - 8.2, -0.02, z); if (k) { const a = k * 2; bi.push(a - 2, a, a - 1, a - 1, a, a + 1); } }
   const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(bp, 3)); bg.setIndex(bi); bg.computeVertexNormals(); const banket = new THREE.Mesh(bg, new THREE.MeshLambertMaterial({ color: 0x9a8a66, side: THREE.DoubleSide })); banket.receiveShadow = true; world.add(banket);
-  const nk = Math.floor((LEN + 200) / 4), kenar = new THREE.InstancedMesh(BG, new THREE.MeshBasicMaterial({ color: 0xf2f2ea }), nk * 2), o = new THREE.Object3D();
-  for (let i = 0; i < nk; i++) for (let sd = 0; sd < 2; sd++) { const z = -80 + i * 4, x0 = cx(z), x1 = cx(z + 4); o.position.set((x0 + x1) / 2 + (sd ? -6.1 : 6.1), 0.02, z + 2); o.rotation.y = Math.atan2(x1 - x0, 4); o.scale.set(0.16, 0.02, Math.hypot(4, x1 - x0) + 0.03); o.updateMatrix(); kenar.setMatrixAt(i * 2 + sd, o.matrix); } world.add(kenar); }
-{ const cnt = Math.floor((LEN + 200) / 9), im = new THREE.InstancedMesh(BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), cnt), o = new THREE.Object3D(); for (let i = 0; i < cnt; i++) { const z = -80 + i * 9; o.position.set(cx(z), 0.02, z); o.scale.set(0.25, 0.02, 3.5); o.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); o.updateMatrix(); im.setMatrixAt(i, o.matrix); } world.add(im);
+  // kenar çizgileri
+  const kenar = new Dilimli(BG, new THREE.MeshBasicMaterial({ color: 0xf2f2ea })), o = new THREE.Object3D();
+  for (let z = -80; z < LEN + 120; z += 4) for (const sd of [-1, 1]) {
+    const x0 = cx(z), x1 = cx(z + 4);
+    o.position.set((x0 + x1) / 2 + sd * 6.1, 0.02, z + 2); o.rotation.set(0, Math.atan2(x1 - x0, 4), 0); o.scale.set(0.16, 0.02, Math.hypot(4, x1 - x0) + 0.03); kenar.ekle(o);
+  }
+  kenar.bitir(world); }
+{ // orta şerit çizgileri
+  const orta = new Dilimli(BG, new THREE.MeshBasicMaterial({ color: 0xffffff })), o = new THREE.Object3D();
+  for (let z = -80; z < LEN + 120; z += 9) { o.position.set(cx(z), 0.02, z); o.scale.set(0.25, 0.02, 3.5); o.rotation.set(0, Math.atan2(cx(z + 1) - cx(z), 1), 0); orta.ekle(o); }
+  orta.bitir(world);
 }
 // yol kenarı süsleri: bariyerle manzara karoları arasındaki şeride ağaç, kaya, çalı, çiçek (Nature Kit). Düşük kalitede yok.
 if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 1013904223) >>> 0; return t2 / 4294967296; }, N = KENNEY + 'nature/', yer = {};
@@ -93,11 +117,15 @@ if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 
       if (koy && sira === 0) for (let b = 0; b < 2; b++) spawn(C + BINA[(r * 5 + b * 2) % 5 | 0] + '.glb', world, x - sd * 3 + (b ? sd * 7 : 0), 0, z + (b ? 4 : -3.5), 7.5, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2));
       else if (sira === 0 || r < 0.6) spawn(KARO[(r * 97) % KARO.length | 0], world, x, 0.01, z, 1.62, ry + ((r * 4) | 0) * Math.PI / 2); } } }
 
-{ const n = Math.floor((LEN + 200) / 4), rail = new THREE.InstancedMesh(BG, M(0xc9ced6), n * 2), post = new THREE.InstancedMesh(BG, M(0x7d828c), n * 2), o = new THREE.Object3D(); // yol kenarı bariyerleri
-  for (let i = 0; i < n; i++) for (let sd = 0; sd < 2; sd++) { const z = -80 + i * 4, x0 = cx(z), x1 = cx(z + 4), off = sd ? -BARR : BARR; o.rotation.set(0, Math.atan2(x1 - x0, 4), 0);
-    o.position.set((x0 + x1) / 2 + off, 0.68, z + 2); o.scale.set(0.1, 0.34, Math.hypot(4, x1 - x0) + 0.05); o.updateMatrix(); rail.setMatrixAt(i * 2 + sd, o.matrix);
-    o.position.set(x0 + off + (sd ? -0.1 : 0.1), 0.42, z); o.scale.set(0.14, 0.84, 0.14); o.updateMatrix(); post.setMatrixAt(i * 2 + sd, o.matrix); }
-  rail.castShadow = post.castShadow = true; world.add(rail); world.add(post); }
+{ // yol kenarı bariyerleri: ray ve direkler
+  const ray = new Dilimli(BG, M(0xc9ced6), { golge: true }), direk = new Dilimli(BG, M(0x7d828c), { golge: true }), o = new THREE.Object3D();
+  for (let z = -80; z < LEN + 120; z += 4) for (const sd of [1, -1]) {
+    const x0 = cx(z), x1 = cx(z + 4), off = sd * BARR;
+    o.rotation.set(0, Math.atan2(x1 - x0, 4), 0);
+    o.position.set((x0 + x1) / 2 + off, 0.68, z + 2); o.scale.set(0.1, 0.34, Math.hypot(4, x1 - x0) + 0.05); ray.ekle(o);
+    o.position.set(x0 + off + sd * 0.1, 0.42, z); o.scale.set(0.14, 0.84, 0.14); direk.ekle(o);
+  }
+  ray.bitir(world); direk.bitir(world); }
 export const tex = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
 export const polPark = POLZ.map((z) => { const g = new THREE.Group(); g.position.set(cx(z) - BARR - 1.9, 0, z); g.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); mkPolice(g); world.add(g); // radar: bariyerin dışında bekleyen polis + hız levhası
   const zs = z - 75, xs = cx(zs) + BARR + 0.9; add(world, BG, M(0x888888), xs, 1.3, zs, 0.12, 2.6, 0.12); const lv = add(world, new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => { c.fillStyle = '#fff'; c.beginPath(); c.arc(64, 64, 58, 0, 7); c.fill(); c.lineWidth = 13; c.strokeStyle = '#d8232a'; c.stroke(); c.fillStyle = '#111'; c.font = '900 62px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('50', 64, 68); }) }), xs, 3.0, zs - 0.08); lv.rotation.y = Math.PI; return g; });
