@@ -86,35 +86,41 @@
   kbd{display:inline-block;min-width:16px;text-align:center;background:#f2f2ea;color:#141a26;border-radius:5px;padding:1px 6px;font:800 12px system-ui,Arial;box-shadow:0 2px 0 #9aa4b5}
   .gorevler{font-size:13px;line-height:1.55;color:#d7dce6}.gorevler b{color:#fff}
   @media (max-width:520px){.tus{grid-template-columns:1fr}}
+  /* dil */
+  html[lang="en"] .dil-tr, html:not([lang="en"]) .dil-en{display:none}
+  .dilsec{display:flex;gap:6px;justify-content:flex-end;margin:-8px -6px 6px 0}.dilsec b{cursor:pointer;font-size:12px;font-weight:800;padding:3px 8px;border-radius:8px;border:2px solid #ddd;color:#777}.dilsec b.secili{border-color:#d8432f;color:#d8432f}
+  .dilsec.ayar{justify-content:flex-start;margin:0}.dilsec.ayar b{font-size:14px;border-color:#39445a;color:#9aa4b5}.dilsec.ayar b.secili{border-color:#d8432f;color:#fff;background:#d8432f}
 </style>
 <script src="lib/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
 </head>
 <body>
 <div id="menu"><div class="kart">
+  <div class="dilsec"><b data-dil="tr">TR</b><b data-dil="en">EN</b></div>
   <h1>🚚 Road Hogs</h1>
-  <p>Şoför önünü göremez, yolcu tarif eder, kasadakiler yakıt ve lastikle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.</p>
-  <input id="ad" maxlength="12" placeholder="Adın">
-  <button id="kur">Oda kur</button>
-  <div class="sat"><input id="kod" maxlength="4" placeholder="KOD"><button id="katil" class="iki">Katıl</button></div>
+  <p data-t="menuAciklama"></p>
+  <input id="ad" maxlength="12" data-tp="adin">
+  <button id="kur" data-t="odaKur"></button>
+  <div class="sat"><input id="kod" maxlength="4" data-tp="kod"><button id="katil" class="iki" data-t="katil"></button></div>
   <div id="durum"></div>
 </div></div>
 <div id="hud">
   <div id="rol"></div>
   <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div><div id="gorev"></div></div>
-  <div id="tumsek"></div><div id="ileri">👀 İLERİSİ</div>
+  <div id="tumsek"></div><div id="ileri" data-t="ileri"></div>
   <div id="isaret"></div>
   <div id="afis"></div>
 </div>
-<div id="dugmeler"><b id="tusBtn" title="Tuşlar (H)">⌨ Tuşlar</b><b id="ayarBtn" title="Ayarlar (O)">⚙ Ayarlar</b></div>
+<div id="dugmeler"><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
 <div id="ayar" class="panel kapali"><div class="kart2">
-  <h2>⚙ Ayarlar</h2>
-  <h3>SES</h3><div id="sesler"></div>
-  <h3>OYUNCULAR</h3><div id="oyuncular"></div>
-  <button class="pkapat">Kapat (Esc)</button>
+  <h2 data-t="ayarlar"></h2>
+  <h3 data-t="dilBaslik"></h3><div class="dilsec ayar"><b data-dil="tr">Türkçe</b><b data-dil="en">English</b></div>
+  <h3 data-t="ses"></h3><div id="sesler"></div>
+  <h3 data-t="oyuncular"></h3><div id="oyuncular"></div>
+  <button class="pkapat" data-t="kapat"></button>
 </div></div>
 <div id="tuslar" class="panel kapali"><div class="kart2">
-  <h2>⌨ Tuşlar</h2>
+  <div class="dil-tr"><h2>⌨ Tuşlar</h2>
   <h3>KASADA</h3><div class="tus">
     <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> yürü</div><div><kbd>Boşluk</kbd> zıpla · tutunurken tırman</div>
     <div><kbd>J</kbd> / sol tık: TUT</div><div><kbd>K</kbd> / sağ tık: ŞAPLAK</div>
@@ -141,26 +147,54 @@
     🥷 <b>Haydut:</b> üç şaplakta kamyondan uçar. 🚓 <b>Polis:</b> arkadaki varilin yanında F ile yağ dök ya da üstüne atla.<br>
     📦 <b>Yük:</b> sert virajda ve çarpmada sandıklar kayar; TUT ile tutulan sandık kaymaz. Koltukta 30 saniyeden fazla kalan fırlar.
   </div>
-  <button class="pkapat">Kapat (Esc)</button>
+</div><div class="dil-en"><h2>⌨ Controls</h2>
+  <h3>IN THE BACK</h3><div class="tus">
+    <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk</div><div><kbd>Space</kbd> jump · climb while holding</div>
+    <div><kbd>J</kbd> / left click: GRAB</div><div><kbd>K</kbd> / right click: SLAP</div>
+    <div><kbd>F</kbd> use (valve, oil, water)</div><div><kbd>E</kbd> sit down / stand up</div>
+  </div>
+  <h3>DRIVER</h3><div class="tus">
+    <div><kbd>A</kbd> <kbd>D</kbd> steer</div><div><kbd>W</kbd> gas · <kbd>S</kbd> brake</div>
+    <div><kbd>E</kbd> leave the seat</div>
+  </div>
+  <h3>PASSENGER</h3><div class="tus">
+    <div><kbd>A</kbd> <kbd>D</kbd> left / right sign</div><div><kbd>S</kbd> slow down · <kbd>W</kbd> speed up sign</div>
+    <div><kbd>T</kbd> call the tanker (passenger only, fuel under 50%)</div>
+  </div>
+  <h3>GENERAL</h3><div class="tus">
+    <div><kbd>Enter</kbd> start the game (host)</div><div><kbd>M</kbd> microphone · <kbd>N</kbd> music</div>
+    <div><kbd>H</kbd> this screen</div><div><kbd>O</kbd> settings · <kbd>Esc</kbd> close</div>
+  </div>
+  <h3>WHAT TO DO</h3><div class="gorevler">
+    🛞 <b>Flat tyre:</b> GRAB the air hose from the blue compressor at the back and take it to the tyre with the yellow marker.<br>
+    🔧 <b>Damage:</b> GRAB the drill from the yellow box and take it to the orange marker.<br>
+    🔥 <b>Fire:</b> GRAB the red extinguisher at the front right and take it to the flames.<br>
+    ⛽ <b>Fuel:</b> when the tanker arrives, drop the yellow nozzle into the filler cap and open the valve on top of the tanker with F.<br>
+    🌡 <b>Overheating:</b> press F next to the blue cap between the seats in the cab.<br>
+    🥷 <b>Bandit:</b> three slaps send him flying. 🚓 <b>Police:</b> spill oil with F at the barrel at the back, or jump on their car.<br>
+    📦 <b>Cargo:</b> crates slide in hard turns and crashes; a crate you GRAB stays put. Anyone sitting longer than 30 seconds gets ejected.
+  </div>
+</div>
+  <button class="pkapat" data-t="kapat"></button>
 </div></div>
 <div id="dok" data-r="0">
   <div id="boy"><b data-z="-1">A−</b><b data-z="1">A+</b></div>
   <div id="pk" class="pan"><div id="halka">
-    <div id="joy"><i></i><span>HAREKET</span></div>
-    <b data-k="g" style="--a:150deg">TUT</b><b data-k="p" style="--a:195deg">ŞAPLAK</b><b data-k="j" style="--a:240deg">ZIPLA</b>
-    <b data-k="u" style="--a:300deg">KULLAN</b><b data-k="s" style="--a:345deg">OTUR</b>
+    <div id="joy"><i></i><span data-t="b_hareket"></span></div>
+    <b data-k="g" style="--a:150deg" data-t="b_tut"></b><b data-k="p" style="--a:195deg" data-t="b_saplak"></b><b data-k="j" style="--a:240deg" data-t="b_zipla"></b>
+    <b data-k="u" style="--a:300deg" data-t="b_kullan"></b><b data-k="s" style="--a:345deg" data-t="b_otur"></b>
   </div></div>
   <div id="ps" class="pan">
-    <b data-k="s" class="kucuk">KALK</b>
-    <b data-k="fr" class="pedal fren">FREN</b>
-    <div id="dir"><span>◀ DİREKSİYON ▶</span><i></i></div>
-    <b data-k="ga" class="pedal gaz">GAZ</b>
+    <b data-k="s" class="kucuk" data-t="b_kalk"></b>
+    <b data-k="fr" class="pedal fren" data-t="b_fren"></b>
+    <div id="dir"><span data-t="b_dir"></span><i></i></div>
+    <b data-k="ga" class="pedal gaz" data-t="b_gaz"></b>
   </div>
   <div id="py" class="pan">
-    <b data-k="s" class="kucuk">KALK</b><b data-k="c" class="kucuk">TANKER</b>
-    <b data-k="sl" class="ok">⬅<br>SOLA DÖN</b><b data-k="yv" class="ok">🐢<br>YAVAŞLA</b><b data-k="hz" class="ok">⏩<br>HIZLAN</b><b data-k="sr" class="ok">➡<br>SAĞA DÖN</b>
+    <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="c" class="kucuk" data-t="b_tanker"></b>
+    <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=36"></script>
+<script type="module" src="src/main.js?v=37"></script>
 </body>
 </html>

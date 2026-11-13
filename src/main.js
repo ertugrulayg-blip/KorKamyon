@@ -1,5 +1,6 @@
 // Giriş noktası: ağ (PeerJS), mikrofon, ana döngü.
 import { net, sesSeviye, ui } from './state.js';
+import { L, dilSec, sayfayiCevir } from './dil.js';
 import { $, BUMP, DBG, GATE, INLET, OBS, ODA, POLZ, RAIN, WHEEL, cx } from './world.js';
 import { AH, AIR, BLIM, BOT, CR, DH, DRL, EX, FIRE, NZ, OIL, PC, SPOT, T, TKS, eject, hitPlayer, jolt, mkPlayer, place, players, pourOil, simStep, snap, startGame } from './sim.js';
 import { cam, ren, scene } from './scene.js';
@@ -33,19 +34,20 @@ export function begin() { $('menu').style.display = 'none'; $('hud').style.displ
   addEventListener('blur', () => { for (const k in key) key[k] = 0; ui.mouseL = false; }); }
 export async function go(kod, host) {
   initSnd();
-  const name = ($('ad').value.trim() || 'Oyuncu').slice(0, 12); localStorage.setItem('kk-ad', name); if (!net.mic) { durum('Mikrofon izni isteniyor…'); await getMic(); } durum('Bağlanıyor…');
+  const name = ($('ad').value.trim() || L('oyuncu')).slice(0, 12); localStorage.setItem('kk-ad', name); if (!net.mic) { durum(L('mikIzin')); await getMic(); } durum(L('baglaniyor'));
   if (location.search.includes('tek')) { net.isHost = true; net.myId = 'ben'; net.odaKodu = 'TEK'; mkPlayer(net.myId, name); $('kod').value = ''; return begin(); } // ağsız tek kişilik deneme
   net.isHost = host; net.odaKodu = kod || Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPRSTUVYZ'[(Math.random() * 21) | 0]).join('');
   // ?yerel: ofis ağında 0.peerjs.com engelli; deneme için yerel sunucu (npx peer --port 9000 --path /kk)
   const PO = location.search.includes("yerel") ? { host: "localhost", port: 9000, path: "/kk", secure: false } : {};
   peer = net.isHost ? new Peer(ODA + net.odaKodu, PO) : new Peer(PO);
-  const zam = setTimeout(() => $('menu').style.display !== 'none' && durum('Bağlanılamadı. Wi-Fi yerine mobil veriyle (ya da tersi) tekrar dene.'), 12000);
+  const zam = setTimeout(() => $('menu').style.display !== 'none' && durum(L('baglanamadi')), 12000);
   // Aynı kodu yazan herkes aynı odada buluşur: oda yoksa kurulur, varsa katılınır.
-  peer.on('error', (e) => { if (e.type === 'peer-unavailable' && !net.isHost) { clearTimeout(zam); peer.destroy(); go(net.odaKodu, true); } else if (e.type === 'unavailable-id' && net.isHost) { clearTimeout(zam); peer.destroy(); go(net.odaKodu, false); } else durum('Bağlantı hatası: ' + e.type); });
+  peer.on('error', (e) => { if (e.type === 'peer-unavailable' && !net.isHost) { clearTimeout(zam); peer.destroy(); go(net.odaKodu, true); } else if (e.type === 'unavailable-id' && net.isHost) { clearTimeout(zam); peer.destroy(); go(net.odaKodu, false); } else durum(L('baglantiHata', e.type)); });
   peer.on('call', (c) => { c.answer(net.mic); c.on('stream', (s) => playAudio(c.peer, s)); });
   peer.on('open', (id) => { net.myId = id;
     if (net.isHost) { mkPlayer(id, name); peer.on('connection', (c) => { c.on('data', (d) => { if (d.t === 'hi') { if (yasakli.has(String(d.name).slice(0, 12))) { c.send({ t: 'kick' }); return setTimeout(() => c.close(), 300); } if (players.size >= 4) return c.send({ t: 'full' }); conns[c.peer] = c; mkPlayer(c.peer, String(d.name).slice(0, 12)); c.send({ t: 'w', peers: [net.myId, ...Object.keys(conns).filter((i) => i !== c.peer)] }); } else if (d.t === 'i') { const p = players.get(c.peer); if (p) p.inp = d; } }); c.on('close', () => { delete conns[c.peer]; const p = players.get(c.peer); if (p && NZ.holder === p.id) NZ.holder = null; players.delete(c.peer); }); }); begin(); }
-    else { hostConn = peer.connect(ODA + net.odaKodu, { serialization: 'json' }); hostConn.on('open', () => hostConn.send({ t: 'hi', name })); hostConn.on('data', (d) => { if (d.t === 's') V = d; else if (d.t === 'w') { d.peers.forEach(callPeer); begin(); } else if (d.t === 'full') durum('Oda dolu (4 kişi)'); else if (d.t === 'kick') { try { sessionStorage.setItem('kk-mesaj', 'Oda sahibi seni odadan çıkardı.'); } catch (e) {} location.reload(); } }); hostConn.on('close', () => { $('menu').style.display = 'flex'; durum('Oda sahibi ayrıldı'); }); } });
+    else { hostConn = peer.connect(ODA + net.odaKodu, { serialization: 'json' }); hostConn.on('open', () => hostConn.send({ t: 'hi', name })); hostConn.on('data', (d) => { if (d.t === 's') V = d; else if (d.t === 'w') { d.peers.forEach(callPeer); begin(); } else if (d.t === 'full') durum(L('odaDolu')); else if (d.t === 'kick') { try { sessionStorage.setItem('kk-mesaj', 'atildin'); } catch (e) {} location.reload(); } }); hostConn.on('close', () => { $('menu').style.display = 'flex'; durum(L('sahipAyrildi')); }); } });
 }
-$('ad').value = localStorage.getItem('kk-ad') || ''; try { const msj = sessionStorage.getItem('kk-mesaj'); if (msj) { durum(msj); sessionStorage.removeItem('kk-mesaj'); } } catch (e) {} $('kur').onclick = () => { const k = $('kod').value.trim().toUpperCase(); go(k.length === 4 ? k : '', true); }; $('katil').onclick = () => { const k = $('kod').value.trim().toUpperCase(); if (k.length === 4) go(k, false); else durum('4 harfli oda kodunu yaz'); };
+sayfayiCevir(); for (const b of document.querySelectorAll('[data-dil]')) b.onclick = () => dilSec(b.dataset.dil); // dil seçimi: menüde ve ayarlarda
+$('ad').value = localStorage.getItem('kk-ad') || ''; try { const msj = sessionStorage.getItem('kk-mesaj'); if (msj) { durum(L(msj)); sessionStorage.removeItem('kk-mesaj'); } } catch (e) {} $('kur').onclick = () => { const k = $('kod').value.trim().toUpperCase(); go(k.length === 4 ? k : '', true); }; $('katil').onclick = () => { const k = $('kod').value.trim().toUpperCase(); if (k.length === 4) go(k, false); else durum(L('kodYaz')); };
 if (DBG) window.G = { get barSahne() { return import('./bar.js'); }, kick, kamera: cam, ren, scene, cx, hitPlayer, CR, FIRE, EX, GATE, RAIN, jolt, get BOT() { return BOT; }, PC, OIL, POLZ, pourOil, eject, T, TKS, NZ, AH, AIR, DH, DRL, SPOT, BLIM, players, OBS, BUMP, key, cnt, startGame, mkPlayer, place, simStep, WHEEL, INLET, get V() { return V; }, set cam(v) { ui.camMode = v; } };

@@ -5,7 +5,7 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 
 ## Çalışma düzeni
 - Proje sahibi yalnızca fikir ve geri bildirim verir; kod, görsel, ses, paketleme ve belgeler asistanın işidir.
-- Sahibi Türkçe yazar; yanıtlar ve oyun içi metinler Türkçe.
+- Sahibi Türkçe yazar; yanıtlar Türkçe. Oyun Türkçe ve İngilizce (tarayıcı diline göre açılır, menüden ve ayarlardan değişir).
 - Değişiklikler dalda yapılır. `main`'e birleştirme (yayın) her seferinde sahibinin açık onayıyla olur.
 - `main`'e birleşince web sürümü GitHub Pages'te, PC sürümü Releases sayfasında (`.exe`) kendiliğinden güncellenir.
 - Ücretli model/ses gerekiyorsa sahibine "şunu satın al" denir; o alır.
@@ -26,11 +26,12 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/main.js` — PeerJS ağı, mikrofon, ana döngü. `src/state.js` — paylaşılan `net` ve `ui`.
 - `src/detail.js` — kamyon, dorse, tanker süslemeleri (yalnız görüntü; `Batch` ile tek ağda birleştirilir). hud.js yükler.
 - `src/rig.js` — iskeletli karakter (`assets/chars/trucker.glb`): kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
+- `src/dil.js` — Türkçe/İngilizce. Oyun mesajları oda sahibinden **kod** olarak gelir (`say('kod', param)`), her istemci `mesaj()` ile kendi dilinde gösterir. Ekran metinleri `L('anahtar')`; index.html'de `data-t` / `data-tp`, uzun bloklar `.dil-tr` / `.dil-en`. Yeni metin eklerken iki dile de yaz.
 - `src/panel.js` — ayarlar (ses seviyeleri, oyuncu listesi, oda sahibi için lobide çıkarma) ve tuş rehberi. Ses ayarları `ui.ses`, `localStorage kk-ses`.
 - Karakter dosyaları oyuncu rengine göre `rig.js` içindeki `KARAKTER` listesinde; olmayan renk kırmızı modelin boyanmış hali.
 - `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
 - `lib/` — three.js, GLTFLoader ve PeerJS kopyaları. `desktop/` — Electron sarmalayıcı.
-- Modüller sırayla bağımlıdır: world → sim → models → scene → detail → rig → bar → audio → input → hud → panel → main. Geri yönde import ekleme.
+- Modüller sırayla bağımlıdır: dil → world → sim → models → scene → detail → rig → bar → audio → input → hud → panel → main. Geri yönde import ekleme.
 - Grafik kalitesi `ui.kalite` (0/1/2, `?kalite=N`). Yazılım GL'de yüksek kalite ~4 kare/sn: testler `kalite=0` ile koşar, ekran görüntüsü için `kalite=2` kullan ve uzun bekle.
 - Dış siteler bu ortamdan kapalı; GitHub'daki açık depolar `git clone` ile alınabiliyor. kenney.nl robotları reddediyor (zorlama).
 

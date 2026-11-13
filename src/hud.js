@@ -1,5 +1,6 @@
 // Çizim döngüsü ve ekran yazıları: oda sahibinden gelen durumu (V) ekrana yansıtır.
 import * as THREE from 'three';
+import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
 import { $, BUMP, BUMP_V, COL, GATE, HZ, LEN, LIMIT, POLZ, WHEEL, cx } from './world.js';
 import { SPOT } from './sim.js';
@@ -29,6 +30,7 @@ function polDarbe(qs, qd, hp, dt) {
   while (pd.acc > 1) { pd.acc -= 1; const m = polDuman[pd.i++ % polDuman.length]; m.visible = true; m.userData.t = 0; m.position.set(pol.position.x + (Math.random() - 0.5) * 0.6, 1.3, pol.position.z + 1.5); m.material.color.setHex(hp < 35 ? 0x26272a : 0x6a6c70); }
   for (const m of polDuman) if (m.visible) { const u = (m.userData.t += dt) / 1.1; if (u >= 1) { m.visible = false; continue; } m.position.y += dt * 1.8; m.position.z -= dt * 6; m.scale.setScalar(0.2 + u * 0.7); m.material.opacity = 0.5 * (1 - u); }
 }
+const SARS = ['bariyer', 'kapaliSerit', 'engel', 'tumsekPat', 'lastikPat', 'polisVurdu', 'polisAtladi']; // ekranı sarsan olaylar
 const fx = { m: '', shake: 0, acc: 0, i: 0, eg: 0, j: 0 }, dust = Array.from({ length: 28 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xb9b2a6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; }); // darbe sarsıntısı, teker tozu
 export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 9.5, -10.5), camL = new THREE.Vector3(0, 1.5, -1); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
@@ -53,7 +55,7 @@ export function draw(V, dt) {
   SPOT.forEach((p, i) => { const d = t.dm[i], on = d > 0 && t.s === 'run', g = dmgTag[i]; dmgDent[i].visible = d > 0; dmgMark[i].visible = on; dmgMark[i].material.opacity = 0.55 + 0.4 * Math.sin(performance.now() / 150); g.sp.visible = on; if (!on) return; g.sp.material.opacity = 0.65 + 0.35 * Math.sin(performance.now() / 120);
     if (d !== g.v) { g.v = d; const x = g.c.getContext('2d'); x.clearRect(0, 0, 128, 64); x.font = '900 44px system-ui,Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 8; x.strokeStyle = '#000'; x.strokeText('-' + d, 64, 34); x.fillStyle = '#ff7a4a'; x.fillText('-' + d, 64, 34); g.tx.needsUpdate = true; } });
   hpTag.forEach((g, i) => { const on = !!t.fl[i] && t.s === 'run'; g.sp.visible = on; if (!on) return; const p = Math.floor(t.rp[i] * 100); g.sp.material.opacity = 0.65 + 0.35 * Math.sin(performance.now() / 120);
-    if (p !== g.v) { g.v = p; const x = g.c.getContext('2d'); x.clearRect(0, 0, 128, 64); x.font = '900 44px system-ui,Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 8; x.strokeStyle = '#000'; x.strokeText('%' + p, 64, 34); x.fillStyle = p < 35 ? '#ff5a5f' : p < 70 ? '#ffd23f' : '#7bd389'; x.fillText('%' + p, 64, 34); g.tx.needsUpdate = true; } });
+    if (p !== g.v) { g.v = p; const x = g.c.getContext('2d'); x.clearRect(0, 0, 128, 64); x.font = '900 44px system-ui,Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 8; x.strokeStyle = '#000'; x.strokeText(L('yuzde', p), 64, 34); x.fillStyle = p < 35 ? '#ff5a5f' : p < 70 ? '#ffd23f' : '#7bd389'; x.fillText(L('yuzde', p), 64, 34); g.tx.needsUpdate = true; } });
   swheel.rotation.z = -t.st * 2.2; pedG.position.z = 3.1 + t.g * 0.06; pedB.position.z = 3.1 + t.b * 0.06; needle.rotation.z = (t.f / 100 - 0.5) * -2.4;
   obsMesh.forEach((m, i) => (m.visible = !t.oh.includes(i)));
   const [ks, kx, kz, kv] = V.k; tanker.visible = ks > 0; tanker.position.set(kx, 0, kz); valve.rotation.z += kv ? dt * 4 : 0;
@@ -87,7 +89,7 @@ export function draw(V, dt) {
       else if (a < 3.9) { const k = (a - 3.4) / 0.5; g.visible = true; g.position.set(ev.x, ev.y + 3 * (1 - k) * (1 - k), ev.z); g.rotation.set(0, (1 - k) * 2, 0); }
       else { g.position.copy(ev); g.rotation.set(0, 0, 0); g.visible = true; delete u.t; } } } // yeni koltuk yukarıdan yerine düşer
   // darbe sarsıntısı ve teker tozu
-  if (t.m !== fx.m) { fx.m = t.m; if (/GÜM|PAT!|vurdu|atladı/.test(t.m)) fx.shake = 0.55; }
+  if (t.m !== fx.m) { fx.m = t.m; if (SARS.includes(mesajKod(t.m))) fx.shake = 0.55; }
   if (fx.shake > 0) { fx.shake = Math.max(0, fx.shake - dt * 1.6); cam.position.x += (Math.random() - 0.5) * fx.shake; cam.position.y += (Math.random() - 0.5) * fx.shake * 0.7; }
   { const run = t.s === 'run' && !t.cd, off = Math.abs(t.X - cx(t.Z)) > 6.3; fx.acc += run ? dt * t.v * (off ? 3.2 : 0.55) : 0;
     while (fx.acc > 1) { fx.acc -= 1; const d = dust[fx.i++ % dust.length], w = WHEEL[2 + (fx.i & 1)]; d.visible = true; d.userData.t = 0; d.userData.L = off ? 0.9 : 0.5; d.userData.s = off ? 1 : 0.45; d.position.set(w[0] * 0.97 + (Math.random() - 0.5) * 0.3, 0.15, w[2] - 0.5); d.userData.vx = (Math.random() - 0.5) * 1.2 + Math.sign(w[0]) * 0.5; d.userData.vz = -t.v * 0.55; d.material.color.setHex(off ? 0x8a7350 : 0xb9b2a6); }
@@ -104,28 +106,28 @@ export function draw(V, dt) {
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
-    el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = '⚠ TÜMSEK ' + Math.max(0, Math.round(d)) + ' m' + (hz ? ' — YAVAŞLA! (' + Math.round(BUMP_V * 3.6) + ' km/s altı)' : ' — hız uygun'); } }
-  { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = ['', '⬅ SOLA', 'SAĞA ➡', '🐢 YAVAŞ', '⏩ HIZLAN'][sg || 0]; }
-  const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · T tanker çağır · E kalk' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su)';
+    el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = L('tumsek', Math.max(0, Math.round(d)), hz, Math.round(BUMP_V * 3.6)); } }
+  { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = L('isaret')[sg || 0]; }
+  const rol = t.s === 'lobby' ? L('rolBar') : seat === 1 ? L('rolSofor') : seat === 2 ? L('rolYolcu') : L('rolKasa');
   let af = '';
-  if (t.s === 'lobby') af += `<div>Oda kodu: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 oyuncu</div><div style="font-size:18px">${net.isHost ? 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat' : 'Oda sahibinin başlatması bekleniyor'}</div><div style="font-size:16px">Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!</div>`;
-  if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>Yerlerinizi alın, kamyon kalkıyor!</div>`;
-  if (t.s === 'over' || t.s === 'win') af += `<div class="buyuk">${t.s === 'win' ? '🏁 BAŞARDINIZ!' : '💥 OYUN BİTTİ'}</div><div>${t.why}</div><div style="font-size:18px">${net.isHost ? 'ENTER: yeniden' : ''}</div>`;
-  if (t.m) af += `<div>${t.m}</div>`;
-  let gv = ''; const cap = (s) => s[0].toUpperCase() + s.slice(1), U = TOUCH ? 'KULLAN' : 'F'; // görev listesi: sağda, kısa satırlar
+  if (t.s === 'lobby') af += `<div>${L('odaKodu')}: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 ${L('kisi')}</div><div style="font-size:18px">${net.isHost ? L('baslatHost') : L('baslatBekle')}</div><div style="font-size:16px">${L('lobiIpucu')}</div>`;
+  if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>${L('geriSayim')}</div>`;
+  if (t.s === 'over' || t.s === 'win') af += `<div class="buyuk">${t.s === 'win' ? L('basardiniz') : L('oyunBitti')}</div><div>${mesaj(t.why)}</div><div style="font-size:18px">${net.isHost ? L('enterYeniden') : ''}</div>`;
+  if (t.m) af += `<div>${mesaj(t.m)}</div>`;
+  let gv = ''; // görev listesi: sağda, kısa satırlar
   if (t.s === 'run' && !t.cd) { const hy = V.p.some((p) => p.bt);
-    if (ch) gv += `<div class="k">🚓 Polis %${qhp}</div>`;
-    else if (seat !== 1) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) gv += `<div${t.v > LIMIT ? ' class="k"' : ''}>🚓 Radar ${Math.max(0, Math.round(d))} m</div>`; }
-    if (seat === 2 && !ch) { const g = GATE.find((g) => g.z > t.Z + 4 && g.z < t.Z + 230); if (g) gv += `<div>🚧 ${Math.round(g.z - t.Z)} m ${g.open > 0 ? '⬅ SOL' : 'SAĞ ➡'}</div>`; }
-    if (t.sl) gv += `<div class="k">🌡 Motor stop</div>`; else if (t.ht >= 70) gv += `<div>🌡 Hararet %${t.ht}</div>`;
-    if (V.fr) gv += `<div class="k">🔥 Yangın</div>`;
-    if (hy) gv += `<div class="k">🥷 Haydut</div>`;
-    if (t.rn) gv += `<div>🌧 Yağmur</div>`;
-    if (t.f < 25) gv += `<div class="k">⛽ Yakıt az · yolcu tanker çağırsın</div>`;
-    if (ks === 2) gv += `<div>⛽ ${V.n[3] ? (kv ? 'Doluyor' : 'Vanayı aç') : 'Hortumu tak'}${V.k[4] > 0 ? ' %' + Math.round(V.k[4] * 100) : ''}</div>`;
-    t.fl.forEach((f, i) => { if (f) gv += `<div>🛞 ${cap(WHEEL[i][3])}</div>`; });
-    t.dm.forEach((d, i) => { if (d) gv += `<div>🔧 ${cap(SPOT[i][3].replace(' yan', ''))} −${d}</div>`; }); }
-  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
-  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">⏱ Koltuk fırlatmasına ${(sl / 60) | 0}:${String(sl % 60).padStart(2, '0')}</span>` : '') + (net.micOk ? '<br>🎙 M: mikrofon aç/kapa' : '<br>🔇 mikrofon yok') + (TOUCH ? '' : '<br>🎵 N: müzik aç/kapa'); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧%${hp} 🌡%${t.ht} 📦${V.cr.filter((c) => c).length}/4<br>${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} km/s`; $('oda').textContent = 'Oda ' + net.odaKodu; }
+    if (ch) gv += `<div class="k">${L('g_polis', qhp)}</div>`;
+    else if (seat !== 1) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) gv += `<div${t.v > LIMIT ? ' class="k"' : ''}>${L('g_radar', Math.max(0, Math.round(d)))}</div>`; }
+    if (seat === 2 && !ch) { const g = GATE.find((g) => g.z > t.Z + 4 && g.z < t.Z + 230); if (g) gv += `<div>${L('g_ayrim', Math.round(g.z - t.Z), g.open > 0)}</div>`; }
+    if (t.sl) gv += `<div class="k">${L('g_motor')}</div>`; else if (t.ht >= 70) gv += `<div>${L('g_hararet', t.ht)}</div>`;
+    if (V.fr) gv += `<div class="k">${L('g_yangin')}</div>`;
+    if (hy) gv += `<div class="k">${L('g_haydut')}</div>`;
+    if (t.rn) gv += `<div>${L('g_yagmur')}</div>`;
+    if (t.f < 25) gv += `<div class="k">${L('g_yakit')}</div>`;
+    if (ks === 2) gv += `<div>⛽ ${V.n[3] ? (kv ? L('g_doluyor') : L('g_vana')) : L('g_hortum')}${V.k[4] > 0 ? ' ' + L('yuzde', Math.round(V.k[4] * 100)) : ''}</div>`;
+    t.fl.forEach((f, i) => { if (f) gv += `<div>${L('g_lastik', i)}</div>`; });
+    t.dm.forEach((d, i) => { if (d) gv += `<div>${L('g_hasar', i, d)}</div>`; }); }
+  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = DIL + rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
+  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">${L('koltukSure', ((sl / 60) | 0) + ':' + String(sl % 60).padStart(2, '0'))}</span>` : '') + '<br>' + (net.micOk ? L('mikVar') : L('mikYok')) + (TOUCH ? '' : '<br>' + L('muzikTus')); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧${L('yuzde', hp)} 🌡${L('yuzde', t.ht)} 📦${V.cr.filter((c) => c).length}/4<br>${Math.max(0, Math.round(LEN - t.Z))} m · ${Math.round(t.v * 3.6)} ${L('kmh')}`; $('oda').textContent = L('oda') + ' ' + net.odaKodu; }
 }
 export const fit = () => { ren.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 80 : 62; cam.updateProjectionMatrix(); }; addEventListener('resize', fit); fit();

@@ -26,7 +26,8 @@ export const jolt = (vx, vz) => { for (const c of CR) if (!c.lost && !held(c)) {
 export const loseCrate = (c, m) => { c.lost = true; c.b.on = false; say(m); };
 export const chase = () => PC.st === 1 || PC.st === 2;
 export const run0 = () => T.state === 'run';
-export const say = (m) => { T.msg = m; T.msgT = 3.5; };
+// Oyun mesajı: kod (ve isteğe bağlı parametre) olarak gönderilir; her oyuncu kendi dilinde görür (dil.js).
+export const say = (kod, a) => { T.msg = a === undefined ? kod : kod + '|' + a; T.msgT = 3.5; };
 
 export const R = [0.25, 0.3, 0.25, 0.13, 0.13, 0.15, 0.15]; // kalça, göğüs, kafa, sol el, sağ el, sol ayak, sağ ayak
 export const OFF = [[0, 0, 0], [0, 0.4, 0], [0, 0.76, 0], [0.35, 0.2, 0], [-0.35, 0.2, 0], [0.15, -0.5, 0], [-0.15, -0.5, 0]];
@@ -72,21 +73,21 @@ export function collide(P, i, r) {
 }
 export function dropNozzle() {
   NZ.holder = null;
-  if (TKS.st === 2 && Math.hypot(NZ.p[0] - INLET[0], NZ.p[1] - INLET[1], NZ.p[2] - INLET[2]) < 0.9) { NZ.dock = true; say('Hortum depoya takıldı! Vanayı aç'); }
+  if (TKS.st === 2 && Math.hypot(NZ.p[0] - INLET[0], NZ.p[1] - INLET[1], NZ.p[2] - INLET[2]) < 0.9) { NZ.dock = true; say('hortumTak'); }
 }
 export function unseat(q) { const s = SEAT[q.seat]; q.seat = 0; place(q, s[0], 2.1, 0.5); }
-export function eject(q) { const s = q.seat; T.ej[s]++; T.ejT[s] = 3.9; unseat(q); for (let i = 0; i < 21; i += 3) { q.P[i + 1] += 0.5; q.Q[i] = q.P[i]; q.Q[i + 1] = q.P[i + 1] - 0.13; q.Q[i + 2] = q.P[i + 2] + 0.045; } q.stun = 1.2; q.seatCd = 8; say(q.name + ' koltuktan fırladı! 🪑'); }
+export function eject(q) { const s = q.seat; T.ej[s]++; T.ejT[s] = 3.9; unseat(q); for (let i = 0; i < 21; i += 3) { q.P[i + 1] += 0.5; q.Q[i] = q.P[i]; q.Q[i + 1] = q.P[i + 1] - 0.13; q.Q[i + 2] = q.P[i + 2] + 0.045; } q.stun = 1.2; q.seatCd = 8; say('firladi', q.name); }
 export function pourOil(pl) { T.oilCd = 6; const z = -8.5; OIL.push([r2(T.X + z * Math.sin(T.th)), r2(T.Z + z * Math.cos(T.th))]); if (OIL.length > 5) OIL.shift();
-  if (PC.st === 2 && PC.slip <= 0) { PC.slip = 3; PC.hp -= 35; PC.ram = 4.5; say(pl.name + ' yola yağ döktü — polis kaydı! 🛢'); } else say(pl.name + ' yola yağ döktü 🛢'); }
+  if (PC.st === 2 && PC.slip <= 0) { PC.slip = 3; PC.hp -= 35; PC.ram = 4.5; say('yagKaydi', pl.name); } else say('yag', pl.name); }
 export function hitPlayer(a, q, fx, fz) {
   if (a.bot && q.seat) return;
-  if (q.bot) { q.hits++; for (let i = 0; i < 21; i += 3) { q.Q[i] -= fx * 0.055 * q.hits; q.Q[i + 1] -= 0.035 * q.hits; q.Q[i + 2] -= fz * 0.055 * q.hits; } q.stun = 1; q.stealT = 0; q.pin = [null, null]; if (q.hits >= 3 && !(q.outT > 0)) { for (let i = 0; i < 21; i += 3) { q.Q[i] -= fx * 0.2; q.Q[i + 1] -= 0.14; q.Q[i + 2] -= fz * 0.2; } q.outT = 1.3; say('🥷 Haydut kamyondan uçtu! 👋'); } return; } // her şaplakta daha uzağa savrulur
-  if (q.seat) { const was = q.seat; unseat(q); q.stun = 0.9; if (was === 1) { if (NZ.holder === a.id) dropNozzle(); a.seat = 1; a.seatT = 0; a.pin = [null, null]; say(a.name + ' direksiyona geçti!'); } return; }
+  if (q.bot) { q.hits++; for (let i = 0; i < 21; i += 3) { q.Q[i] -= fx * 0.055 * q.hits; q.Q[i + 1] -= 0.035 * q.hits; q.Q[i + 2] -= fz * 0.055 * q.hits; } q.stun = 1; q.stealT = 0; q.pin = [null, null]; if (q.hits >= 3 && !(q.outT > 0)) { for (let i = 0; i < 21; i += 3) { q.Q[i] -= fx * 0.2; q.Q[i + 1] -= 0.14; q.Q[i + 2] -= fz * 0.2; } q.outT = 1.3; say('haydutUctu'); } return; } // her şaplakta daha uzağa savrulur
+  if (q.seat) { const was = q.seat; unseat(q); q.stun = 0.9; if (was === 1) { if (NZ.holder === a.id) dropNozzle(); a.seat = 1; a.seatT = 0; a.pin = [null, null]; say('direksiyon', a.name); } return; }
   q.Q[6] -= fx * 0.22; q.Q[8] -= fz * 0.22; q.Q[7] -= 0.05; q.Q[3] -= fx * 0.1; q.Q[5] -= fz * 0.1; q.stun = 0.7; q.pin = [null, null]; if (NZ.holder === q.id) dropNozzle();
 }
 export function stepPlayer(pl, dt) {
   const P = pl.P, Q = pl.Q, I = pl.inp;
-  if (I.c !== undefined && I.c !== pl.lc) { pl.lc = I.c; if (T.state === 'run' && pl.seat !== 2) say('📻 Tankeri yalnız yolcu telsizle çağırabilir'); else if (T.state === 'run' && TKS.st === 0) { /* tanker: yalnız yolcu */ if (T.fuel >= 50) say('Depo yarıdan dolu: tanker gelmez (%50 altında çağır)'); else { TKS.st = 1; TKS.z = -50; TKS.x = 3.3; TKS.valve = 0; say(pl.name + ' tankeri çağırdı ☎'); } } }
+  if (I.c !== undefined && I.c !== pl.lc) { pl.lc = I.c; if (T.state === 'run' && pl.seat !== 2) say('tankerYolcu'); else if (T.state === 'run' && TKS.st === 0) { /* tanker: yalnız yolcu */ if (T.fuel >= 50) say('tankerDolu'); else { TKS.st = 1; TKS.z = -50; TKS.x = 3.3; TKS.valve = 0; say('tankerCagirdi', pl.name); } } }
   if (pl.dead > 0) { pl.dead -= dt; if (pl.dead <= 0) place(pl, rnd(-0.8, 0.8), 4, rnd(-4.5, -1.5)); return; }
   if (I.s !== undefined && I.s !== pl.ls) {
     pl.ls = I.s;
@@ -179,25 +180,25 @@ export function stepPlayer(pl, dt) {
   if (I.u && !st && T.state === 'run' && Math.hypot(P[3] - OILB[0], P[5] - OILB[2]) < 1.4) { pl.oilT += dt; if (pl.oilT > 0.8 && T.oilCd <= 0) { pl.oilT = 0; pourOil(pl); } } else pl.oilT = 0; // yağ varili
   if (I.u && !st) { fromCab(RAD[0], RAD[2]); if (Math.hypot(P[3] - tX, P[5] - tZ) < 1.3) { T.heat = Math.max(0, T.heat - dt * 30); T.coolT = 0.3; } }
   if (I.u && !st) {
-    if (TKS.st === 2 && Math.hypot(P[3] - TKS.x, P[4] - 2.3, P[5] - (TKS.z - 2)) < 1.4) { TKS.vp += dt / 1.2; if (TKS.vp >= 1) { TKS.vp = 0; TKS.valve = 25; say('Vana açıldı ⛽'); } }
+    if (TKS.st === 2 && Math.hypot(P[3] - TKS.x, P[4] - 2.3, P[5] - (TKS.z - 2)) < 1.4) { TKS.vp += dt / 1.2; if (TKS.vp >= 1) { TKS.vp = 0; TKS.valve = 25; say('vanaAcildi'); } }
   }
   pl.offT = P[1] < 0.7 ? pl.offT + dt : 0;
   // kasanın dışına taşmış ama düşmemiş (ayağı korkuluğa takılmış): tutunmuyorsa kısa sürede düşmüş sayılır ve kasaya geri gelir
   const disari = Math.abs(P[0]) > 1.62 || P[2] < -6.25 || P[2] > 5.6, tutunuyor = pl.pin[0] || pl.pin[1];
   pl.disT = disari && !tutunuyor && !pl.seat && !pl.onPol ? (pl.disT || 0) + dt : 0; if (pl.disT > 1.2) pl.offT = 99;
-  if (pl.offT > 2.5 || P[2] < -16 || P[2] > 14 || Math.abs(P[0]) > 12) { pl.dead = 2; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); if (T.state === 'run') say(pl.name + ' kamyondan düştü!'); }
+  if (pl.offT > 2.5 || P[2] < -16 || P[2] > 14 || Math.abs(P[0]) > 12) { pl.dead = 2; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); if (T.state === 'run') say('dustu', pl.name); }
 }
 export function stepAir(dt) {
   const h = AH.holder && players.get(AH.holder);
   if (AH.holder && (!h || h.dead > 0 || h.seat || h.stun > 0 || !h.inp.g)) AH.holder = null; // TUT bırakılınca hortum da bırakılır
-  if (AH.holder) { const i = 9 + AH.hand * 3; AH.p = [h.P[i], h.P[i + 1], h.P[i + 2]]; if (Math.hypot(AH.p[0] - AIR[0], AH.p[2] - AIR[2]) > 9.5) { AH.holder = null; say('Basınç hortumu elinden kurtuldu!'); } }
+  if (AH.holder) { const i = 9 + AH.hand * 3; AH.p = [h.P[i], h.P[i + 1], h.P[i + 2]]; if (Math.hypot(AH.p[0] - AIR[0], AH.p[2] - AIR[2]) > 9.5) { AH.holder = null; say('havaKurtuldu'); } }
   else for (let k = 0; k < 3; k++) AH.p[k] += (AIR[k] - AH.p[k]) * Math.min(1, dt * 5); // makaraya geri sarar
-  if (AH.holder && T.state === 'run') for (let w = 0; w < 4; w++) if (T.flat[w] && Math.hypot(AH.p[0] - WHEEL[w][0], AH.p[2] - WHEEL[w][2]) < 2.0) { T.rep[w] += dt / 5; if (T.rep[w] >= 1) { T.flat[w] = 0; T.rep[w] = 0; say(h.name + ' lastiği şişirdi 🛞'); } }
+  if (AH.holder && T.state === 'run') for (let w = 0; w < 4; w++) if (T.flat[w] && Math.hypot(AH.p[0] - WHEEL[w][0], AH.p[2] - WHEEL[w][2]) < 2.0) { T.rep[w] += dt / 5; if (T.rep[w] >= 1) { T.flat[w] = 0; T.rep[w] = 0; say('lastikSisirdi', h.name); } }
   const dh = DH.holder && players.get(DH.holder);
   if (DH.holder && (!dh || dh.dead > 0 || dh.seat || dh.stun > 0 || !dh.inp.g)) DH.holder = null;
-  if (DH.holder) { const i = 9 + DH.hand * 3; DH.p = [dh.P[i], dh.P[i + 1], dh.P[i + 2]]; if (Math.hypot(DH.p[0] - DRL[0], DH.p[2] - DRL[2]) > 9.5) { DH.holder = null; say('Matkap elinden kurtuldu!'); } }
+  if (DH.holder) { const i = 9 + DH.hand * 3; DH.p = [dh.P[i], dh.P[i + 1], dh.P[i + 2]]; if (Math.hypot(DH.p[0] - DRL[0], DH.p[2] - DRL[2]) > 9.5) { DH.holder = null; say('matkapKurtuldu'); } }
   else for (let k = 0; k < 3; k++) DH.p[k] += (DRL[k] - DH.p[k]) * Math.min(1, dt * 5); // kablo geri sarar
-  if (DH.holder && T.state === 'run') for (let w = 0; w < 4; w++) if (T.dmg[w] > 0 && Math.hypot(DH.p[0] - SPOT[w][0], DH.p[2] - SPOT[w][2]) < 1.5) { T.dmg[w] = Math.max(0, T.dmg[w] - dt * 7); if (!T.dmg[w]) say(dh.name + ' hasarı onardı 🔧'); }
+  if (DH.holder && T.state === 'run') for (let w = 0; w < 4; w++) if (T.dmg[w] > 0 && Math.hypot(DH.p[0] - SPOT[w][0], DH.p[2] - SPOT[w][2]) < 1.5) { T.dmg[w] = Math.max(0, T.dmg[w] - dt * 7); if (!T.dmg[w]) say('hasarOnardi', dh.name); }
 }
 export function stepExtras(dt) {
   const run = T.state === 'run' && !(T.cd > 0);
@@ -207,10 +208,10 @@ export function stepExtras(dt) {
   if (EX.holder) { const i = 9 + EX.hand * 3; EX.p = [eh.P[i], eh.P[i + 1], eh.P[i + 2]]; } else for (let k = 0; k < 3; k++) EX.p[k] += (EXT[k] - EX.p[k]) * Math.min(1, dt * 5);
   // yangın
   if (FIRE.on) { FIRE.t += dt; const w = (FIRE.x > 0 ? 0 : 1) + (FIRE.z < -2 ? 2 : 0); if (run) T.dmg[w] += dt * 1.3;
-    if (FIRE.t > 22) { FIRE.t = 8; const c = CR.filter((c) => !c.lost).sort((a, b) => Math.hypot(a.x - FIRE.x, a.z - FIRE.z) - Math.hypot(b.x - FIRE.x, b.z - FIRE.z))[0]; if (c && run) loseCrate(c, '🔥 Bir sandık yandı!'); }
-    if (EX.holder && Math.hypot(EX.p[0] - FIRE.x, EX.p[2] - FIRE.z) < 1.8) { FIRE.hp -= dt * 34; if (FIRE.hp <= 0) { FIRE.on = false; T.nFire = rnd(55, 85) * diff(); say(eh.name + ' yangını söndürdü 🧯'); } }
+    if (FIRE.t > 22) { FIRE.t = 8; const c = CR.filter((c) => !c.lost).sort((a, b) => Math.hypot(a.x - FIRE.x, a.z - FIRE.z) - Math.hypot(b.x - FIRE.x, b.z - FIRE.z))[0]; if (c && run) loseCrate(c, 'sandikYandi'); }
+    if (EX.holder && Math.hypot(EX.p[0] - FIRE.x, EX.p[2] - FIRE.z) < 1.8) { FIRE.hp -= dt * 34; if (FIRE.hp <= 0) { FIRE.on = false; T.nFire = rnd(55, 85) * diff(); say('yanginSondu', eh.name); } }
     if (!run) FIRE.on = false; }
-  else if (run) { T.nFire -= dt; if (T.nFire <= 0) { const f = FSPOT[(Math.random() * FSPOT.length) | 0]; Object.assign(FIRE, { on: true, x: f[0], z: f[1], hp: 100, t: 0 }); say('🔥 Kasada yangın! Sağ öndeki söndürücüyü TUT, ateşe götür'); } }
+  else if (run) { T.nFire -= dt; if (T.nFire <= 0) { const f = FSPOT[(Math.random() * FSPOT.length) | 0]; Object.assign(FIRE, { on: true, x: f[0], z: f[1], hp: 100, t: 0 }); say('yangin'); } }
   // yük sandıkları
   const mu = T.rain ? 2.0 : 2.8; // sürtünme: sandıklar ağır, kolay kaymaz
   for (const c of CR) { if (c.lost) continue;
@@ -220,46 +221,46 @@ export function stepExtras(dt) {
     c.x += c.vx * dt; c.z += c.vz * dt;
     for (const o of CR) if (o !== c && !o.lost && Math.abs(o.x - c.x) < 0.62 && Math.abs(o.z - c.z) < 0.62) { if (Math.abs(o.x - c.x) > Math.abs(o.z - c.z)) { c.x = o.x + Math.sign(c.x - o.x || 1) * 0.62; c.vx *= 0.3; } else { c.z = o.z + Math.sign(c.z - o.z || 1) * 0.62; c.vz *= 0.3; } }
     if (c.z < -4.8) { c.z = -4.8; c.vz = 0; } if (c.z > 0.55) { c.z = 0.55; c.vz = 0; }
-    if (Math.abs(c.x) > 1.05) { if (Math.abs(c.vx) > 2.6) loseCrate(c, '📦 Bir sandık yola düştü! Sandıkları TUT'); else { c.x = Math.sign(c.x) * 1.05; c.vx *= -0.25; } } // korkuluğa yavaş çarpan sandık geri seker
+    if (Math.abs(c.x) > 1.05) { if (Math.abs(c.vx) > 2.6) loseCrate(c, 'sandikDustu'); else { c.x = Math.sign(c.x) * 1.05; c.vx *= -0.25; } } // korkuluğa yavaş çarpan sandık geri seker
     c.b.o[0] = c.x; c.b.o[2] = c.z; c.b.on = !c.lost; }
-  if (run && !CR.some((c) => !c.lost)) { T.state = 'over'; T.why = 'Bütün yük yola döküldü!'; }
+  if (run && !CR.some((c) => !c.lost)) { T.state = 'over'; T.why = 'yukDokuldu'; }
   // haydut: kasaya atlar, sandıkları aşağı atar; şaplakla kovulur
   if (BOT && (BOT.dead > 0 || !run)) { players.delete(BOT.id); BOT = null; T.nBot = rnd(50, 75) * diff(); }
-  if (!BOT) { if (run && !chase()) { T.nBot -= dt; if (T.nBot <= 0 && CR.some((c) => !c.lost)) { BOT = mkPlayer('haydut', 'HAYDUT'); Object.assign(BOT, { bot: true, ci: 5, stealT: 0, pt: 1, pc: 0, hits: 0 }); place(BOT, rnd(-0.6, 0.6), 3.2, -4.5); say('🥷 Haydut kasaya atladı! Şaplakla kovun'); } } }
+  if (!BOT) { if (run && !chase()) { T.nBot -= dt; if (T.nBot <= 0 && CR.some((c) => !c.lost)) { BOT = mkPlayer('haydut', 'HAYDUT'); Object.assign(BOT, { bot: true, ci: 5, stealT: 0, pt: 1, pc: 0, hits: 0 }); place(BOT, rnd(-0.6, 0.6), 3.2, -4.5); say('haydutGeldi'); } } }
   else if (BOT.outT > 0) { BOT.outT -= dt; BOT.stun = 1; BOT.inp = {}; if (BOT.outT <= 0) BOT.dead = 1; }
   else { const B = BOT, c = CR.filter((c) => !c.lost).sort((a, b) => Math.hypot(a.x - B.P[0], a.z - B.P[2]) - Math.hypot(b.x - B.P[0], b.z - B.P[2]))[0]; B.pt -= dt;
     let tx = c ? c.x : 3, tz = c ? c.z : B.P[2], near = 0.8;
     const v = [...players.values()].find((q) => q !== B && !q.seat && q.dead <= 0 && Math.hypot(q.P[0] - B.P[0], q.P[2] - B.P[2]) < 1.1);
     if (v && B.pt <= 0.5) { tx = v.P[0]; tz = v.P[2]; near = 0.3; if (B.pt <= 0) { B.pc++; B.pt = 1.6; } }
     const dx = tx - B.P[0], dz = tz - B.P[2], d = Math.hypot(dx, dz) || 1; B.inp = { mx: d > near ? dx / d : dx / d * 0.05, mz: d > near ? dz / d : dz / d * 0.05, p: B.pc };
-    if (c && Math.hypot(c.x - B.P[0], c.z - B.P[2]) < 1.0 && B.stun <= 0) { B.stealT += dt; if (B.stealT > 7) { B.stealT = 0; loseCrate(c, '🥷 Haydut bir sandığı aşağı attı!'); } } else B.stealT = Math.max(0, B.stealT - dt); }
+    if (c && Math.hypot(c.x - B.P[0], c.z - B.P[2]) < 1.0 && B.stun <= 0) { B.stealT += dt; if (B.stealT > 7) { B.stealT = 0; loseCrate(c, 'sandikAtti'); } } else B.stealT = Math.max(0, B.stealT - dt); }
 }
 export function stepPolice(dt) {
   const S = PC, run = T.state === 'run' && !(T.cd > 0), px = S.x, pz = S.z; T.oilCd -= dt; T.ejT[1] -= dt; T.ejT[2] -= dt;
-  if (run && S.st === 0) for (let i = 0; i < POLZ.length; i++) if (!S.used[i] && T.Z > POLZ[i] - 45 && T.Z < POLZ[i] + 5 && T.v > LIMIT) { S.used[i] = 1; Object.assign(S, { st: 1, x: -2.5, z: -45, hp: 100, t: 0, ram: 5, slip: 0, geri: 0, darbe: 0 }); say('🚓 Hız sınırını aştınız! Polis peşinizde'); break; }
-  if (S.st === 1) { S.z += dt * 9; S.x -= S.x * Math.min(1, dt); if (S.z >= -9.4) { S.z = -9.4; S.st = 2; say('🚓 Polis arkanızda! Yağ dökün ya da üstüne atlayın'); } }
+  if (run && S.st === 0) for (let i = 0; i < POLZ.length; i++) if (!S.used[i] && T.Z > POLZ[i] - 45 && T.Z < POLZ[i] + 5 && T.v > LIMIT) { S.used[i] = 1; Object.assign(S, { st: 1, x: -2.5, z: -45, hp: 100, t: 0, ram: 5, slip: 0, geri: 0, darbe: 0 }); say('polisGeldi'); break; }
+  if (S.st === 1) { S.z += dt * 9; S.x -= S.x * Math.min(1, dt); if (S.z >= -9.4) { S.z = -9.4; S.st = 2; say('polisArkada'); } }
   else if (S.st === 2) { S.t += dt; S.geri = Math.max(0, S.geri - dt * 1.2); S.darbe = Math.max(0, S.darbe - dt * 2.2); // darbe: üstüne atlanınca araç çöker, yavaşlayıp geride kalır
     if (S.slip > 0) { S.slip -= dt; S.z += (-24 - S.z) * Math.min(1, dt * 2.5); } // yağda kayıp geride kalır
     else { const lunge = S.ram < 0.35; S.z += (-9.4 - S.geri + (lunge ? 1.25 : 0) - S.z) * Math.min(1, dt * (lunge ? 9 : 2.2)); S.x += (Math.sin(S.t * 0.7) * 1.3 - S.x) * Math.min(1, dt * 2); S.ram -= dt;
-      if (S.ram <= 0 && S.z > -8.5) { S.ram = rnd(5, 8); T.dmg[S.x > 0 ? 2 : 3] += 6; say('GÜM! Polis arkadan vurdu'); jolt(0, -1.3); for (const p of players.values()) if (!p.seat) for (let i = 2; i < 21; i += 3) p.Q[i] += 0.06; } }
+      if (S.ram <= 0 && S.z > -8.5) { S.ram = rnd(5, 8); T.dmg[S.x > 0 ? 2 : 3] += 6; say('polisVurdu'); jolt(0, -1.3); for (const p of players.values()) if (!p.seat) for (let i = 2; i < 21; i += 3) p.Q[i] += 0.06; } }
     for (const p of players.values()) { const inB = !p.seat && p.dead <= 0 && Math.abs(p.P[0] - px) < 1.3 && Math.abs(p.P[2] - pz) < 2.5 && p.P[2] < -6.3 && p.P[1] > 1.3 && p.P[1] < 3.6, on = inB && p.gndT > 0;
       if (inB && S.slip <= 0) for (let i = 0; i < 21; i += 3) { p.P[i] += S.x - px; p.Q[i] += S.x - px; p.P[i + 2] += S.z - pz; p.Q[i + 2] += S.z - pz; } // üstündeki oyuncuyu taşır (yağda kayarken taşımaz: düşer)
-      if (on) { S.hp -= dt * 5; S.geri = Math.max(S.geri, 1.2); if (p.airT > 0.2) { S.hp -= 12; S.geri = Math.min(7, S.geri + 3); S.darbe = 1; S.ram = Math.max(S.ram, 2.5); say(p.name + ' polis arabasının üstüne atladı! 💥'); } } // üstünde biri varken ağırlaşır, atlayınca frenler
+      if (on) { S.hp -= dt * 5; S.geri = Math.max(S.geri, 1.2); if (p.airT > 0.2) { S.hp -= 12; S.geri = Math.min(7, S.geri + 3); S.darbe = 1; S.ram = Math.max(S.ram, 2.5); say('polisAtladi', p.name); } } // üstünde biri varken ağırlaşır, atlayınca frenler
       p.airT = p.gndT > 0 ? 0 : (p.airT || 0) + dt; p.onPol = on; }
-    if (S.hp <= 0 || !run) { S.st = 3; T.autoT = 12; if (run) say('🚓 Polis aracı saf dışı! Kurtuldunuz 🎉 Şoför koltuğa!'); } }
+    if (S.hp <= 0 || !run) { S.st = 3; T.autoT = 12; if (run) say('polisBitti'); } }
   else if (S.st === 3) { S.z -= dt * 10; if (S.z < -60) S.st = 0; }
   PK.on = PK2.on = S.st > 0; PK.o[0] = PK2.o[0] = S.x; PK.o[2] = PK2.o[2] = S.z;
 }
 export function stepTanker(dt) {
   const S = TKS;
-  if (S.st === 1) { S.z += dt * 7; if (S.z >= 0) { S.z = 0; S.st = 2; S.t = 0; say('Tanker solunda! Hortumu al, vanayı aç'); } }
-  else if (S.st === 2) { S.t += dt; S.z = Math.sin(S.t * 0.5) * 0.5; S.x = 3.3; S.valve -= dt; if (NZ.dock && S.valve > 0) T.fuel = Math.min(100, T.fuel + 14 * dt); if (T.fuel >= 100 || S.t > 75) { S.st = 3; NZ.dock = false; NZ.holder = null; say('Tanker ayrılıyor'); } }
+  if (S.st === 1) { S.z += dt * 7; if (S.z >= 0) { S.z = 0; S.st = 2; S.t = 0; say('tankerGeldi'); } }
+  else if (S.st === 2) { S.t += dt; S.z = Math.sin(S.t * 0.5) * 0.5; S.x = 3.3; S.valve -= dt; if (NZ.dock && S.valve > 0) T.fuel = Math.min(100, T.fuel + 14 * dt); if (T.fuel >= 100 || S.t > 75) { S.st = 3; NZ.dock = false; NZ.holder = null; say('tankerGidiyor'); } }
   else if (S.st === 3) { S.z -= dt * 6; if (S.z < -50) S.st = 0; }
   TK.on = S.st > 0; TK.o[0] = S.x; TK.o[2] = S.z;
   const h = NZ.holder && players.get(NZ.holder);
   if (NZ.holder) {
     if (!h || h.dead > 0 || h.seat || S.st !== 2) NZ.holder = null;
-    else { const i = 9 + NZ.hand * 3; NZ.p = [h.P[i], h.P[i + 1], h.P[i + 2]]; if (Math.hypot(NZ.p[0] - S.x, NZ.p[1] - 2, NZ.p[2] - (S.z + 1)) > 7.5) { NZ.holder = null; say('Hortum elinden kurtuldu!'); } }
+    else { const i = 9 + NZ.hand * 3; NZ.p = [h.P[i], h.P[i + 1], h.P[i + 2]]; if (Math.hypot(NZ.p[0] - S.x, NZ.p[1] - 2, NZ.p[2] - (S.z + 1)) > 7.5) { NZ.holder = null; say('yakitKurtuldu'); } }
   }
   if (!NZ.holder) NZ.p = NZ.dock ? INLET.slice() : [S.x - 1.3, 2.2, S.z + 1];
 }
@@ -267,7 +268,7 @@ export function stepTruck(dt) {
   const y = [...players.values()].find((p) => p.seat === 2), yi = y ? y.inp : null; // yolcunun şoföre işareti: 1 sol, 2 sağ, 3 yavaş
   T.sig = yi ? yi.sg || ((yi.mx || 0) > 0.5 ? 1 : (yi.mx || 0) < -0.5 ? 2 : (yi.mz || 0) < -0.5 ? 3 : (yi.mz || 0) > 0.5 ? 4 : 0) : 0; // 1 sol, 2 sağ, 3 yavaş, 4 hızlan
   if (T.state === 'lobby') { T.v = 0; T.pax = T.paz = 0; return; }
-  if (T.state === 'run' && T.cd > 0) { T.cd -= dt; T.v = 0; T.pax = T.paz = 0; T.gas = T.br = 0; if (T.cd > 0) return; T.cd = 0; T.v = 8; say('Yola çıktınız! Kamyon durmasın'); } // başlangıç geri sayımı: kamyon bekler
+  if (T.state === 'run' && T.cd > 0) { T.cd -= dt; T.v = 0; T.pax = T.paz = 0; T.gas = T.br = 0; if (T.cd > 0) return; T.cd = 0; T.v = 8; say('yolaCiktiniz'); } // başlangıç geri sayımı: kamyon bekler
   T.t += dt; T.msgT -= dt; T.wipeT -= dt; T.rain = run0() && RAIN.some(([a, b]) => T.Z > a && T.Z < b) ? 1 : 0;
   const d = [...players.values()].find((p) => p.seat === 1), run = T.state === 'run';
   let si = d ? clamp(d.inp.mx || 0, -1, 1) : 0, gas = d && run ? Math.max(0, d.inp.mz || 0) : 0, br = d ? Math.max(0, -(d.inp.mz || 0)) : run ? 0 : 1;
@@ -277,7 +278,7 @@ export function stepTruck(dt) {
     si = clamp((Math.atan2(cx(T.Z + 16) + off - T.X, 16) - T.th - T.phi) * 3, -1, 1); const vt = chase() ? 13 : 8; gas = T.v < vt ? 1 : 0; br = T.v > vt + 2 ? 0.6 : 0; }
   T.steer += (si - T.steer) * Math.min(1, dt * 3.5);
   let bias = 0, vmax = 20; for (let w = 0; w < 4; w++) if (T.flat[w]) { vmax -= 6; bias += Math.sign(WHEEL[w][0]) * 0.2 + Math.sin(T.t * 7) * 0.05; }
-  if (run) { T.heat = clamp(T.heat + dt * (0.5 + gas * 1.1) * (1 + 0.6 * T.Z / LEN), 0, 100); if (T.heat >= 100 && !T.stall) { T.stall = true; say('🌡 Motor hararetten stop etti! Su dökün'); } if (T.stall && T.heat < 55) { T.stall = false; say('Motor yeniden çalıştı 👍'); } if (T.stall) gas = 0; }
+  if (run) { T.heat = clamp(T.heat + dt * (0.5 + gas * 1.1) * (1 + 0.6 * T.Z / LEN), 0, 100); if (T.heat >= 100 && !T.stall) { T.stall = true; say('motorStop'); } if (T.stall && T.heat < 55) { T.stall = false; say('motorCalisti'); } if (T.stall) gas = 0; }
   if (T.fuel <= 0) gas = 0; T.gas = gas; T.br = br;
   const off = Math.abs(T.X - cx(T.Z)) > 7;
   const slow = T.v < 8.4; // ~30 km/s altı: kendi kendine neredeyse hiç yavaşlamaz, fren yumuşak
@@ -289,20 +290,20 @@ export function stepTruck(dt) {
   { const c = cx(T.Z), e = T.X - c; T.hitCd -= dt; // yol kenarı bariyerleri: kamyon dışarı çıkamaz, çarptıkça hasar alır
     if (Math.abs(e) > BLIM) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
       T.X = c + sd * BLIM; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
-      if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say('GÜM! Bariyere çarptınız: ' + SPOT[w][3] + ' hasarlı'); for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }
+      if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say('bariyer', w); for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }
   T.pax = -T.v * omt * 0.55 + (off ? Math.sin(T.t * 23) * 3 : 0); T.paz = -((T.v - ov) / dt) * 0.6;
   if (!run) return;
   T.fuel = Math.max(0, T.fuel - dt * (0.45 + gas * 0.75));
-  for (const o of OBS) if (!o.hit && o.z - T.Z > -6 && o.z - T.Z < 5.6 && Math.abs(o.x - T.X) < (o.w || 1.5) + 1) { o.hit = true; jolt(0, 2.2); if (o.gate) { T.v *= 0.3; T.dmg[o.x > T.X ? 0 : 1] += 18; say('GÜM! Kapalı şeride girdiniz'); } else { T.v *= 0.4; say('GÜM! Engele çarptınız'); } for (const p of players.values()) if (!p.seat) for (let i = 2; i < 21; i += 3) p.Q[i] -= 0.1; }
+  for (const o of OBS) if (!o.hit && o.z - T.Z > -6 && o.z - T.Z < 5.6 && Math.abs(o.x - T.X) < (o.w || 1.5) + 1) { o.hit = true; jolt(0, 2.2); if (o.gate) { T.v *= 0.3; T.dmg[o.x > T.X ? 0 : 1] += 18; say('kapaliSerit'); } else { T.v *= 0.4; say('engel'); } for (const p of players.values()) if (!p.seat) for (let i = 2; i < 21; i += 3) p.Q[i] -= 0.1; }
   for (const b of BUMP) if (oz < b && T.Z >= b && Math.abs(T.X - cx(b)) < 7) {
     for (const p of players.values()) if (!p.seat) for (let i = 1; i < 21; i += 3) p.Q[i] -= T.v > BUMP_V ? 0.14 : 0.05;
-    if (auto) {} else if (T.v > BUMP_V) { jolt((Math.random() < 0.5 ? -1 : 1) * 1.7, 0); const c = [0, 1, 2, 3].filter((w) => !T.flat[w]); if (c.length) { const w = c.includes(0) || c.includes(1) ? c.filter((w) => w < 2)[(Math.random() * c.filter((w) => w < 2).length) | 0] : c[0]; T.flat[w] = 1; say('PAT! Tümseğe hızlı girdiniz: ' + WHEEL[w][3] + ' lastik patladı'); } }
-    else say('Tümsek yavaş geçildi 👍');
+    if (auto) {} else if (T.v > BUMP_V) { jolt((Math.random() < 0.5 ? -1 : 1) * 1.7, 0); const c = [0, 1, 2, 3].filter((w) => !T.flat[w]); if (c.length) { const w = c.includes(0) || c.includes(1) ? c.filter((w) => w < 2)[(Math.random() * c.filter((w) => w < 2).length) | 0] : c[0]; T.flat[w] = 1; say('tumsekPat', w); } }
+    else say('tumsekYavas');
   }
-  T.nextFlat -= dt; if (T.nextFlat <= 0) { const c = [0, 1, 2, 3].filter((w) => !T.flat[w]); if (c.length > 2) { const w = c[(Math.random() * c.length) | 0]; T.flat[w] = 1; say('PAT! Lastik patladı: ' + WHEEL[w][3]); } T.nextFlat = rnd(35, 60) * diff(); }
-  if (T.dmg[0] + T.dmg[1] + T.dmg[2] + T.dmg[3] >= 100) { T.state = 'over'; T.why = 'Kamyon hurdaya döndü!'; }
-  else if (T.Z >= LEN) { T.state = 'win'; T.why = 'Hedefe ulaştınız! 🏁 Teslim edilen yük: ' + CR.filter((c) => !c.lost).length + '/4'; }
-  else if (T.t > 6 && T.v < 0.4) { T.state = 'over'; T.why = T.fuel <= 0 ? 'Yakıt bitti, kamyon durdu!' : 'Kamyon durdu!'; }
+  T.nextFlat -= dt; if (T.nextFlat <= 0) { const c = [0, 1, 2, 3].filter((w) => !T.flat[w]); if (c.length > 2) { const w = c[(Math.random() * c.length) | 0]; T.flat[w] = 1; say('lastikPat', w); } T.nextFlat = rnd(35, 60) * diff(); }
+  if (T.dmg[0] + T.dmg[1] + T.dmg[2] + T.dmg[3] >= 100) { T.state = 'over'; T.why = 'hurda'; }
+  else if (T.Z >= LEN) { T.state = 'win'; T.why = 'hedef|' + CR.filter((c) => !c.lost).length; }
+  else if (T.t > 6 && T.v < 0.4) { T.state = 'over'; T.why = T.fuel <= 0 ? 'yakitBitti' : 'durdu'; }
 }
 export function startGame() { resetGame(); T.state = 'run'; T.v = 0; T.cd = 5; }
 export function resetGame() {
