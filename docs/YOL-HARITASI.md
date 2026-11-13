@@ -68,7 +68,7 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 
 ## 4. Steam ağı
 - ✅ Oda kurma ve arkadaş daveti: Steam lobileri ve Steam ağı (`src/steam.js`, `desktop/steam.cjs`; deneme numarası 480)
-- 🙋 steamworks.js paketinin projeye eklenmesi (onay bekliyor)
+- ✅ steamworks.js paketi eklendi (0.4.0)
 - ⬜ Sesli sohbetin Steam üzerinden çalışması (şimdilik Steam sürümünde de PeerJS ile)
 - 🙋 İki bilgisayarda Steam açıkken deneme
 
