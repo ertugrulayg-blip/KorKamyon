@@ -38,11 +38,33 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ⬜ Gamepad desteği
 - 🙋 Tanıdıklara oynatıp "para verir miydin" diye sormak
 
+## Oyun testi geri bildirimi (13.11, Alper)
+- ✅ Bağlantısı kopan oyuncu 7 sn içinde odadan düşer; oda sahibinden 9 sn haber alamayan istemci menüye döner
+- ✅ Sandıklar tutulup taşınabilir
+- ✅ Koltuk yerine düşünce (4 sn) fırlayan dahil herkes hemen oturabilir
+- ✅ Tankerin üstünde durunca ölme hatası (vana açılamıyordu) düzeltildi
+- ✅ Hararet, yağ ve vana: işaret ve ekranda "F" ipucu; etki alanı genişledi
+- ✅ Sesli sohbet isteğe bağlı (varsayılan kapalı), açık mikrofon ya da bas-konuş (V); her oyuncunun sesi ayrı ayarlanır (WebAudio, iPhone dahil)
+- 🙋 Sesli sohbet ve kopma: gerçek iki-üç cihazla denenmeli
+
+## Aşamalar, eğitim, puan (13.11 geri bildirimi)
+- ✅ Aşamalar: Eğitim, 100, 500, 1000, 1500, 2000, 2500 m. Her aşama yeni olaylar açar, bitirince sonraki açılır (`ASAMA` world.js, `kk-acik`)
+- ✅ Eğitim: 9 adım, her işi tek tek tetikleyip öğretir; kamyon kendi gider, oyun bitmez (`src/egitim.js`)
+- ✅ Olaylar daha geç başlar ve üst üste binmez (yangın, haydut, lastik, polis birbirini bekler)
+- ✅ Oyuncu puanları ve sayaçlar; anlık "+50" balonu; final: yıldızlar, konfeti, madalyalı sıralama tablosu
+- 🙋 Puan değerleri ve aşama zorluğu: oynayıp ayarlanmalı
+
 ## 3. Steam hesabı ve mağaza sayfası
-- 🙋 Steamworks hesabı, kayıt ücreti, vergi ve banka bilgisi
-- 🙋 İsim kontrolü: "Road Hogs" adında oyun/marka var mı
-- ⬜ Mağaza metni, kapak görselleri, ekran görüntüleri
-- 🙋 Sayfayı "yakında" olarak yayınlamak (istek listesi birikmeye başlasın)
+- 🙋 Steamworks hesabı, vergi formu (W-8BEN tamamlandı), banka bilgisi, kayıt ücreti
+- 🙋 İsim kontrolü: "Road Hogs" adında oyun/marka var mı (Overwatch'taki "Roadhog" karakterine dikkat)
+- 🙋 Meshy lisansının ticari kullanım hakkı
+- ✅ İngilizce sürüm (`src/dil.js`): tüm arayüz, ekran yazıları, tuş rehberi ve oyun mesajları
+- ✅ Mağaza metinleri İngilizce ve Türkçe (`marketing/STEAM-SAYFASI.md`)
+- ✅ Kapak görselleri, logo, simgeler ve 6 ekran görüntüsü (`marketing/steam/`, betikler `marketing/*.cjs`) — ⏸ oyun tamamlanınca yeniden üretilecek
+- ✅ Tanıtım sayfası (`tanitim/`, GitHub Pages'te `/tanitim/`)
+- ⬜ Fragman — 🙋 oyun kaydı
+- ⬜ Sistem gereksinimleri — 🙋 düşük donanımda deneme
+- 🙋 Sayfayı "yakında" olarak yayınlamak
 
 ## 4. Steam ağı
 - ⬜ Oda kurma ve arkadaş daveti: Steam lobileri ve Steam ağına geçiş

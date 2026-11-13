@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Road Hogs</title>
+<meta name="description" content="Road Hogs — a chaotic online co-op trucking game for 2–4 friends. The driver can't see the road, the passenger gives directions, the crew in the back keeps the truck alive.">
+<meta property="og:title" content="Road Hogs">
+<meta property="og:description" content="A chaotic online co-op trucking game for 2–4 friends.">
+<meta property="og:image" content="img/1-bar.jpg">
+<link rel="icon" href="img/ikon.png">
+<style>
+  @font-face { font-family: LG; src: url(LuckiestGuy-Regular.ttf); font-display: swap; }
+  :root { --koyu: #120d0a; --kart: #1d1612; --cizgi: #3a2c22; --yazi: #f2e9df; --soluk: #b9a99a; --sari: #ffd23f; --turuncu: #ff6a3d; --kirmizi: #d8432f; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--koyu); color: var(--yazi); font: 17px/1.55 system-ui, "Segoe UI", Inter, Arial, sans-serif; }
+  a { color: inherit; }
+  html[lang="en"] .tr, html[lang="tr"] .en { display: none; }
+  .ic { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+  /* üst şerit */
+  .ust { position: sticky; top: 0; z-index: 5; background: rgba(18, 13, 10, .88); backdrop-filter: blur(8px); border-bottom: 1px solid var(--cizgi); }
+  .ust .ic { display: flex; align-items: center; gap: 14px; height: 58px; }
+  .ust .ad { font-family: LG; font-size: 24px; color: var(--sari); text-decoration: none; letter-spacing: .5px; }
+  .ust nav { margin-left: auto; display: flex; gap: 18px; font-size: 15px; }
+  .ust nav a { text-decoration: none; color: var(--soluk); } .ust nav a:hover { color: var(--yazi); }
+  .dil { display: flex; gap: 4px; } .dil button { background: none; border: 2px solid var(--cizgi); color: var(--soluk); border-radius: 8px; padding: 2px 8px; font-weight: 800; cursor: pointer; }
+  .dil button.secili { border-color: var(--kirmizi); color: #fff; background: var(--kirmizi); }
+  @media (max-width: 720px) { .ust nav { display: none; } .dil { margin-left: auto; } }
+
+  /* giriş */
+  .giris { position: relative; min-height: 78vh; display: grid; place-items: center; text-align: center; overflow: hidden; }
+  .giris::before { content: ""; position: absolute; inset: 0; background: url(img/hero.jpg) center 70% / cover; filter: brightness(.55); }
+  .giris::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,13,10,.2), rgba(18,13,10,.1) 50%, var(--koyu)); }
+  .giris .ic { position: relative; z-index: 1; padding-top: 40px; padding-bottom: 40px; }
+  .giris img.logo { width: min(560px, 86vw); height: auto; filter: drop-shadow(0 10px 24px rgba(0,0,0,.6)); }
+  .giris p.slogan { font-size: clamp(18px, 2.4vw, 24px); max-width: 680px; margin: 10px auto 26px; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+  .dugmeler { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .dugme { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 14px; font-weight: 800; text-decoration: none; font-size: 17px; border: 2px solid transparent; }
+  .dugme.ana { background: var(--kirmizi); color: #fff; box-shadow: 0 6px 0 #7a1f17; } .dugme.ana:hover { transform: translateY(1px); box-shadow: 0 5px 0 #7a1f17; }
+  .dugme.ikinci { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.25); color: #fff; } .dugme.ikinci:hover { background: rgba(255,255,255,.16); }
+  .dugme.pasif { opacity: .7; cursor: default; }
+  .kucuk { font-size: 13px; color: var(--soluk); margin-top: 14px; }
+
+  section { padding: 64px 0; }
+  h2 { font-family: LG; font-weight: 400; font-size: clamp(30px, 4vw, 44px); color: var(--sari); margin: 0 0 8px; letter-spacing: .5px; }
+  .alt { color: var(--soluk); margin: 0 0 30px; max-width: 720px; }
+
+  /* roller */
+  .roller { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .rol { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 18px; overflow: hidden; }
+  .rol img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+  .rol div { padding: 16px 18px 20px; } .rol h3 { margin: 0 0 6px; font-size: 20px; } .rol p { margin: 0; color: var(--soluk); font-size: 15px; }
+  @media (max-width: 860px) { .roller { grid-template-columns: 1fr; } }
+
+  /* özellikler */
+  .ozellik { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .ozellik div { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 14px; padding: 16px 18px; }
+  .ozellik b { display: block; font-size: 17px; margin-bottom: 4px; } .ozellik span { color: var(--soluk); font-size: 15px; }
+
+  /* galeri */
+  .galeri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .galeri a { display: block; border-radius: 12px; overflow: hidden; border: 1px solid var(--cizgi); }
+  .galeri img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; transition: transform .25s; } .galeri a:hover img { transform: scale(1.04); }
+  @media (max-width: 760px) { .galeri { grid-template-columns: 1fr 1fr; } }
+
+  .son { text-align: center; background: linear-gradient(180deg, var(--koyu), #22140f); }
+  footer { border-top: 1px solid var(--cizgi); padding: 26px 0 40px; color: var(--soluk); font-size: 14px; }
+  footer a { color: var(--yazi); }
+</style>
+</head>
+<body>
+<header class="ust"><div class="ic">
+  <a class="ad" href="#">Road Hogs</a>
+  <nav><a href="#nasil"><span class="tr">Nasıl oynanır</span><span class="en">How it plays</span></a><a href="#ozellikler"><span class="tr">Özellikler</span><span class="en">Features</span></a><a href="#galeri"><span class="tr">Görüntüler</span><span class="en">Screenshots</span></a></nav>
+  <div class="dil"><button data-dil="tr">TR</button><button data-dil="en">EN</button></div>
+</div></header>
+
+<section class="giris"><div class="ic">
+  <img class="logo" src="img/logo.png" alt="Road Hogs" width="870" height="450">
+  <p class="slogan"><span class="en">A chaotic online co-op trucking game for 2–4 friends. The driver can't see the road. The truck must never stop.</span><span class="tr">2–4 arkadaş için kaotik bir çevrim içi ortak kamyon oyunu. Şoför yolu göremez. Kamyon asla durmamalı.</span></p>
+  <div class="dugmeler">
+    <a class="dugme ana" href="../"><span class="en">▶ Play free in your browser</span><span class="tr">▶ Tarayıcıda ücretsiz oyna</span></a>
+    <a class="dugme ikinci" href="https://github.com/ertugrulayg-blip/KorKamyon/releases/latest"><span class="en">⬇ Download for Windows</span><span class="tr">⬇ Windows için indir</span></a>
+    <span class="dugme ikinci pasif"><span class="en">🎮 Coming soon to Steam</span><span class="tr">🎮 Yakında Steam'de</span></span>
+  </div>
+  <p class="kucuk"><span class="en">Voice chat built in · Works on PC and phone · No account needed</span><span class="tr">Sesli sohbet içinde · Bilgisayar ve telefonda çalışır · Hesap gerekmez</span></p>
+</div></section>
+
+<section id="nasil"><div class="ic">
+  <h2><span class="en">Everyone has a job</span><span class="tr">Herkesin bir işi var</span></h2>
+  <p class="alt"><span class="en">Nobody can do it alone. You have to talk — or shout — to get the truck to the end of the road.</span><span class="tr">Kimse tek başına başaramaz. Kamyonu yolun sonuna götürmek için konuşmanız, hatta bağırmanız gerekecek.</span></p>
+  <div class="roller">
+    <div class="rol"><img src="img/4-sofor.jpg" alt="" loading="lazy"><div><h3>🚚 <span class="en">The driver</span><span class="tr">Şoför</span></h3><p><span class="en">Too short to see over the dashboard. Only sky and treetops. Steers, brakes and floors it on faith.</span><span class="tr">Boyu tablonun üstünü görmeye yetmez; yalnız gökyüzü ve ağaç tepeleri. Direksiyonu, freni ve gazı tamamen güvenle kullanır.</span></p></div></div>
+    <div class="rol"><img src="img/5-yolcu.jpg" alt="" loading="lazy"><div><h3>👀 <span class="en">The passenger</span><span class="tr">Yolcu</span></h3><p><span class="en">The only one who sees the road. Calls the turns, spots the speed traps and radios the fuel tanker.</span><span class="tr">Yolu gören tek kişi. Virajları söyler, radarları fark eder, yakıt tankerini telsizle çağırır.</span></p></div></div>
+    <div class="rol"><img src="img/2-kasa.jpg" alt="" loading="lazy"><div><h3>📦 <span class="en">The crew in the back</span><span class="tr">Kasadakiler</span></h3><p><span class="en">Pump up flat tyres, drill out dents, put out fires, slap bandits off the cargo and hold on for dear life.</span><span class="tr">Patlak lastikleri şişirir, ezikleri matkapla düzeltir, yangın söndürür, yüke dadanan haydutları şaplakla atar ve canını dişine takıp tutunur.</span></p></div></div>
+  </div>
+</div></section>
+
+<section id="ozellikler" style="padding-top:0"><div class="ic">
+  <h2><span class="en">What goes wrong</span><span class="tr">Neler ters gidebilir</span></h2>
+  <p class="alt"><span class="en">Pretty much everything, usually at the same time.</span><span class="tr">Hemen her şey, genelde aynı anda.</span></p>
+  <div class="ozellik">
+    <div><b>🚓 <span class="en">Police chases</span><span class="tr">Polis kovalamacası</span></b><span><span class="en">Speed past a trap and the cops ram you from behind. Spill oil or jump on their roof.</span><span class="tr">Radarda hız yaparsan polis arkadan vurur. Yola yağ dök ya da tavanına atla.</span></span></div>
+    <div><b>⛽ <span class="en">Refuel on the move</span><span class="tr">Giderken yakıt al</span></b><span><span class="en">A tanker pulls up alongside. Someone has to grab the hose and someone has to open the valve.</span><span class="tr">Bir tanker yanınıza gelir. Biri hortumu tutmalı, biri vanayı açmalı.</span></span></div>
+    <div><b>🔥 <span class="en">Fire, flats and dents</span><span class="tr">Yangın, patlak ve ezik</span></b><span><span class="en">Hit a bump too fast, scrape a barrier, overheat the engine. Fix it before it gets worse.</span><span class="tr">Tümseğe hızlı gir, bariyere sürt, motoru ısıt. Daha kötüye gitmeden düzelt.</span></span></div>
+    <div><b>🥷 <span class="en">Bandits</span><span class="tr">Haydutlar</span></b><span><span class="en">A sneaky thief jumps on and starts throwing your cargo off. Three slaps and he's gone.</span><span class="tr">Sinsi bir hırsız kasaya atlayıp yükünüzü atmaya başlar. Üç şaplakta gider.</span></span></div>
+    <div><b>🪑 <span class="en">Ejector seats</span><span class="tr">Fırlayan koltuklar</span></b><span><span class="en">Nobody gets comfortable: sit for 30 seconds and the seat launches you into the back.</span><span class="tr">Kimse rahat edemez: 30 saniye oturan koltukla birlikte kasaya fırlar.</span></span></div>
+    <div><b>🤸 <span class="en">Wobbly physics</span><span class="tr">Sallantılı fizik</span></b><span><span class="en">Every trucker is a ragdoll. Every turn is a chance to fall off.</span><span class="tr">Her kamyoncu bez bebek gibi sallanır. Her viraj düşmek için bir fırsat.</span></span></div>
+  </div>
+</div></section>
+
+<section id="galeri" style="padding-top:0"><div class="ic">
+  <h2><span class="en">Screenshots</span><span class="tr">Görüntüler</span></h2>
+  <div class="galeri">
+    <a href="img/1-bar.jpg"><img src="img/1-bar.jpg" alt="" loading="lazy"></a>
+    <a href="img/2-kasa.jpg"><img src="img/2-kasa.jpg" alt="" loading="lazy"></a>
+    <a href="img/3-polis.jpg"><img src="img/3-polis.jpg" alt="" loading="lazy"></a>
+    <a href="img/4-sofor.jpg"><img src="img/4-sofor.jpg" alt="" loading="lazy"></a>
+    <a href="img/5-yolcu.jpg"><img src="img/5-yolcu.jpg" alt="" loading="lazy"></a>
+    <a href="img/6-tanker.jpg"><img src="img/6-tanker.jpg" alt="" loading="lazy"></a>
+  </div>
+</div></section>
+
+<section class="son"><div class="ic">
+  <h2><span class="en">Grab your crew</span><span class="tr">Ekibini topla</span></h2>
+  <p class="alt" style="margin-left:auto;margin-right:auto"><span class="en">Create a room, share the 4-letter code, and hit the road.</span><span class="tr">Bir oda kur, 4 harfli kodu paylaş ve yola çık.</span></p>
+  <div class="dugmeler"><a class="dugme ana" href="../"><span class="en">▶ Play now</span><span class="tr">▶ Hemen oyna</span></a></div>
+</div></section>
+
+<footer><div class="ic">
+  <span class="en">Road Hogs is in development. Made with three.js and PeerJS. Environment models by <a href="https://kenney.nl">Kenney</a> (CC0).</span>
+  <span class="tr">Road Hogs geliştirme aşamasında. three.js ve PeerJS ile yapıldı. Çevre modelleri <a href="https://kenney.nl">Kenney</a> (CC0).</span>
+</div></footer>
+
+<script>
+  // dil: kayıtlı seçim, yoksa tarayıcı dili
+  const kayitli = (() => { try { return localStorage.getItem('kk-dil'); } catch (e) { return null; } })();
+  const sec = (d) => { document.documentElement.lang = d; document.querySelectorAll('[data-dil]').forEach((b) => b.classList.toggle('secili', b.dataset.dil === d)); try { localStorage.setItem('kk-dil', d); } catch (e) {} };
+  sec(kayitli === 'tr' || kayitli === 'en' ? kayitli : (navigator.language || '').toLowerCase().startsWith('tr') ? 'tr' : 'en');
+  document.querySelectorAll('[data-dil]').forEach((b) => (b.onclick = () => sec(b.dataset.dil)));
+</script>
+</body>
+</html>

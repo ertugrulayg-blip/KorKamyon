@@ -28,4 +28,14 @@ for (const g of GATE) { for (let i = OBS.length - 1; i >= 0; i--) if (Math.abs(O
 export const RAIN = [[720, 1040], [1540, 1860]]; // yağmur bölgeleri
 export const BUMP = []; for (let z = 190; z < LEN - 80; z += 150 + ((z * 7) % 90)) { while (OBS.some((o) => Math.abs(o.z - z) < 28)) z += 14; BUMP.push(z); }
 export const LIMIT = 50 / 3.6, POLZ = [520, 980, 1450, 1900, 2280], SEAT_T = 30; // hız sınırı (m/s), radar noktaları, koltukta kalma süresi (sn)
+// Aşamalar: 0 eğitim (adım adım öğretir), sonra giderek uzayan ve zorlaşan yollar. olay: o aşamada rastgele gelen sorunlar (isi: hararet hızı).
+export const ASAMA = [
+  { m: 700, egitim: true, olay: {} },
+  { m: 100, olay: {} },
+  { m: 500, olay: { lastik: 1, isi: 0.5 } },
+  { m: 1000, olay: { lastik: 1, isi: 0.7, yangin: 1, polis: 1 } },
+  { m: 1500, olay: { lastik: 1, isi: 0.85, yangin: 1, polis: 1, haydut: 1 } },
+  { m: 2000, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
+  { m: 2500, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
+];
 export const BUMP_V = 8; // m/s (~29 km/s) üstünde tümseğe girilirse lastik patlar

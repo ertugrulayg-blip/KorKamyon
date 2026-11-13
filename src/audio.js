@@ -55,28 +55,28 @@ export function sfx(V, dt) {
   if (run && t.cd !== sm.cd) { if (t.cd > 0) tone(520, now, 0.16, 0.25, 'square'); else if (sm.cd > 0) { tone(1040, now, 0.5, 0.25, 'square'); horn(now + 0.1, 0.9); } } sm.cd = run ? t.cd : 0;
   t.fl.forEach((f, i) => { if (f && !sm.fl[i]) { burst(now, 0.4, 0.7, 'lowpass', 1100); tone(140, now, 0.35, 0.5, 'sine', S.master, 38); burst(now + 0.05, 1.4, 0.12, 'bandpass', 4200); } }); sm.fl = t.fl.slice(); // patlama + sönme tıslaması
   if (t.oh.length > sm.oh) { burst(now, 0.5, 0.8, 'lowpass', 700); tone(95, now, 0.45, 0.6, 'sine', S.master, 30); burst(now + 0.03, 0.3, 0.2, 'highpass', 3500); } sm.oh = t.oh.length;
-  if (t.m !== sm.m) { const m = (sm.m = t.m);
-    if (m.includes('sandı')) { tone(320, now, 0.5, 0.3, 'triangle', S.master, 70); burst(now + 0.35, 0.25, 0.5, 'lowpass', 500); }
-    else if (m.includes('uçtu')) { tone(300, now, 0.5, 0.25, 'square', S.master, 1100); burst(now, 0.2, 0.4, 'lowpass', 900); }
-    else if (m.includes('Haydut kasaya')) for (let i = 0; i < 3; i++) tone(i % 2 ? 392 : 311, now + i * 0.16, 0.16, 0.2, 'sawtooth');
-    else if (m.includes('Kasada yangın')) { burst(now, 0.9, 0.5, 'bandpass', 1400); tone(180, now, 0.7, 0.2, 'sawtooth', S.master, 420); }
-    else if (m.includes('söndürdü') || m.includes('yeniden çalıştı')) { tone(660, now, 0.2, 0.2); tone(990, now + 0.12, 0.4, 0.2); }
-    else if (m.includes('stop etti')) { for (let i = 0; i < 4; i++) tone(90 - i * 12, now + i * 0.16, 0.14, 0.4, 'sawtooth'); burst(now + 0.6, 1.2, 0.3, 'bandpass', 3500); }
-    else if (m.includes('saf dışı')) { burst(now, 1.1, 0.8, 'lowpass', 500); tone(120, now, 0.9, 0.5, 'sine', S.master, 28); [0, 4, 7, 12].forEach((n, i) => tone(523 * st(n), now + 0.5 + i * 0.12, 0.3, 0.18, 'square')); }
-    else if (m.includes('yağ döktü')) { burst(now, 0.7, 0.4, 'lowpass', 650); tone(260, now, 0.5, 0.15, 'sine', S.master, 80); if (m.includes('kaydı')) burst(now + 0.3, 1.2, 0.3, 'bandpass', 2900); }
-    else if (m.includes('atladı')) { burst(now + 0.05, 0.6, 0.25, 'bandpass', 3100); tone(420, now + 0.05, 0.5, 0.06, 'sawtooth', S.master, 260); // lastik cıyaklaması + metal ezilmesi
+  if (t.m !== sm.m) { const m = (sm.m = t.m), k = m ? m.split('|')[0] : ''; // mesaj kodu (dil.js)
+    if (['sandikYandi', 'sandikDustu', 'sandikAtti'].includes(k)) { tone(320, now, 0.5, 0.3, 'triangle', S.master, 70); burst(now + 0.35, 0.25, 0.5, 'lowpass', 500); }
+    else if (k === 'haydutUctu') { tone(300, now, 0.5, 0.25, 'square', S.master, 1100); burst(now, 0.2, 0.4, 'lowpass', 900); }
+    else if (k === 'haydutGeldi') for (let i = 0; i < 3; i++) tone(i % 2 ? 392 : 311, now + i * 0.16, 0.16, 0.2, 'sawtooth');
+    else if (k === 'yangin') { burst(now, 0.9, 0.5, 'bandpass', 1400); tone(180, now, 0.7, 0.2, 'sawtooth', S.master, 420); }
+    else if (k === 'yanginSondu' || k === 'motorCalisti') { tone(660, now, 0.2, 0.2); tone(990, now + 0.12, 0.4, 0.2); }
+    else if (k === 'motorStop') { for (let i = 0; i < 4; i++) tone(90 - i * 12, now + i * 0.16, 0.14, 0.4, 'sawtooth'); burst(now + 0.6, 1.2, 0.3, 'bandpass', 3500); }
+    else if (k === 'polisBitti') { burst(now, 1.1, 0.8, 'lowpass', 500); tone(120, now, 0.9, 0.5, 'sine', S.master, 28); [0, 4, 7, 12].forEach((n, i) => tone(523 * st(n), now + 0.5 + i * 0.12, 0.3, 0.18, 'square')); }
+    else if (k === 'yag' || k === 'yagKaydi') { burst(now, 0.7, 0.4, 'lowpass', 650); tone(260, now, 0.5, 0.15, 'sine', S.master, 80); if (k === 'yagKaydi') burst(now + 0.3, 1.2, 0.3, 'bandpass', 2900); }
+    else if (k === 'polisAtladi') { burst(now + 0.05, 0.6, 0.25, 'bandpass', 3100); tone(420, now + 0.05, 0.5, 0.06, 'sawtooth', S.master, 260); // lastik cıyaklaması + metal ezilmesi
  burst(now, 0.3, 0.7, 'lowpass', 900); tone(150, now, 0.3, 0.5, 'sine', S.master, 45); tone(700, now, 0.25, 0.07, 'square', S.master, 480); }
-    else if (m.includes('fırladı')) { tone(90, now, 0.6, 0.35, 'sawtooth', S.master, 600); tone(300, now + 0.05, 0.9, 0.12, 'sine', S.master, 1400); } // yay sesi
-    else if (m.includes('fırladı_eski')) { tone(200, now, 0.55, 0.25, 'square', S.master, 950); burst(now, 0.15, 0.3, 'bandpass', 1200); }
-    else if (m.includes('Bariyer') || m.includes('vurdu') || m.includes('Kapalı şerid')) { burst(now, 0.45, 0.7, 'lowpass', 800); tone(110, now, 0.4, 0.5, 'sine', S.master, 36); burst(now + 0.02, 0.5, 0.25, 'bandpass', 2600); tone(640, now, 0.5, 0.08, 'square', S.master, 520); }
-    else if (m.includes('onardı')) { tone(660, now, 0.2, 0.2); tone(990, now + 0.1, 0.2, 0.2); tone(1320, now + 0.2, 0.45, 0.2); }
-    else if (m.includes('Tümse')) { tone(75, now, 0.3, 0.5, 'sine', S.master, 34); burst(now, 0.18, 0.3, 'lowpass', 500); }
-    else if (m.includes('şişirdi')) { tone(880, now, 0.25, 0.2); tone(1320, now + 0.12, 0.45, 0.2); }
-    else if (m.includes('Vana')) { burst(now, 0.08, 0.4, 'bandpass', 900); tone(300, now, 0.2, 0.15, 'square', S.master, 140); }
-    else if (m.includes('takıldı')) { burst(now, 0.05, 0.5, 'bandpass', 1500); burst(now + 0.09, 0.05, 0.4, 'bandpass', 2300); }
-    else if (m.includes('çağırdı')) for (let i = 0; i < 2; i++) for (let j = 0; j < 6; j++) tone(j % 2 ? 480 : 620, now + i * 0.55 + j * 0.06, 0.06, 0.12, 'square');
-    else if (m.includes('Tanker ayrılıyor')) horn(now, 0.5);
-    else if (m.includes('kurtuldu')) burst(now, 0.5, 0.3, 'bandpass', 3800); }
+    else if (k === 'firladi') { tone(90, now, 0.6, 0.35, 'sawtooth', S.master, 600); tone(300, now + 0.05, 0.9, 0.12, 'sine', S.master, 1400); } // yay sesi
+    else if (false) { tone(200, now, 0.55, 0.25, 'square', S.master, 950); burst(now, 0.15, 0.3, 'bandpass', 1200); }
+    else if (k === 'bariyer' || k === 'polisVurdu' || k === 'kapaliSerit') { burst(now, 0.45, 0.7, 'lowpass', 800); tone(110, now, 0.4, 0.5, 'sine', S.master, 36); burst(now + 0.02, 0.5, 0.25, 'bandpass', 2600); tone(640, now, 0.5, 0.08, 'square', S.master, 520); }
+    else if (k === 'hasarOnardi') { tone(660, now, 0.2, 0.2); tone(990, now + 0.1, 0.2, 0.2); tone(1320, now + 0.2, 0.45, 0.2); }
+    else if (k === 'tumsekPat' || k === 'tumsekYavas') { tone(75, now, 0.3, 0.5, 'sine', S.master, 34); burst(now, 0.18, 0.3, 'lowpass', 500); }
+    else if (k === 'lastikSisirdi') { tone(880, now, 0.25, 0.2); tone(1320, now + 0.12, 0.45, 0.2); }
+    else if (k === 'vanaAcildi') { burst(now, 0.08, 0.4, 'bandpass', 900); tone(300, now, 0.2, 0.15, 'square', S.master, 140); }
+    else if (k === 'hortumTak') { burst(now, 0.05, 0.5, 'bandpass', 1500); burst(now + 0.09, 0.05, 0.4, 'bandpass', 2300); }
+    else if (k === 'tankerCagirdi') for (let i = 0; i < 2; i++) for (let j = 0; j < 6; j++) tone(j % 2 ? 480 : 620, now + i * 0.55 + j * 0.06, 0.06, 0.12, 'square');
+    else if (k === 'tankerGidiyor') horn(now, 0.5);
+    else if (['havaKurtuldu', 'matkapKurtuldu', 'yakitKurtuldu'].includes(k)) burst(now, 0.5, 0.3, 'bandpass', 3800); }
   if (t.s !== sm.s) { if (t.s === 'win') [0, 4, 7, 12, 16].forEach((n, i) => tone(329.6 * st(n), now + i * 0.14, i === 4 ? 0.9 : 0.25, 0.2, 'square')); if (t.s === 'over') { tone(300, now, 1.4, 0.3, 'sawtooth', S.master, 55); [7, 3, 0].forEach((n, i) => tone(196 * st(n), now + i * 0.3, 0.5, 0.18, 'triangle')); } sm.s = t.s; }
   const mode = t.s === 'lobby' ? 0 : roll ? 1 : -1; if (mode !== sm.mode) { sm.mode = mode; sm.step = 0; sm.nt = now + 0.15; }
   set(S.mg.gain, ui.musOn ? (mode ? 1 : 0.9) * 0.9 * ui.ses.muzik : 0, 0.1); set(S.master.gain, 0.9 * ui.ses.efekt, 0.1);

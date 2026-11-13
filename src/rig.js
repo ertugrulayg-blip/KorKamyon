@@ -67,12 +67,57 @@ export async function makeRig(ci, parent, dosya = null) {
   const w = (k) => B[k].getWorldPosition(new THREE.Vector3());
   const boy = (a, b) => w(a).distanceTo(w(b)), hips = w('Hips');
   return {
-    root, B, bind, ayak,
+    root, B, bind, ayak, el: elOlc(model, B),
     hipY: hips.y - root.getWorldPosition(new THREE.Vector3()).y, // modelin ayak tabanından kalça kemiğine yükseklik (ölçek 1)
     kalcaBacak: hips.y - w('LeftUpLeg').y, // kalça kemiği ile uyluk başı arası
     kol: [boy('LeftArm', 'LeftForeArm'), boy('LeftForeArm', 'LeftHand')],
     bacak: [boy('LeftUpLeg', 'LeftLeg'), boy('LeftLeg', 'LeftFoot')],
   };
+}
+
+// El ölçüsü (bağ pozunda, bir kez): el kemiğine bağlı köşelerden parmak yönü, avuç normali ve bilekten avuç ortasına uzaklık.
+// Yönler el kemiğinin kendi ekseninde saklanır; böylece her modelde (kemik eksenleri farklı) el bir nesneyi doğru kavrar.
+function elOlc(model, B) {
+  let mesh = null; model.traverse((o) => { if (o.isSkinnedMesh && !mesh) mesh = o; });
+  const sonuc = [null, null]; if (!mesh) return sonuc;
+  model.updateMatrixWorld(true);
+  const kalca = B.Hips.getWorldPosition(new THREE.Vector3());
+  const pos = mesh.geometry.attributes.position, si = mesh.geometry.attributes.skinIndex, sw = mesh.geometry.attributes.skinWeight;
+  for (const [i, ad] of [[0, 'LeftHand'], [1, 'RightHand']]) {
+    const kemik = B[ad], bi = mesh.skeleton.bones.indexOf(kemik); if (bi < 0) continue;
+    const bilek = kemik.getWorldPosition(new THREE.Vector3()), noktalar = [], v = new THREE.Vector3();
+    for (let n = 0; n < pos.count; n++) {
+      let a = 0; for (let j = 0; j < 4; j++) if (si.getComponent(n, j) === bi) a += sw.getComponent(n, j);
+      if (a > 0.6) { mesh.getVertexPosition(n, v); noktalar.push(v.clone().applyMatrix4(mesh.matrixWorld)); }
+    }
+    if (noktalar.length < 8) continue;
+    const orta = noktalar.reduce((t, q) => t.add(q), new THREE.Vector3()).divideScalar(noktalar.length);
+    const parmak = orta.clone().sub(bilek); const uzun = parmak.length(); parmak.normalize();
+    // avuç normali: köşe dağılımının en ince ekseni (parmak yönüne dik). Kovaryansın en küçük özvektörü, ters üs yöntemiyle.
+    const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    for (const q of noktalar) { const d = [q.x - orta.x, q.y - orta.y, q.z - orta.z]; for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) C[r][c] += d[r] * d[c]; }
+    const M3 = new THREE.Matrix3().set(C[0][0], C[0][1], C[0][2], C[1][0], C[1][1], C[1][2], C[2][0], C[2][1], C[2][2]);
+    const tr = C[0][0] + C[1][1] + C[2][2]; M3.elements[0] += tr * 1e-6; M3.elements[4] += tr * 1e-6; M3.elements[8] += tr * 1e-6;
+    const ters = M3.clone().invert(), avuc = new THREE.Vector3(0.3, 0.5, 0.8);
+    for (let k = 0; k < 40; k++) { avuc.applyMatrix3(ters); avuc.addScaledVector(parmak, -avuc.dot(parmak)).normalize(); }
+    // işaret: bağ pozunda (kollar aşağı) avuç gövdeye, kalçaya doğru bakar
+    if (avuc.dot(v.copy(kalca).sub(bilek).setY(0)) < 0) avuc.negate();
+    const qt = kemik.getWorldQuaternion(new THREE.Quaternion()).invert();
+    sonuc[i] = { parmak: parmak.applyQuaternion(qt), avuc: avuc.applyQuaternion(qt), uzun };
+  }
+  return sonuc;
+}
+
+// Eli dünya yönüne çevirir: parmaklar 'parmak', avuç 'avuc' yönüne baksın. a: 0..1 karışım (0: IK'nın verdiği duruş).
+const EM1 = new THREE.Matrix4(), EM2 = new THREE.Matrix4(), EQ = new THREE.Quaternion(), EX = new THREE.Vector3(), EY = new THREE.Vector3(), EZ = new THREE.Vector3();
+function eliCevir(r, i, parmak, avuc, a = 1) {
+  const o = r.el && r.el[i]; if (!o || a <= 0) return;
+  const kemik = i ? r.B.RightHand : r.B.LeftHand;
+  EX.copy(o.parmak); EZ.crossVectors(EX, o.avuc).normalize(); EY.crossVectors(EZ, EX); EM1.makeBasis(EX, EY, EZ); // yerel taban
+  EX.copy(parmak).normalize(); EY.copy(avuc).addScaledVector(EX, -avuc.dot(EX)).normalize(); EZ.crossVectors(EX, EY); EY.crossVectors(EZ, EX); EM2.makeBasis(EX, EY, EZ); // istenen
+  EQ.setFromRotationMatrix(EM2.multiply(EM1.transpose()));
+  kemik.getWorldQuaternion(q2); q2.slerp(EQ, a);
+  kemik.parent.getWorldQuaternion(q1); kemik.quaternion.copy(q1.invert().multiply(q2)); kemik.updateMatrixWorld(true);
 }
 
 const KL = new THREE.Vector3(), KR = new THREE.Vector3(), KO = new THREE.Vector3(), KY = new THREE.Vector3(), KI = new THREE.Vector3();
@@ -131,6 +176,8 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   for (const k of ['LeftFoot', 'RightFoot']) { const f = r.B[k]; q2.copy(yon).multiply(r.ayak[k]); f.parent.getWorldQuaternion(q1); f.quaternion.copy(q1.invert().multiply(q2)); f.updateMatrixWorld(true); }
   if (bas) turn(r.B.Head, yukari, bas);
   if (ek && ek.basEg) turn(r.B.Head, sol, ek.basEg);
+  // ek.tut: { i: 0 sol / 1 sağ, parmak, avuc, a } — el bir nesneyi kavrar (kupa)
+  if (ek && ek.tut) eliCevir(r, ek.tut.i, ek.tut.parmak, ek.tut.avuc, ek.tut.a);
   if (ek && ek.bilek) { if (ek.bilek[0]) turn(r.B.LeftHand, sol, ek.bilek[0]); if (ek.bilek[1]) turn(r.B.RightHand, sol, ek.bilek[1]); }
 }
 

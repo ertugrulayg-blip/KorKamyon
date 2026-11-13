@@ -5,7 +5,7 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 
 ## Çalışma düzeni
 - Proje sahibi yalnızca fikir ve geri bildirim verir; kod, görsel, ses, paketleme ve belgeler asistanın işidir.
-- Sahibi Türkçe yazar; yanıtlar ve oyun içi metinler Türkçe.
+- Sahibi Türkçe yazar; yanıtlar Türkçe. Oyun Türkçe ve İngilizce (tarayıcı diline göre açılır, menüden ve ayarlardan değişir).
 - Değişiklikler dalda yapılır. `main`'e birleştirme (yayın) her seferinde sahibinin açık onayıyla olur.
 - `main`'e birleşince web sürümü GitHub Pages'te, PC sürümü Releases sayfasında (`.exe`) kendiliğinden güncellenir.
 - Ücretli model/ses gerekiyorsa sahibine "şunu satın al" denir; o alır.
@@ -26,11 +26,16 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/main.js` — PeerJS ağı, mikrofon, ana döngü. `src/state.js` — paylaşılan `net` ve `ui`.
 - `src/detail.js` — kamyon, dorse, tanker süslemeleri (yalnız görüntü; `Batch` ile tek ağda birleştirilir). hud.js yükler.
 - `src/rig.js` — iskeletli karakter (`assets/chars/trucker.glb`): kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
+- `src/dil.js` — Türkçe/İngilizce. Oyun mesajları oda sahibinden **kod** olarak gelir (`say('kod', param)`), her istemci `mesaj()` ile kendi dilinde gösterir. Ekran metinleri `L('anahtar')`; index.html'de `data-t` / `data-tp`, uzun bloklar `.dil-tr` / `.dil-en`. Yeni metin eklerken iki dile de yaz.
+- `src/egitim.js` — eğitim adımları (oda sahibinde, `stepEgitim` main'den). Aşama ayarları `ASAMA` (world.js); `oyun.lv/acik`, `asamaSec`, `puan()`, `bitir()` sim.js'te.
+- `src/sohbet.js` — sesli sohbet: bağlantılar sessiz parçayla kurulur, mikrofon açılınca `replaceTrack`; kipler kapalı/açık/bas-konuş (V); uzaktaki sesler WebAudio kazancıyla (oyuncu başına seviye).
 - `src/panel.js` — ayarlar (ses seviyeleri, oyuncu listesi, oda sahibi için lobide çıkarma) ve tuş rehberi. Ses ayarları `ui.ses`, `localStorage kk-ses`.
 - Karakter dosyaları oyuncu rengine göre `rig.js` içindeki `KARAKTER` listesinde; olmayan renk kırmızı modelin boyanmış hali.
 - `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
+- `marketing/` — Steam görselleri (`steam/`), mağaza metni (`STEAM-SAYFASI.md`), üretim betikleri (`cek.cjs` ekran görüntüleri, `hero.cjs` arka planlar, `kapak.cjs` kapaklar ve logo). `?temiz` adresi bardaki isimleri gizler.
+- `tanitim/` — tanıtım sayfası (tek HTML, iki dil), GitHub Pages'te `/tanitim/`.
 - `lib/` — three.js, GLTFLoader ve PeerJS kopyaları. `desktop/` — Electron sarmalayıcı.
-- Modüller sırayla bağımlıdır: world → sim → models → scene → detail → rig → bar → audio → input → hud → panel → main. Geri yönde import ekleme.
+- Modüller sırayla bağımlıdır: dil → world → sim → egitim → models → scene → detail → rig → bar → audio → input → hud → sohbet → panel → main. Geri yönde import ekleme.
 - Grafik kalitesi `ui.kalite` (0/1/2, `?kalite=N`). Yazılım GL'de yüksek kalite ~4 kare/sn: testler `kalite=0` ile koşar, ekran görüntüsü için `kalite=2` kullan ve uzun bekle.
 - Dış siteler bu ortamdan kapalı; GitHub'daki açık depolar `git clone` ile alınabiliyor. kenney.nl robotları reddediyor (zorlama).
 
@@ -38,6 +43,6 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - Koordinatlar kamyon (dorse) çerçevesindedir: +z ileri, +y yukarı, **+x SOL**. Dünya kamyonun altında kayar.
 - Çekici dorseye `HZ` mafsalından bağlıdır; kabin kutuları `b.cab` ile işaretli, `toCab/fromCab` ile dönüştürülür.
 - Yeni oyun durumu eklerken: `T`/ilgili nesne → `resetGame()` → `snap()` → `hud.js` (çizim) → gerekiyorsa `audio.js`.
-- Ağ: oda sahibi 60 Hz benzetir, 20 Hz durum yollar; istemciler yalnız girdi yollar. Ücretsiz PeerJS sunucusu kullanılıyor.
+- Ağ: oda sahibi 60 Hz benzetir, 20 Hz durum yollar; istemciler yalnız girdi yollar. Ücretsiz PeerJS sunucusu kullanılıyor. 7 sn girdi göndermeyen istemci düşürülür (`dusur`), 9 sn durum alamayan istemci menüye döner.
 - `?debug` ile `window.G` üzerinden durum kurcalanabilir (testler bunu kullanır). `G.kamera` sahne kamerası (`G.cam` ayrı: kamera kipini değiştiren ayarlayıcı).
 - Kod sıkışık yazılmıştır (uzun satırlar). Yeni kodu okunur yaz; eskisini dokunduğun yerde aç.
