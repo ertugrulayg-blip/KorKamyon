@@ -26,9 +26,11 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/main.js` — PeerJS ağı, mikrofon, ana döngü. `src/state.js` — paylaşılan `net` ve `ui`.
 - `src/detail.js` — kamyon, dorse, tanker süslemeleri (yalnız görüntü; `Batch` ile tek ağda birleştirilir). hud.js yükler.
 - `src/rig.js` — iskeletli karakter (`assets/chars/trucker.glb`): kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
+- `src/panel.js` — ayarlar (ses seviyeleri, oyuncu listesi, oda sahibi için lobide çıkarma) ve tuş rehberi. Ses ayarları `ui.ses`, `localStorage kk-ses`.
+- Karakter dosyaları oyuncu rengine göre `rig.js` içindeki `KARAKTER` listesinde; olmayan renk kırmızı modelin boyanmış hali.
 - `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
 - `lib/` — three.js, GLTFLoader ve PeerJS kopyaları. `desktop/` — Electron sarmalayıcı.
-- Modüller sırayla bağımlıdır: world → sim → models → scene → detail → rig → bar → audio → input → hud → main. Geri yönde import ekleme.
+- Modüller sırayla bağımlıdır: world → sim → models → scene → detail → rig → bar → audio → input → hud → panel → main. Geri yönde import ekleme.
 - Grafik kalitesi `ui.kalite` (0/1/2, `?kalite=N`). Yazılım GL'de yüksek kalite ~4 kare/sn: testler `kalite=0` ile koşar, ekran görüntüsü için `kalite=2` kullan ve uzun bekle.
 - Dış siteler bu ortamdan kapalı; GitHub'daki açık depolar `git clone` ile alınabiliyor. kenney.nl robotları reddediyor (zorlama).
 

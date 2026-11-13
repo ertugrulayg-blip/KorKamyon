@@ -12,7 +12,7 @@ export function initSnd() {
   const F = (type, f, q, to) => { const b = AC.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; b.connect(to); return b; };
   const O = (type, f, to) => { const o = AC.createOscillator(); o.type = type; o.frequency.value = f; o.connect(to); o.start(); return o; };
   const N = (to) => { const s = AC.createBufferSource(); s.buffer = nb; s.loop = true; s.connect(to); s.start(); return s; };
-  const master = G(0.9, out), mg = G(ui.musOn ? 1 : 0, master), mlp = F('lowpass', 2200, 0.5, mg);
+  const master = G(0.9 * ui.ses.efekt, out), mg = G(0, out), mlp = F('lowpass', 2200, 0.5, mg); // efektler master'dan, müzik ayrı yoldan çıkar (ayrı ses ayarı)
   const eg = G(0, master), ef = F('lowpass', 250, 1.5, eg), e1 = O('sawtooth', 40, ef), e2 = O('square', 20, ef); // motor
   const rg = G(0, master), rf = F('lowpass', 400, 0.7, rg); N(rf); // gaz / yol uğultusu
   const bg = G(0, master); N(F('bandpass', 2400, 5, bg)); // fren
@@ -77,6 +77,6 @@ export function sfx(V, dt) {
     else if (m.includes('kurtuldu')) burst(now, 0.5, 0.3, 'bandpass', 3800); }
   if (t.s !== sm.s) { if (t.s === 'win') [0, 4, 7, 12, 16].forEach((n, i) => tone(329.6 * st(n), now + i * 0.14, i === 4 ? 0.9 : 0.25, 0.2, 'square')); if (t.s === 'over') { tone(300, now, 1.4, 0.3, 'sawtooth', S.master, 55); [7, 3, 0].forEach((n, i) => tone(196 * st(n), now + i * 0.3, 0.5, 0.18, 'triangle')); } sm.s = t.s; }
   const mode = t.s === 'lobby' ? 0 : roll ? 1 : -1; if (mode !== sm.mode) { sm.mode = mode; sm.step = 0; sm.nt = now + 0.15; }
-  set(S.mg.gain, ui.musOn ? (mode ? 1 : 0.9) : 0, 0.1);
+  set(S.mg.gain, ui.musOn ? (mode ? 1 : 0.9) * 0.9 * ui.ses.muzik : 0, 0.1); set(S.master.gain, 0.9 * ui.ses.efekt, 0.1);
   if (mode >= 0 && ui.musOn) { if (sm.nt < now) sm.nt = now + 0.05; while (sm.nt < now + 0.2) sm.nt += musStep(sm.step++, sm.nt, mode); }
 }

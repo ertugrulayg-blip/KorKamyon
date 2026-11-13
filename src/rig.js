@@ -5,6 +5,8 @@ import { clone as cloneSkinned } from '../lib/SkeletonUtils.js';
 import { loadModel, recolor } from './models.js';
 
 export const CHAR_URL = 'assets/chars/trucker.glb';
+// Oyuncu rengine göre karakter dosyası. Olmayanlar için kırmızı kamyoncu boyanarak kullanılır.
+const KARAKTER = ['trucker.glb', 'mavi.glb', null, null];
 const KEMIK = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
 
 // Oyuncu rengine göre tişört ve kepin kırmızısını başka renge çevirir (0: kırmızı, olduğu gibi).
@@ -49,9 +51,9 @@ function ik(ust, orta, uc, hedef, kutup, a, b) {
 
 // Bir karakter kopyası üretir. Model yüklenmemişse null döner.
 export async function makeRig(ci, parent) {
-  const m = await loadModel(CHAR_URL); if (!m) return null;
+  const ozel = KARAKTER[ci % 4], m = (ozel && (await loadModel('assets/chars/' + ozel))) || (await loadModel(CHAR_URL)); if (!m) return null;
   const root = new THREE.Group(), model = cloneSkinned(m);
-  const boya = kirmiziyiBoya(ci); if (boya) recolor(model, 'rig' + (ci % 4), boya);
+  const boya = !ozel || m !== (await loadModel('assets/chars/' + ozel)) ? kirmiziyiBoya(ci) : null; if (boya) recolor(model, 'rig' + (ci % 4), boya);
   model.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; o.receiveShadow = false; } });
   root.add(model); root.matrixAutoUpdate = false; parent.add(root);
   const B = {}; model.traverse((o) => { if (o.isBone) { const ad = o.name.replace(/^mixamorig:?/, ''); if (KEMIK.includes(ad)) B[ad] = o; } });
@@ -70,10 +72,11 @@ export async function makeRig(ci, parent) {
   };
 }
 
-const ileri = new THREE.Vector3(), yukari = new THREE.Vector3(), kutup = new THREE.Vector3(), M = new THREE.Matrix4(), P = new THREE.Vector3(), SC = new THREE.Vector3(1, 1, 1);
+const sol = new THREE.Vector3(), ileri = new THREE.Vector3(), yukari = new THREE.Vector3(), kutup = new THREE.Vector3(), M = new THREE.Matrix4(), P = new THREE.Vector3(), SC = new THREE.Vector3(1, 1, 1);
 // Karakteri yerleştirir. kalca: kalça kemiğinin dünya konumu; yon: gövdenin dünya yönelimi (+z ileri, +y yukarı);
 // hedef: { lh, rh, lf, rf } dünya konumları (el ve ayak kemikleri); bas: baş çevirme açısı (radyan, gövde eksenine göre).
-export function poseRig(r, kalca, yon, hedef, bas = 0) {
+// ek (isteğe bağlı): { egil: gövdeyi öne eğme, basEg: başı öne eğme (eksi: geriye), bilek: [sol, sağ] bilek bükme } — radyan
+export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   for (const [k, q] of r.bind) r.B[k].quaternion.copy(q);
   // kök: kalça kemiği kalça noktasına gelecek biçimde
   P.set(0, -r.hipY, 0).applyQuaternion(yon).add(kalca);
@@ -81,7 +84,8 @@ export function poseRig(r, kalca, yon, hedef, bas = 0) {
   r.root.parent.updateMatrixWorld(true);
   r.root.matrix.copy(m1.copy(r.root.parent.matrixWorld).invert().multiply(M));
   r.root.updateMatrixWorld(true);
-  ileri.set(0, 0, 1).applyQuaternion(yon); yukari.set(0, 1, 0).applyQuaternion(yon);
+  ileri.set(0, 0, 1).applyQuaternion(yon); yukari.set(0, 1, 0).applyQuaternion(yon); sol.set(1, 0, 0).applyQuaternion(yon);
+  if (ek && ek.egil) { turn(r.B.Spine1, sol, ek.egil * 0.6); turn(r.B.Spine2, sol, ek.egil * 0.4); } // gövde: kollar IK'dan önce eğilir
   // kollar: dirsek geriye ve aşağı; bacaklar: diz ileri
   kutup.copy(ileri).multiplyScalar(-1).addScaledVector(yukari, -0.6);
   if (hedef.lh) ik(r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh, kutup, r.kol[0], r.kol[1]);
@@ -92,5 +96,7 @@ export function poseRig(r, kalca, yon, hedef, bas = 0) {
   // ayak tabanı yere paralel kalsın
   for (const k of ['LeftFoot', 'RightFoot']) { const f = r.B[k]; q2.copy(yon).multiply(r.ayak[k]); f.parent.getWorldQuaternion(q1); f.quaternion.copy(q1.invert().multiply(q2)); f.updateMatrixWorld(true); }
   if (bas) turn(r.B.Head, yukari, bas);
+  if (ek && ek.basEg) turn(r.B.Head, sol, ek.basEg);
+  if (ek && ek.bilek) { if (ek.bilek[0]) turn(r.B.LeftHand, sol, ek.bilek[0]); if (ek.bilek[1]) turn(r.B.RightHand, sol, ek.bilek[1]); }
 }
 
