@@ -38,6 +38,15 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ⬜ Gamepad desteği
 - 🙋 Tanıdıklara oynatıp "para verir miydin" diye sormak
 
+## Oyun testi geri bildirimi (13.11, Alper)
+- ✅ Bağlantısı kopan oyuncu 7 sn içinde odadan düşer; oda sahibinden 9 sn haber alamayan istemci menüye döner
+- ✅ Sandıklar tutulup taşınabilir
+- ✅ Koltuk yerine düşünce (4 sn) fırlayan dahil herkes hemen oturabilir
+- ✅ Tankerin üstünde durunca ölme hatası (vana açılamıyordu) düzeltildi
+- ✅ Hararet, yağ ve vana: işaret ve ekranda "F" ipucu; etki alanı genişledi
+- ✅ Sesli sohbet isteğe bağlı (varsayılan kapalı), açık mikrofon ya da bas-konuş (V); her oyuncunun sesi ayrı ayarlanır (WebAudio, iPhone dahil)
+- 🙋 Sesli sohbet ve kopma: gerçek iki-üç cihazla denenmeli
+
 ## 3. Steam hesabı ve mağaza sayfası
 - 🙋 Steamworks hesabı, vergi formu (W-8BEN tamamlandı), banka bilgisi, kayıt ücreti
 - 🙋 İsim kontrolü: "Road Hogs" adında oyun/marka var mı (Overwatch'taki "Roadhog" karakterine dikkat)

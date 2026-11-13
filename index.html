@@ -90,6 +90,10 @@
   html[lang="en"] .dil-tr, html:not([lang="en"]) .dil-en{display:none}
   .dilsec{display:flex;gap:6px;justify-content:flex-end;margin:-8px -6px 6px 0}.dilsec b{cursor:pointer;font-size:12px;font-weight:800;padding:3px 8px;border-radius:8px;border:2px solid #ddd;color:#777}.dilsec b.secili{border-color:#d8432f;color:#d8432f}
   .dilsec.ayar{justify-content:flex-start;margin:0}.dilsec.ayar b{font-size:14px;border-color:#39445a;color:#9aa4b5}.dilsec.ayar b.secili{border-color:#d8432f;color:#fff;background:#d8432f}
+  #dugmeler b#mikBtn.canli{background:rgba(200,30,40,.85);border-color:#fff}
+  .kay .kip{display:flex;gap:6px;flex-wrap:wrap}.kay .kip button{border:2px solid #39445a;background:none;color:#9aa4b5;border-radius:8px;padding:4px 9px;font-weight:800;cursor:pointer}.kay .kip button.secili{background:#d8432f;border-color:#d8432f;color:#fff}
+  #eylem{position:fixed;left:50%;bottom:22%;transform:translateX(-50%);display:none;background:rgba(15,20,30,.78);border:2px solid #ffd23f;color:#ffe14d;border-radius:12px;padding:7px 14px;font-weight:900;font-size:18px;white-space:nowrap;text-shadow:none;pointer-events:none}
+  #eylem kbd{display:inline-block;background:#ffd23f;color:#141a26;border-radius:6px;padding:0 7px;margin-right:6px;font:900 15px system-ui,Arial}
 </style>
 <script src="lib/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
@@ -108,10 +112,10 @@
   <div id="rol"></div>
   <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div><div id="gorev"></div></div>
   <div id="tumsek"></div><div id="ileri" data-t="ileri"></div>
-  <div id="isaret"></div>
+  <div id="isaret"></div><div id="eylem"></div>
   <div id="afis"></div>
 </div>
-<div id="dugmeler"><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
+<div id="dugmeler"><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
 <div id="ayar" class="panel kapali"><div class="kart2">
   <h2 data-t="ayarlar"></h2>
   <h3 data-t="dilBaslik"></h3><div class="dilsec ayar"><b data-dil="tr">Türkçe</b><b data-dil="en">English</b></div>
@@ -135,7 +139,7 @@
     <div><kbd>T</kbd> tanker çağır (yalnız yolcu, yakıt %50 altı)</div>
   </div>
   <h3>GENEL</h3><div class="tus">
-    <div><kbd>Enter</kbd> oyunu başlat (oda sahibi)</div><div><kbd>M</kbd> mikrofon · <kbd>N</kbd> müzik</div>
+    <div><kbd>Enter</kbd> oyunu başlat (oda sahibi)</div><div><kbd>V</kbd> bas-konuş · <kbd>M</kbd> sustur · <kbd>N</kbd> müzik</div>
     <div><kbd>H</kbd> bu ekran</div><div><kbd>O</kbd> ayarlar · <kbd>Esc</kbd> kapat</div>
   </div>
   <h3>NE YAPILIR</h3><div class="gorevler">
@@ -145,7 +149,7 @@
     ⛽ <b>Yakıt:</b> tanker gelince sarı hortumu depo ağzına bırak, tankerin üstündeki vanayı F ile aç.<br>
     🌡 <b>Hararet:</b> kabinde koltukların arasındaki mavi kapağın yanında F'ye bas.<br>
     🥷 <b>Haydut:</b> üç şaplakta kamyondan uçar. 🚓 <b>Polis:</b> arkadaki varilin yanında F ile yağ dök ya da üstüne atla.<br>
-    📦 <b>Yük:</b> sert virajda ve çarpmada sandıklar kayar; TUT ile tutulan sandık kaymaz. Koltukta 30 saniyeden fazla kalan fırlar.
+    📦 <b>Yük:</b> sert virajda ve çarpmada sandıklar kayar; TUT ile tutulan sandık kaymaz, tutarken yürürsen taşırsın. Koltukta 30 saniyeden fazla kalan fırlar.
   </div>
 </div><div class="dil-en"><h2>⌨ Controls</h2>
   <h3>IN THE BACK</h3><div class="tus">
@@ -162,7 +166,7 @@
     <div><kbd>T</kbd> call the tanker (passenger only, fuel under 50%)</div>
   </div>
   <h3>GENERAL</h3><div class="tus">
-    <div><kbd>Enter</kbd> start the game (host)</div><div><kbd>M</kbd> microphone · <kbd>N</kbd> music</div>
+    <div><kbd>Enter</kbd> start the game (host)</div><div><kbd>V</kbd> push to talk · <kbd>M</kbd> mute · <kbd>N</kbd> music</div>
     <div><kbd>H</kbd> this screen</div><div><kbd>O</kbd> settings · <kbd>Esc</kbd> close</div>
   </div>
   <h3>WHAT TO DO</h3><div class="gorevler">
@@ -172,7 +176,7 @@
     ⛽ <b>Fuel:</b> when the tanker arrives, drop the yellow nozzle into the filler cap and open the valve on top of the tanker with F.<br>
     🌡 <b>Overheating:</b> press F next to the blue cap between the seats in the cab.<br>
     🥷 <b>Bandit:</b> three slaps send him flying. 🚓 <b>Police:</b> spill oil with F at the barrel at the back, or jump on their car.<br>
-    📦 <b>Cargo:</b> crates slide in hard turns and crashes; a crate you GRAB stays put. Anyone sitting longer than 30 seconds gets ejected.
+    📦 <b>Cargo:</b> crates slide in hard turns and crashes; a crate you GRAB stays put, and you can carry it while walking. Anyone sitting longer than 30 seconds gets ejected.
   </div>
 </div>
   <button class="pkapat" data-t="kapat"></button>
@@ -195,6 +199,6 @@
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=38"></script>
+<script type="module" src="src/main.js?v=39"></script>
 </body>
 </html>

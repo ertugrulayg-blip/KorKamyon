@@ -8,7 +8,7 @@ import { initSnd } from './audio.js';
 // ---------- girdi ----------
 export const TOUCH = matchMedia('(pointer:coarse)').matches;
 export const key = {}, cnt = { p: 0, s: 0, c: 0, w: 0, q: 0, r: 0 }, tb = {}, joy = { x: 0, y: 0 };
-addEventListener('keydown', (e) => { if (e.repeat || $('menu').style.display !== 'none') return; key[e.code] = 1; if (e.code === 'KeyK') cnt.p++; if (e.code === 'KeyE') cnt.s++; if (e.code === 'KeyT') cnt.c++; initSnd(); if (e.code === 'KeyN') { ui.musOn = !ui.musOn; localStorage.setItem('kk-muz', ui.musOn ? '1' : '0'); } if (e.code === 'Enter') hostStart(); if (e.code === 'KeyM' && net.mic) { const tr = net.mic.getAudioTracks()[0]; if (tr) tr.enabled = !tr.enabled; } if (DBG && e.code === 'KeyC') ui.camMode = ui.camMode >= 2 ? -1 : ui.camMode + 1; if (e.code === 'Space') e.preventDefault(); });
+addEventListener('keydown', (e) => { if (e.repeat || $('menu').style.display !== 'none') return; key[e.code] = 1; if (e.code === 'KeyK') cnt.p++; if (e.code === 'KeyE') cnt.s++; if (e.code === 'KeyT') cnt.c++; initSnd(); if (e.code === 'KeyN') { ui.musOn = !ui.musOn; localStorage.setItem('kk-muz', ui.musOn ? '1' : '0'); } if (e.code === 'Enter') hostStart(); if (DBG && e.code === 'KeyC') ui.camMode = ui.camMode >= 2 ? -1 : ui.camMode + 1; if (e.code === 'Space') e.preventDefault(); });
 addEventListener('keyup', (e) => (key[e.code] = 0));
 addEventListener('pointerdown', initSnd); ren.domElement.addEventListener('mousedown', (e) => { if (e.button === 0) ui.mouseL = true; else cnt.p++; }); addEventListener('mouseup', (e) => { if (e.button === 0) ui.mouseL = false; }); addEventListener('contextmenu', (e) => e.preventDefault());
 ren.domElement.addEventListener('dblclick', () => matchMedia('(pointer:coarse)').matches && hostStart());
