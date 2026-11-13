@@ -25,7 +25,7 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Yük dengesi: normal çarpmada sandık düşmez, yalnız hızlı sert çarpmada 0–3 sandık gider
 - ✅ Mavi karakter (Meshy)
 - ✅ Şoför görüşü: göz tablonun hizasında (gökyüzü ve ağaç tepeleri görünür, yol görünmez); yağmurda cam buğulanır
-- ✅ Koltuk 1 dakika; fırlayan koltuk yaylanıp uçar, yenisi yerine düşer
+- ✅ Koltuk 30 saniye; fırlayan koltuk yaylanıp uçar, yenisi yerine düşer
 - ✅ Yolcu: korna (haydudu irkiltir), çivi (kovalayan polise), silecek hatası düzeltildi
 - ✅ Yolcu kendi koltuğundan yolu görür (ileri penceresi kalktı); tankeri yalnız yolcu çağırır
 - ✅ Bar: kupa elde, avuç yukarı top

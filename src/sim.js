@@ -107,7 +107,7 @@ export function stepPlayer(pl, dt) {
     else if (pl.seatCd <= 0) for (const s of [1, 2]) { fromCab(SEAT[s][0], SEAT[s][2]); if (!(T.ejT[s] > 0) && ![...players.values()].some((q) => q.seat === s) && Math.hypot(P[0] - tX, P[2] - tZ) < 1.4 && P[1] > 1.5) { pl.seat = s; pl.seatT = 0; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); break; } }
   }
   pl.seatCd -= dt;
-  if (pl.seat) { if (T.state === 'run' && !(T.cd > 0) && !chase()) pl.seatT += dt; if (pl.seatT >= SEAT_T) eject(pl); else { poseSeat(pl); return; } } // koltukta 1 dakikadan fazla kalan fırlar
+  if (pl.seat) { if (T.state === 'run' && !(T.cd > 0) && !chase()) pl.seatT += dt; if (pl.seatT >= SEAT_T) eject(pl); else { poseSeat(pl); return; } } // koltukta 30 saniyeden fazla kalan fırlar
   const st = pl.stun > 0; pl.stun -= dt; pl.gndT -= dt; pl.jumpT -= dt; pl.punchCd -= dt; pl.punchT -= dt;
   const mx = st ? 0 : I.mx || 0, mz = st ? 0 : I.mz || 0, ml = Math.min(1, Math.hypot(mx, mz));
   if (ml > 0.1) { let d = Math.atan2(mx, mz) - pl.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); pl.yaw += d * 0.25; }
