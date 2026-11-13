@@ -64,7 +64,8 @@ export function sfx(V, dt) {
     else if (m.includes('stop etti')) { for (let i = 0; i < 4; i++) tone(90 - i * 12, now + i * 0.16, 0.14, 0.4, 'sawtooth'); burst(now + 0.6, 1.2, 0.3, 'bandpass', 3500); }
     else if (m.includes('saf dışı')) { burst(now, 1.1, 0.8, 'lowpass', 500); tone(120, now, 0.9, 0.5, 'sine', S.master, 28); [0, 4, 7, 12].forEach((n, i) => tone(523 * st(n), now + 0.5 + i * 0.12, 0.3, 0.18, 'square')); }
     else if (m.includes('yağ döktü')) { burst(now, 0.7, 0.4, 'lowpass', 650); tone(260, now, 0.5, 0.15, 'sine', S.master, 80); if (m.includes('kaydı')) burst(now + 0.3, 1.2, 0.3, 'bandpass', 2900); }
-    else if (m.includes('atladı')) { burst(now, 0.3, 0.7, 'lowpass', 900); tone(150, now, 0.3, 0.5, 'sine', S.master, 45); tone(700, now, 0.25, 0.07, 'square', S.master, 480); }
+    else if (m.includes('atladı')) { burst(now + 0.05, 0.6, 0.25, 'bandpass', 3100); tone(420, now + 0.05, 0.5, 0.06, 'sawtooth', S.master, 260); // lastik cıyaklaması + metal ezilmesi
+ burst(now, 0.3, 0.7, 'lowpass', 900); tone(150, now, 0.3, 0.5, 'sine', S.master, 45); tone(700, now, 0.25, 0.07, 'square', S.master, 480); }
     else if (m.includes('fırladı')) { tone(90, now, 0.6, 0.35, 'sawtooth', S.master, 600); tone(300, now + 0.05, 0.9, 0.12, 'sine', S.master, 1400); } // yay sesi
     else if (m.includes('fırladı_eski')) { tone(200, now, 0.55, 0.25, 'square', S.master, 950); burst(now, 0.15, 0.3, 'bandpass', 1200); }
     else if (m.includes('Bariyer') || m.includes('vurdu') || m.includes('Kapalı şerid')) { burst(now, 0.45, 0.7, 'lowpass', 800); tone(110, now, 0.4, 0.5, 'sine', S.master, 36); burst(now + 0.02, 0.5, 0.25, 'bandpass', 2600); tone(640, now, 0.5, 0.08, 'square', S.master, 520); }

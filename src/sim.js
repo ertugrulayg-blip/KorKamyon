@@ -184,7 +184,7 @@ export function stepPlayer(pl, dt) {
   pl.offT = P[1] < 0.7 ? pl.offT + dt : 0;
   // kasanın dışına taşmış ama düşmemiş (ayağı korkuluğa takılmış): tutunmuyorsa kısa sürede düşmüş sayılır ve kasaya geri gelir
   const disari = Math.abs(P[0]) > 1.62 || P[2] < -6.25 || P[2] > 5.6, tutunuyor = pl.pin[0] || pl.pin[1];
-  pl.disT = disari && !tutunuyor && !pl.seat ? (pl.disT || 0) + dt : 0; if (pl.disT > 1.2) pl.offT = 99;
+  pl.disT = disari && !tutunuyor && !pl.seat && !pl.onPol ? (pl.disT || 0) + dt : 0; if (pl.disT > 1.2) pl.offT = 99;
   if (pl.offT > 2.5 || P[2] < -16 || P[2] > 14 || Math.abs(P[0]) > 12) { pl.dead = 2; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); if (T.state === 'run') say(pl.name + ' kamyondan düştü!'); }
 }
 export function stepAir(dt) {
@@ -236,15 +236,15 @@ export function stepExtras(dt) {
 }
 export function stepPolice(dt) {
   const S = PC, run = T.state === 'run' && !(T.cd > 0), px = S.x, pz = S.z; T.oilCd -= dt; T.ejT[1] -= dt; T.ejT[2] -= dt;
-  if (run && S.st === 0) for (let i = 0; i < POLZ.length; i++) if (!S.used[i] && T.Z > POLZ[i] - 45 && T.Z < POLZ[i] + 5 && T.v > LIMIT) { S.used[i] = 1; Object.assign(S, { st: 1, x: -2.5, z: -45, hp: 100, t: 0, ram: 5, slip: 0 }); say('🚓 Hız sınırını aştınız! Polis peşinizde'); break; }
+  if (run && S.st === 0) for (let i = 0; i < POLZ.length; i++) if (!S.used[i] && T.Z > POLZ[i] - 45 && T.Z < POLZ[i] + 5 && T.v > LIMIT) { S.used[i] = 1; Object.assign(S, { st: 1, x: -2.5, z: -45, hp: 100, t: 0, ram: 5, slip: 0, geri: 0, darbe: 0 }); say('🚓 Hız sınırını aştınız! Polis peşinizde'); break; }
   if (S.st === 1) { S.z += dt * 9; S.x -= S.x * Math.min(1, dt); if (S.z >= -9.4) { S.z = -9.4; S.st = 2; say('🚓 Polis arkanızda! Yağ dökün ya da üstüne atlayın'); } }
-  else if (S.st === 2) { S.t += dt;
+  else if (S.st === 2) { S.t += dt; S.geri = Math.max(0, S.geri - dt * 1.2); S.darbe = Math.max(0, S.darbe - dt * 2.2); // darbe: üstüne atlanınca araç çöker, yavaşlayıp geride kalır
     if (S.slip > 0) { S.slip -= dt; S.z += (-24 - S.z) * Math.min(1, dt * 2.5); } // yağda kayıp geride kalır
-    else { const lunge = S.ram < 0.35; S.z += (-9.4 + (lunge ? 1.25 : 0) - S.z) * Math.min(1, dt * (lunge ? 9 : 2.2)); S.x += (Math.sin(S.t * 0.7) * 1.3 - S.x) * Math.min(1, dt * 2); S.ram -= dt;
+    else { const lunge = S.ram < 0.35; S.z += (-9.4 - S.geri + (lunge ? 1.25 : 0) - S.z) * Math.min(1, dt * (lunge ? 9 : 2.2)); S.x += (Math.sin(S.t * 0.7) * 1.3 - S.x) * Math.min(1, dt * 2); S.ram -= dt;
       if (S.ram <= 0 && S.z > -8.5) { S.ram = rnd(5, 8); T.dmg[S.x > 0 ? 2 : 3] += 6; say('GÜM! Polis arkadan vurdu'); jolt(0, -1.3); for (const p of players.values()) if (!p.seat) for (let i = 2; i < 21; i += 3) p.Q[i] += 0.06; } }
     for (const p of players.values()) { const inB = !p.seat && p.dead <= 0 && Math.abs(p.P[0] - px) < 1.3 && Math.abs(p.P[2] - pz) < 2.5 && p.P[2] < -6.3 && p.P[1] > 1.3 && p.P[1] < 3.6, on = inB && p.gndT > 0;
       if (inB && S.slip <= 0) for (let i = 0; i < 21; i += 3) { p.P[i] += S.x - px; p.Q[i] += S.x - px; p.P[i + 2] += S.z - pz; p.Q[i + 2] += S.z - pz; } // üstündeki oyuncuyu taşır (yağda kayarken taşımaz: düşer)
-      if (on) { S.hp -= dt * 5; if (p.airT > 0.3) { S.hp -= 12; say(p.name + ' polis arabasının üstüne atladı! 💥'); } }
+      if (on) { S.hp -= dt * 5; S.geri = Math.max(S.geri, 1.2); if (p.airT > 0.2) { S.hp -= 12; S.geri = Math.min(7, S.geri + 3); S.darbe = 1; S.ram = Math.max(S.ram, 2.5); say(p.name + ' polis arabasının üstüne atladı! 💥'); } } // üstünde biri varken ağırlaşır, atlayınca frenler
       p.airT = p.gndT > 0 ? 0 : (p.airT || 0) + dt; p.onPol = on; }
     if (S.hp <= 0 || !run) { S.st = 3; T.autoT = 12; if (run) say('🚓 Polis aracı saf dışı! Kurtuldunuz 🎉 Şoför koltuğa!'); } }
   else if (S.st === 3) { S.z -= dt * 10; if (S.z < -60) S.st = 0; }
@@ -307,7 +307,7 @@ export function stepTruck(dt) {
 export function startGame() { resetGame(); T.state = 'run'; T.v = 0; T.cd = 5; }
 export function resetGame() {
   Object.assign(T, { X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], state: 'lobby', t: 0, cd: 0, dmg: [0, 0, 0, 0], hitCd: 0, phi: 0, oilCd: 0, autoT: 0, heat: 0, stall: false, rain: 0, wipeT: 0, nFire: rnd(45, 70), nBot: rnd(40, 60), ej: [0, 0, 0], ejT: [0, 0, 0], nextFlat: rnd(25, 40), msg: '', msgT: 0, why: '', sig: 0 });
-  Object.assign(TKS, { st: 0, z: -50, valve: 0, vp: 0 }); NZ.holder = null; NZ.dock = false; AH.holder = null; AH.p = AIR.slice(); DH.holder = null; DH.p = DRL.slice(); Object.assign(PC, { st: 0, z: -45, hp: 100, slip: 0, used: [] }); OIL.length = 0; if (BOT) { players.delete(BOT.id); BOT = null; } FIRE.on = false; EX.holder = null; EX.p = EXT.slice(); for (const c of CR) Object.assign(c, { x: c.x0, z: c.z0, vx: 0, vz: 0, lost: false }); for (const p of players.values()) { p.seatT = 0; p.seatCd = 0; } for (const o of OBS) o.hit = false;
+  Object.assign(TKS, { st: 0, z: -50, valve: 0, vp: 0 }); NZ.holder = null; NZ.dock = false; AH.holder = null; AH.p = AIR.slice(); DH.holder = null; DH.p = DRL.slice(); Object.assign(PC, { st: 0, z: -45, hp: 100, slip: 0, used: [], geri: 0, darbe: 0 }); OIL.length = 0; if (BOT) { players.delete(BOT.id); BOT = null; } FIRE.on = false; EX.holder = null; EX.p = EXT.slice(); for (const c of CR) Object.assign(c, { x: c.x0, z: c.z0, vx: 0, vz: 0, lost: false }); for (const p of players.values()) { p.seatT = 0; p.seatCd = 0; } for (const o of OBS) o.hit = false;
 }
 export function simStep(dt) { stepAir(dt);
   cpc = Math.cos(T.phi); cps = Math.sin(T.phi);
@@ -316,4 +316,4 @@ export function simStep(dt) { stepAir(dt);
   for (let a = 0; a < L.length; a++) for (let b = a + 1; b < L.length; b++) { const p = L[a], q = L[b]; if (p.seat || q.seat || p.dead > 0 || q.dead > 0) continue; for (const k of [0, 1]) { const i = k * 3, dx = q.P[i] - p.P[i], dy = q.P[i + 1] - p.P[i + 1], dz = q.P[i + 2] - p.P[i + 2], d = Math.hypot(dx, dy, dz) || 1e-6; if (d < 0.56) { const s = ((0.56 - d) / d) * 0.5; p.P[i] -= dx * s; p.P[i + 2] -= dz * s; q.P[i] += dx * s; q.P[i + 2] += dz * s; } } }
 }
 export const r2 = (v) => Math.round(v * 100) / 100;
-export const snap = () => ({ t: 's', T: { X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, dm: T.dmg.map(Math.ceil), ph: Math.round(T.phi * 1000) / 1000, ht: Math.round(T.heat), sl: T.stall ? 1 : 0, rn: T.rain, wp: T.wipeT > 0 ? 1 : 0, ej: T.ej, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], d: [r2(DH.p[0]), r2(DH.p[1]), r2(DH.p[2]), DH.holder ? 1 : 0], q: [PC.st, r2(PC.x), r2(PC.z), Math.max(0, Math.ceil(PC.hp)), PC.slip > 0 ? 1 : 0, PC.used.slice(), T.oilCd > 0 ? Math.ceil(T.oilCd) : 0], ol: OIL, cr: CR.map((c) => (c.lost ? 0 : [r2(c.x), r2(c.z)])), fr: FIRE.on ? [FIRE.x, FIRE.z, Math.ceil(FIRE.hp)] : 0, x: [r2(EX.p[0]), r2(EX.p[1]), r2(EX.p[2]), EX.holder ? 1 : 0], p: [...players.values()].map((p) => ({ bt: p.bot ? 1 : 0, id: p.id, n: p.name, c: p.ci, s: p.seat, st: p.seat ? Math.max(0, Math.ceil(SEAT_T - p.seatT)) : 0, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, P: Array.from(p.P, r2) })) });
+export const snap = () => ({ t: 's', T: { X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, dm: T.dmg.map(Math.ceil), ph: Math.round(T.phi * 1000) / 1000, ht: Math.round(T.heat), sl: T.stall ? 1 : 0, rn: T.rain, wp: T.wipeT > 0 ? 1 : 0, ej: T.ej, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], d: [r2(DH.p[0]), r2(DH.p[1]), r2(DH.p[2]), DH.holder ? 1 : 0], q: [PC.st, r2(PC.x), r2(PC.z), Math.max(0, Math.ceil(PC.hp)), PC.slip > 0 ? 1 : 0, PC.used.slice(), T.oilCd > 0 ? Math.ceil(T.oilCd) : 0, r2(PC.darbe || 0)], ol: OIL, cr: CR.map((c) => (c.lost ? 0 : [r2(c.x), r2(c.z)])), fr: FIRE.on ? [FIRE.x, FIRE.z, Math.ceil(FIRE.hp)] : 0, x: [r2(EX.p[0]), r2(EX.p[1]), r2(EX.p[2]), EX.holder ? 1 : 0], p: [...players.values()].map((p) => ({ bt: p.bot ? 1 : 0, id: p.id, n: p.name, c: p.ci, s: p.seat, st: p.seat ? Math.max(0, Math.ceil(SEAT_T - p.seatT)) : 0, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, P: Array.from(p.P, r2) })) });
