@@ -108,9 +108,12 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   if (disa) kutup.addScaledVector(sol, -2);
   if (hedef.rh) ik(r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh, kutup, r.kol[0], r.kol[1]);
   kutup.copy(ileri);
+  const dizDisa = ek && ek.dizDisa; // dizler iki yana açık oturuş
   // oturuş: uyluk yatay öne, baldır dik aşağı (ek.otur: [sol, sağ] için [uyluk, baldır] oranları)
   if (ek && ek.otur) for (const [k, h, i] of [['LeftUpLeg', hedef.lf, 0], ['RightUpLeg', hedef.rf, 1]]) { const o = ek.otur[i]; r.B[k].getWorldPosition(h).addScaledVector(ileri, r.bacak[0] * o[0]).addScaledVector(yukari, -r.bacak[1] * o[1]); kutup.copy(ileri).addScaledVector(yukari, 0.3); }
+  if (dizDisa) kutup.copy(ileri).addScaledVector(sol, 1.1).addScaledVector(yukari, 0.3);
   if (hedef.lf) ik(r.B.LeftUpLeg, r.B.LeftLeg, r.B.LeftFoot, hedef.lf, kutup, r.bacak[0], r.bacak[1]);
+  if (dizDisa) kutup.addScaledVector(sol, -2.2);
   if (hedef.rf) ik(r.B.RightUpLeg, r.B.RightLeg, r.B.RightFoot, hedef.rf, kutup, r.bacak[0], r.bacak[1]);
   // ayak tabanı yere paralel kalsın
   for (const k of ['LeftFoot', 'RightFoot']) { const f = r.B[k]; q2.copy(yon).multiply(r.ayak[k]); f.parent.getWorldQuaternion(q1); f.quaternion.copy(q1.invert().multiply(q2)); f.updateMatrixWorld(true); }
