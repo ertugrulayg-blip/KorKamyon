@@ -16,7 +16,10 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Güneş gölgeleri, darbe sarsıntısı, teker tozu
 - ✅ Polis arabası (Car Kit), engeller: arızalı arabalar ve koniler
 - ✅ Yol kenarı süsleri: ağaç, kaya, çalı, çiçek, kütük (Nature Kit, toplu çizim)
-- 🔨 Kalan modeller: kamyon ve dorse (koddan güzelleştirilecek), tanker, karakterler, sandık/alet kutuları
+- ✅ Kamyon ve dorse ayrıntıları (ızgara, farlar, egzoz, tahta kasa, lambalar, plaka), tanker, dönen jantlar (`src/detail.js`)
+- ✅ Karakterler: bot, kemer, yelek arması, baş üstünde isim; egzoz dumanı
+- ✅ CI: ana dala her birleştirmede Releases sayfasına `.exe` yayınlanır
+- ⬜ Kalan: sandık ve alet kutuları, karakter yüz ifadeleri, bar sahnesinin cilası
 - ⬜ Kıvılcım, egzoz dumanı, fren izi, su/yağ sıçraması
 - ⬜ Kalite ayarının menüden seçilmesi; telefonda performans ölçümü — 🙋 gerçek telefonda deneme
 - ⬜ Gerçek ses kayıtları ve müzik (CC0 ya da satın alınmış) — 🙋 kulak onayı

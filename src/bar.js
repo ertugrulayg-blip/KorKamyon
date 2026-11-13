@@ -86,12 +86,17 @@ export function drawBar(V, dt) {
 export const pm = new Map();
 export const qY = new THREE.Quaternion(), v3 = new THREE.Vector3();
 export function limbV(m, a, b, r) { const L = a.distanceTo(b) || 0.01; m.position.copy(a).add(b).multiplyScalar(0.5); m.scale.set(r, L, r); m.quaternion.setFromUnitVectors(UP, v3.copy(b).sub(a).divideScalar(L)); }
+const ARMA = new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => { c.fillStyle = '#f4efe2'; c.beginPath(); c.arc(64, 64, 58, 0, 7); c.fill(); c.lineWidth = 8; c.strokeStyle = '#15110d'; c.stroke(); c.fillStyle = '#15110d'; c.font = '900 64px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('RH', 64, 68); }) }); // yelek arması
 export function playerMesh(ci) { // bardaki kamyoncunun aynısı. Gövde+göbek+kafa tek katı parça (o.body); eller, ayaklar ve uzuvlar fizik noktalarını izler
   const k = ci % 4, g = new THREE.Group(), sk = M(SKIN[k]), col = M(COL[k]), o = { g, s: [], l: [] }, b = (o.body = new THREE.Group()); g.add(b);
   add(b, SG, jean, 0, 0, 0, 0.27, 0.24, 0.25); add(b, SG, leather, 0, 0.42, -0.02, 0.4, 0.46, 0.33); add(b, SG, col, 0, 0.24, 0.16, 0.33, 0.33, 0.29); add(b, BG, col, 0, 0.47, -0.31, 0.34, 0.28, 0.06);
   add(b, CG, sk, 0, 0.86, 0, 0.1, 0.12, 0.1); for (const sd of [-1, 1]) add(b, SG, leather, sd * 0.36, 0.66, 0, 0.14);
   const hd = new THREE.Group(); hd.position.set(0, 1.0, 0.02); hd.scale.setScalar(1.1); add(hd, SG, sk, 0, 0, 0, 0.21, 0.235, 0.21); faceParts(hd, k, sk, col, M(HAIR[k])); b.add(hd);
+  // kemer, toka, yeleğin sırtındaki arma
+  add(b, CG, dark, 0, 0.07, 0, 0.275, 0.07, 0.255); add(b, BG, M(0xd9b23a), 0, 0.07, 0.25, 0.1, 0.075, 0.03);
+  add(b, new THREE.PlaneGeometry(0.3, 0.3), ARMA, 0, 0.47, -0.345).rotation.y = Math.PI;
   [[0.13, sk], [0.13, sk], [0.16, dark], [0.16, dark]].forEach(([r, m]) => o.s.push(add(g, SG, m, 0, 0, 0, r)));
+  for (const k of [2, 3]) o.s[k].scale.set(0.15, 0.13, 0.25); // ayaklar: bot biçimi (yönü hud.js çevirir)
   for (let i = 0; i < 4; i++) o.l.push(add(g, CG, i < 2 ? leather : jean, 0, 0, 0, 1));
   scene.add(g); return o;
 }

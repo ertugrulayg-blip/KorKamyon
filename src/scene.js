@@ -16,7 +16,7 @@ sun.castShadow = ui.kalite > 0; sun.shadow.mapSize.set(ui.kalite > 1 ? 2048 : 10
 export const M = (c, o) => new THREE.MeshLambertMaterial({ color: c, ...o }), UP = new THREE.Vector3(0, 1, 0), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
 export const ZEMIN = 0x377e59; // zemin rengi: model karolarının çimiyle aynı olmalı
 export const BG = new THREE.BoxGeometry(1, 1, 1), SG = new THREE.SphereGeometry(1, 16, 12), CG = new THREE.CylinderGeometry(1, 1, 1, 10);
-export const boxMesh = (b, par) => { const m = new THREE.Mesh(BG, M(b.c)); m.scale.set(b.b[0] - b.a[0], b.b[1] - b.a[1], b.b[2] - b.a[2]); m.position.set((b.a[0] + b.b[0]) / 2, (b.a[1] + b.b[1]) / 2, (b.a[2] + b.b[2]) / 2); m.castShadow = m.receiveShadow = true; par.add(m); return m; };
+export const boxMesh = (b, par) => { const m = new THREE.Mesh(BG, M(b.c)); m.scale.set(b.b[0] - b.a[0], b.b[1] - b.a[1], b.b[2] - b.a[2]); m.position.set((b.a[0] + b.b[0]) / 2, (b.a[1] + b.b[1]) / 2, (b.a[2] + b.b[2]) / 2); m.castShadow = m.receiveShadow = true; par.add(m); b.mesh = m; return m; };
 export const add = (par, geo, mat, x, y, z, sx = 1, sy = sx, sz = sx) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = !mat.transparent && !mat.isMeshBasicMaterial; m.receiveShadow = !mat.transparent; par.add(m); return m; };
 export const truck = new THREE.Group(); scene.add(truck);
 export const cabG = new THREE.Group(); cabG.position.z = HZ; truck.add(cabG); export const cabIn = new THREE.Group(); cabIn.position.z = -HZ; cabG.add(cabIn); // çekici: mafsal etrafında döner
@@ -64,8 +64,7 @@ export const cam2 = new THREE.PerspectiveCamera(50, 1.6, 1, 400); cam2.position.
 export const rainP = (() => { const n = 500, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { pos[i * 3] = srnd() * 50 - 25; pos[i * 3 + 1] = srnd() * 16; pos[i * 3 + 2] = srnd() * 60 - 20; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xdfeaf5, size: 0.09, transparent: true, opacity: 0.7, fog: false })); p.visible = false; scene.add(p); return p; })();
 export const SKY = new THREE.Color(0x9fd4ff), GRAY = new THREE.Color(0x76858f);
 export const tanker = new THREE.Group(); scene.add(tanker);
-boxMesh({ a: [-1.2, 0.5, -3.5], b: [1.2, 2.0, 3.5], c: 0xe9e9e9 }, tanker); boxMesh({ a: [-1.2, 0.5, 3.5], b: [1.2, 2.6, 5.2], c: 0x2e6da4 }, tanker);
-for (const z of [-2.5, 2.5, 4.4]) for (const x of [-1.02, 1.02]) add(tanker, CG, M(0x222222), x, 0.55, z, 0.55, 0.35, 0.55).rotation.z = Math.PI / 2;
+// tankerin gövdesi, kabini ve tekerleri detail.js içinde kurulur
 export const valve = add(tanker, new THREE.TorusGeometry(0.22, 0.05, 8, 16), M(0xd8432f), 0, 2.3, -2); valve.rotation.x = Math.PI / 2; add(tanker, CG, M(0x555555), 0, 2.15, -2, 0.05, 0.3, 0.05);
 export const nozzle = add(scene, CG, M(0xffd23f), 0, -5, 0, 0.08, 0.35, 0.08); export const hoseMat = M(0x222222);
 export const pivot = new THREE.Group(), world = new THREE.Group(); pivot.add(world); scene.add(pivot);
@@ -105,9 +104,9 @@ export const polPark = POLZ.map((z) => { const g = new THREE.Group(); g.position
 export const oilM = Array.from({ length: 5 }, () => { const m = add(world, CG, new THREE.MeshBasicMaterial({ color: 0x15110d, transparent: true, opacity: 0.85 }), 0, 0.03, 0, 2.3, 0.02, 2.9); m.visible = false; return m; });
 export const obsMesh = OBS.map((o) => { const g = new THREE.Group(); g.position.set(o.x, 0, o.z);
   if (o.gate) { add(g, BG, M(0xd8232a), 0, 0.9, 0, 7.4, 1.8, 0.6); for (const k of [-2.6, -0.85, 0.9, 2.65]) add(g, BG, M(0xffffff), k, 0.9, -0.02, 0.85, 1.8, 0.6); add(g, BG, M(0xffd23f), 0, 2.3, 0, 7.4, 0.5, 0.2);
-    for (let k = 1; k <= 9; k++) { const z = o.z - k * 6; spawn(KENNEY + 'car/cone.glb', world, cx(z), 0, z, 1.5); } world.add(g); return g; }
+    for (let k = 1; k <= 9; k++) { const z = o.z - k * 6; spawn(KENNEY + 'car/cone.glb', world, cx(z), 0, z, 1.15); } world.add(g); return g; }
   { const kutu = new THREE.Group(), i = OBS.indexOf(o), sd = i % 2 ? 1 : -1; g.add(kutu); // arızalı araba: yola yan durmuş, önünde koniler (model gelmezse kırmızı-beyaz bariyer kalır)
-    spawn(KENNEY + 'car/' + ['sedan', 'taxi', 'van', 'suv', 'hatchback-sports'][i % 5] + '.glb', g, 0, 0, 0, 1.5, sd * (Math.PI / 2 + 0.25)).then((c) => { if (!c) return; kutu.visible = false; for (const x of [-2.4, 0, 2.4]) spawn(KENNEY + 'car/cone.glb', g, x, 0, -2.6, 1.5); });
+    spawn(KENNEY + 'car/' + ['sedan', 'taxi', 'van', 'suv', 'hatchback-sports'][i % 5] + '.glb', g, 0, 0, 0, 1.5, sd * (Math.PI / 2 + 0.25)).then((c) => { if (!c) return; kutu.visible = false; for (const x of [-2.4, 0, 2.4]) spawn(KENNEY + 'car/cone.glb', g, x, 0, -2.6, 1.15); });
     add(kutu, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(kutu, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; } add(g, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(g, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; });
 { const c = cx(LEN); add(world, BG, M(0x222222), c + 10, 4, LEN, 0.5, 8, 0.5); add(world, BG, M(0x222222), c - 10, 4, LEN, 0.5, 8, 0.5); add(world, BG, M(0xffe14d), c, 7.5, LEN, 20.5, 1.4, 0.4); }
 for (const z of BUMP) { const g = new THREE.Group(); g.position.set(cx(z), 0, z); g.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); for (let k = -3; k <= 3; k++) add(g, BG, M(k % 2 ? 0x222222 : 0xffd23f), k * 1.9, 0.08, 0, 1.9, 0.16, 0.9); world.add(g);
