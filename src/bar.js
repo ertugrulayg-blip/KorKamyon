@@ -75,6 +75,7 @@ export function trucker(ci, name) {
   return g;
 }
 export const truckers = new Map(); export let barT = 0;
+export const setBarT = (t) => { barT = t; }; // test/tanıtım: zamanı dondurmak için
 // ---------- barda iskeletli karakterler: kemiklerle hareket ----------
 // Kalça taburede, bacaklar sarkar. Üstüne zamanla değişen katmanlar: nefes, etrafa bakma, top atıp tutma (bilekle),
 // biradan yudum alma (kupayı ağzına götürür, başını geriye atar), kollar bağlıyken arada bir gülme.
@@ -89,7 +90,12 @@ export function topEli(t) {
 }
 // Mavi (ince uzun) oturmaz: taburenin yanında, sırtını tezgâha yaslamış, kollar göğsünde bağlı, salona bakar.
 // oturanların bacakları: [uyluk, baldır] oranları (sol, sağ) — biraz farklı olsun ki cansız durmasın
+// ağzın başa göre öne uzaklığı (sakallar farklı): kırmızı, mavi, sarı, yeşil
+const AGIZ = [0.25, 0.22, 0.44, 0.25];
+// kupa boyu: iri elli sarıda kupa da büyük (yoksa yumruğun içinde kaybolur)
+const KUPA = [1, 1, 1.35, 1];
 const OTUR = [[[0.95, 0.9], [1.0, 0.6]], null, [[0.95, 0.95], [0.9, 0.8]], [[0.95, 0.9], [0.95, 0.92]]];
+const KY = new THREE.Vector3(), KA = new THREE.Vector3(), KK = new THREE.Vector3(), KV = new THREE.Vector3(), KP = new THREE.Vector3(), KB = new THREE.Vector3(), KQ = new THREE.Quaternion();
 const AQ = new THREE.Quaternion(), AY = new THREE.Vector3(0, 1, 0), AX = new THREE.Vector3(1, 0, 0), AT = new THREE.Vector3();
 function ayakta(u, g, t) {
   const r = u.rig, gx = g.position.x + 0.62, hy = r.hipY - 0.04;
@@ -125,26 +131,42 @@ function barRig(u, g, t) {
   let bas = k === 2 ? 0.55 + Math.sin(t * 0.45 + 1) * 0.35 : u.h.rotation.y; // sarı arada salona (kameraya) ters ters bakar
   // top atma (sol el)
   if (u.ball) { const e = topEli(t); BH.lh.y += e.dy; EK.bilek[0] = e.bilek; bas = bas * 0.4 + 0.25; EK.basEg = -0.25 * (1 - Math.abs(e.u * 2 - 0.7)); } // gözü topta
-  // bira: kupaya en yakın el uzanır, ağza götürür
-  const el = u.ball || k === 2 ? 1 : 0, eh = el ? BH.rh : BH.lh, d = (t + k * 3.1) % 9; u.kupa.position.copy(u.kupa0);
-  let ic = null; u.kupa.rotation.set(0, 0, 0);
+  // bira: önce kupanın yolu hesaplanır (yerinden ağzın önüne, orada yudum için eğilir), el kupayı yanından kavrar.
+  const el = u.ball || k === 2 ? 1 : 0, eh = el ? BH.rh : BH.lh, d = (t + k * 3.1) % 9;
   const elde = k === 0; // kırmızının sırtı tezgâhta: kupayı hep sağ elinde, dizinin üstünde tutar
-  if (elde) eh.set(-0.24, -0.02, 0.3).applyQuaternion(BQ).add(BK);
-  if (k !== 3 && (d < 3.6 || elde)) {
-    const uzan = elde ? 1 : aralik(d, 0, 0.6) * (1 - aralik(d, 3.0, 3.6)), kaldir = d < 3.6 ? aralik(d, 0.6, 1.3) * (1 - aralik(d, 2.5, 3.0)) : 0;
+  let ic = null;
+  if (k !== 3) {
+    const uzan = elde ? 1 : aralik(d, 0, 0.6) * (1 - aralik(d, 3.0, 3.6)); // el kupaya gider / bırakır
+    const kaldir = aralik(d, 0.6, 1.3) * (1 - aralik(d, 2.5, 3.1)); // kupa ağza kalkar
+    const yudum = aralik(d, 1.25, 1.6) * (1 - aralik(d, 2.2, 2.55)); // kupa ağızda eğilir, baş geriye
     const yan = ON.set(el ? -1 : 1, 0, 0).applyQuaternion(BQ), ileri = AQ2.set(0, 0, 1).applyQuaternion(BQ);
-    if (!elde) { AG.copy(u.kupa0); g.localToWorld(AG); AG.addScaledVector(yan, 0.06).y += 0.02; eh.lerp(AG, uzan); } // önce kupayı yanından kavrar
-    u.rig.B.Head.getWorldPosition(AG); AG.addScaledVector(ileri, 0.2).addScaledVector(yan, 0.09).y -= 0.08; eh.lerp(AG, kaldir); // sonra ağzın önüne, bilek yanda
-    EK.basEg -= kaldir * 0.4; bas *= 1 - kaldir; EK.kolDisa = true; ic = { el, uzan, kaldir };
+    // kupanın duruş yeri: kırmızıda dizinin üstü, ötekilerde tezgâh
+    const yer = elde ? KY.set(-0.2, 0.02, 0.36).applyQuaternion(BQ).add(BK) : KY.copy(u.kupa0).applyMatrix4(g.matrixWorld);
+    // ağzın önü: başın önünde, çene hizasında (baş kemiği kafatasının altındadır)
+    const agiz = u.rig.B.Head.getWorldPosition(KA).addScaledVector(ileri, AGIZ[k]).addScaledVector(yan, 0.03); agiz.y += 0.07;
+    const kupa = KK.copy(yer).lerp(agiz, kaldir); kupa.y += Math.sin(kaldir * Math.PI) * 0.06; // hafif yay çizerek kalkar
+    // eğim: kupanın ağzı yüze doğru yatar (yan eksen etrafında)
+    KQ.setFromAxisAngle(yan, (el ? 1 : -1) * (kaldir * 0.25 + yudum * 1.05));
+    // el: avuç kupaya bakar, parmaklar öne (biraz içe) doğru kupayı sarar; bilek kupanın dış yanında
+    const avuc = KV.copy(yan).negate(), parmak = KP.copy(ileri).addScaledVector(yan, -0.3).applyQuaternion(KQ).normalize();
+    const uz = (u.rig.el && u.rig.el[el] ? u.rig.el[el].uzun : 0.07) * 0.9;
+    const bilek = KB.copy(kupa).addScaledVector(yan, 0.05).addScaledVector(parmak, -uz); bilek.y -= 0.04; // kupanın alt yarısından tutar, ağzı elin üstünde görünsün
+    eh.lerp(bilek, uzan);
+    if (k === 2) EK.egil += kaldir * 0.3; // kısa kollu iri sarı: kupaya doğru öne eğilir, yudumda başı daha az geriye gider
+    EK.basEg -= yudum * (k === 2 ? 0.25 : 0.45) + kaldir * 0.08; bas *= 1 - kaldir; EK.kolDisa = true;
+    EK.tut = { i: el, parmak, avuc, a: uzan }; ic = { el, uzan, kupa, bilek, KQ };
   }
   // kollar bağlı olan (yeşil): arada bir kahkaha, omuzlar sarsılır
   if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); BH.lh.y += s; BH.rh.y += s; } } // gülerken omuzları sarsılır
   EK.avuc = u.ball ? [AVUC(), 0] : null; // topu tutan elin avucu yukarı baksın
-  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false; EK.elDiz = false; EK.kolDisa = false; EK.avuc = null;
-  // kupa elin içinde: bilekten parmaklara doğru biraz ileride; içerken ağzına doğru eğilir
-  if (ic && ic.uzan > 0.85) { const B = u.rig.B, h = ic.el ? B.RightHand : B.LeftHand, f = ic.el ? B.RightForeArm : B.LeftForeArm;
-    h.getWorldPosition(AG); f.getWorldPosition(AT); AT.subVectors(AG, AT).normalize(); AG.addScaledVector(AT, 0.07).y -= 0.03;
-    u.kupa.position.copy(g.worldToLocal(AG.clone())); u.kupa.rotation.x = -ic.kaldir * 0.9 * Math.cos(-u.ps.ry - (u.k === 2 ? Math.PI / 2 : 0)); u.kupa.rotation.z = ic.kaldir * 0.9 * Math.sin(-u.ps.ry - (u.k === 2 ? Math.PI / 2 : 0)); }
+  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false; EK.elDiz = false; EK.kolDisa = false; EK.avuc = null; EK.tut = null;
+  // kupa elle birlikte: elin vardığı yere göre kaydırılır (IK yetişemese de kupa elde kalır); el uzanmamışsa yerinde durur
+  u.kupa.position.copy(u.kupa0); u.kupa.quaternion.identity(); u.kupa.scale.setScalar(KUPA[k]);
+  if (ic) {
+    const B = u.rig.B, h = ic.el ? B.RightHand : B.LeftHand; h.getWorldPosition(AG);
+    if (ic.uzan > 0.98 || elde) ic.kupa.add(AG.sub(ic.bilek));
+    { u.kupa.position.copy(g.worldToLocal(AT.copy(ic.kupa))); g.getWorldQuaternion(AQ).invert(); u.kupa.quaternion.copy(AQ.multiply(ic.KQ)); }
+  }
   // top avuçta durur
   if (u.ball) { const h = u.rig.B.LeftHand; h.getWorldPosition(AG); h.getWorldQuaternion(AQ); AT.set(0, 1, 0).applyQuaternion(AQ); u.avuc = (u.avuc || new THREE.Vector3()).copy(AG).addScaledVector(AT, 0.1); u.avuc.y += 0.06; } // avuç ortası: bilekten parmaklara doğru (kemik +y yönü)
 }
