@@ -19,7 +19,9 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Kamyon ve dorse ayrıntıları (ızgara, farlar, egzoz, tahta kasa, lambalar, plaka), tanker, dönen jantlar (`src/detail.js`)
 - ✅ Karakterler: bot, kemer, yelek arması, baş üstünde isim; egzoz dumanı
 - ✅ CI: ana dala her birleştirmede Releases sayfasına `.exe` yayınlanır
-- ⬜ Kalan: sandık ve alet kutuları, karakter yüz ifadeleri, bar sahnesinin cilası
+- ✅ İskeletli karakter (Meshy): oyunda fizikle (IK), barda oturarak; oyuncu renkleri koddan boyanıyor
+- 🔨 Kalan üç karakter (mavi, sarı, yeşil) — 🙋 Meshy'de üretmek; şu an hepsi aynı kamyoncunun boyanmış hali
+- ⬜ Haydut için ayrı model; sandık ve alet kutuları; bar sahnesinin cilası
 - ⬜ Kıvılcım, egzoz dumanı, fren izi, su/yağ sıçraması
 - ⬜ Kalite ayarının menüden seçilmesi; telefonda performans ölçümü — 🙋 gerçek telefonda deneme
 - ⬜ Gerçek ses kayıtları ve müzik (CC0 ya da satın alınmış) — 🙋 kulak onayı

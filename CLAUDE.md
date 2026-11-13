@@ -25,9 +25,10 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/input.js` — klavye/dokunmatik. `src/hud.js` — `draw(V, dt)`: çizim ve ekran yazıları.
 - `src/main.js` — PeerJS ağı, mikrofon, ana döngü. `src/state.js` — paylaşılan `net` ve `ui`.
 - `src/detail.js` — kamyon, dorse, tanker süslemeleri (yalnız görüntü; `Batch` ile tek ağda birleştirilir). hud.js yükler.
+- `src/rig.js` — iskeletli karakter (`assets/chars/trucker.glb`): kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
 - `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
 - `lib/` — three.js, GLTFLoader ve PeerJS kopyaları. `desktop/` — Electron sarmalayıcı.
-- Modüller sırayla bağımlıdır: world → sim → models → scene → detail → bar → audio → input → hud → main. Geri yönde import ekleme.
+- Modüller sırayla bağımlıdır: world → sim → models → scene → detail → rig → bar → audio → input → hud → main. Geri yönde import ekleme.
 - Grafik kalitesi `ui.kalite` (0/1/2, `?kalite=N`). Yazılım GL'de yüksek kalite ~4 kare/sn: testler `kalite=0` ile koşar, ekran görüntüsü için `kalite=2` kullan ve uzun bekle.
 - Dış siteler bu ortamdan kapalı; GitHub'daki açık depolar `git clone` ile alınabiliyor. kenney.nl robotları reddediyor (zorlama).
 
@@ -36,5 +37,5 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - Çekici dorseye `HZ` mafsalından bağlıdır; kabin kutuları `b.cab` ile işaretli, `toCab/fromCab` ile dönüştürülür.
 - Yeni oyun durumu eklerken: `T`/ilgili nesne → `resetGame()` → `snap()` → `hud.js` (çizim) → gerekiyorsa `audio.js`.
 - Ağ: oda sahibi 60 Hz benzetir, 20 Hz durum yollar; istemciler yalnız girdi yollar. Ücretsiz PeerJS sunucusu kullanılıyor.
-- `?debug` ile `window.G` üzerinden durum kurcalanabilir (testler bunu kullanır).
+- `?debug` ile `window.G` üzerinden durum kurcalanabilir (testler bunu kullanır). `G.kamera` sahne kamerası (`G.cam` ayrı: kamera kipini değiştiren ayarlayıcı).
 - Kod sıkışık yazılmıştır (uzun satırlar). Yeni kodu okunur yaz; eskisini dokunduğun yerde aç.

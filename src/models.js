@@ -36,7 +36,10 @@ export function recolor(obj, ad, degistir) {
       const g = c.getContext('2d'); g.drawImage(img, 0, 0); const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
       for (let i = 0; i < p.length; i += 4) { const n = degistir(p[i], p[i + 1], p[i + 2]); if (n) { p[i] = n[0]; p[i + 1] = n[1]; p[i + 2] = n[2]; } }
       g.putImageData(d, 0, 0);
-      const m = o.material.clone(), t = o.material.map.clone(); t.image = c; t.needsUpdate = true; m.map = t; boyali.set(key, m);
+      // Texture.clone() görüntü kaynağını paylaşır; yeni doku yarat ki asıl doku değişmesin
+      const eski = o.material.map, t = new THREE.CanvasTexture(c);
+      t.flipY = eski.flipY; t.colorSpace = eski.colorSpace; t.wrapS = eski.wrapS; t.wrapT = eski.wrapT; t.magFilter = eski.magFilter; t.minFilter = eski.minFilter; t.channel = eski.channel;
+      const m = o.material.clone(); m.map = t; boyali.set(key, m);
     }
     o.material = boyali.get(key);
   });
