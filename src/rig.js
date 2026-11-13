@@ -6,7 +6,7 @@ import { loadModel, recolor } from './models.js';
 
 export const CHAR_URL = 'assets/chars/trucker.glb';
 // Oyuncu rengine göre karakter dosyası. Olmayanlar için kırmızı kamyoncu boyanarak kullanılır.
-const KARAKTER = ['trucker.glb', 'mavi.glb', null, null];
+const KARAKTER = ['trucker.glb', 'mavi.glb', 'sari.glb', 'yesil.glb'];
 const KEMIK = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
 
 // Oyuncu rengine göre tişört ve kepin kırmızısını başka renge çevirir (0: kırmızı, olduğu gibi).
@@ -50,10 +50,11 @@ function ik(ust, orta, uc, hedef, kutup, a, b) {
 }
 
 // Bir karakter kopyası üretir. Model yüklenmemişse null döner.
-export async function makeRig(ci, parent) {
-  const ozel = KARAKTER[ci % 4], m = (ozel && (await loadModel('assets/chars/' + ozel))) || (await loadModel(CHAR_URL)); if (!m) return null;
+// dosya verilirse (ör. 'haydut.glb') o model boyanmadan kullanılır.
+export async function makeRig(ci, parent, dosya = null) {
+  const ozel = dosya || KARAKTER[ci % 4], mo = ozel && (await loadModel('assets/chars/' + ozel)), m = mo || (await loadModel(CHAR_URL)); if (!m) return null;
   const root = new THREE.Group(), model = cloneSkinned(m);
-  const boya = !ozel || m !== (await loadModel('assets/chars/' + ozel)) ? kirmiziyiBoya(ci) : null; if (boya) recolor(model, 'rig' + (ci % 4), boya);
+  const boya = mo || dosya ? null : kirmiziyiBoya(ci); if (boya) recolor(model, 'rig' + (ci % 4), boya); // kendi modeli olmayan renk: kırmızı kamyoncu boyanır
   model.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; o.receiveShadow = false; } });
   root.add(model); root.matrixAutoUpdate = false; parent.add(root);
   const B = {}; model.traverse((o) => { if (o.isBone) { const ad = o.name.replace(/^mixamorig:?/, ''); if (KEMIK.includes(ad)) B[ad] = o; } });
@@ -85,10 +86,14 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   r.root.matrix.copy(m1.copy(r.root.parent.matrixWorld).invert().multiply(M));
   r.root.updateMatrixWorld(true);
   ileri.set(0, 0, 1).applyQuaternion(yon); yukari.set(0, 1, 0).applyQuaternion(yon); sol.set(1, 0, 0).applyQuaternion(yon);
-  if (ek && ek.egil) { turn(r.B.Spine1, sol, ek.egil * 0.6); turn(r.B.Spine2, sol, ek.egil * 0.4); } // gövde: kollar IK'dan önce eğilir
+  if (ek && ek.egil) { turn(r.B.Spine1, sol, ek.egil * 0.6); turn(r.B.Spine2, sol, ek.egil * 0.4); }
+  if (ek && ek.egil) sol.set(1, 0, 0).applyQuaternion(yon); // (turn eksen vektörünü değiştirmez; açıklık için) // gövde: kollar IK'dan önce eğilir
   // kollar: dirsek geriye ve aşağı; bacaklar: diz ileri
-  kutup.copy(ileri).multiplyScalar(-1).addScaledVector(yukari, -0.6);
+  // dirsek: normalde geriye ve aşağı; ek.kolDisa ile yana ve aşağı (kollar göğüste bağlıyken)
+  const disa = ek && ek.kolDisa;
+  kutup.copy(ileri).multiplyScalar(disa ? 0.2 : -1).addScaledVector(yukari, -0.6); if (disa) kutup.addScaledVector(sol, 1);
   if (hedef.lh) ik(r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh, kutup, r.kol[0], r.kol[1]);
+  if (disa) kutup.addScaledVector(sol, -2);
   if (hedef.rh) ik(r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh, kutup, r.kol[0], r.kol[1]);
   kutup.copy(ileri);
   if (hedef.lf) ik(r.B.LeftUpLeg, r.B.LeftLeg, r.B.LeftFoot, hedef.lf, kutup, r.bacak[0], r.bacak[1]);

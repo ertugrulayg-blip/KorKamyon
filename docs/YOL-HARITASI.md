@@ -24,7 +24,7 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - ✅ Ayarlar: müzik / efekt / oyuncu sesi, oyuncu başına ses, lobide oyuncu çıkarma; bilgisayarda tuş rehberi (H)
 - ✅ Yük dengesi: normal çarpmada sandık düşmez, yalnız hızlı sert çarpmada 0–3 sandık gider
 - ✅ Mavi karakter (Meshy)
-- 🔨 Kalan karakterler: sarı, yeşil, haydut — 🙋 Meshy'de üretmek; şu an hepsi aynı kamyoncunun boyanmış hali
+- ✅ Dört kamyoncu ve haydut (Meshy); haydut lobide barmen, mavi taburenin yanında ayakta, kolları bağlı — 🙋 Meshy'de üretmek; şu an hepsi aynı kamyoncunun boyanmış hali
 - ⬜ Haydut için ayrı model; sandık ve alet kutuları; bar sahnesinin cilası
 - ⬜ Kıvılcım, egzoz dumanı, fren izi, su/yağ sıçraması
 - ⬜ Kalite ayarının menüden seçilmesi; telefonda performans ölçümü — 🙋 gerçek telefonda deneme

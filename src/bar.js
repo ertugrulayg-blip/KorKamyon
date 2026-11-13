@@ -69,7 +69,7 @@ export function trucker(ci, name) {
   const kupa = new THREE.Group(); kupa.position.set(ps.mug[0], 1.25, ps.mug[1]); g.add(kupa); add(kupa, CG, M(0xe9a824, { transparent: true, opacity: 0.85 }), 0, 0, 0, 0.07, 0.18, 0.07); add(kupa, CG, M(0xffffff), 0, 0.105, 0, 0.072, 0.035, 0.072);
   const ns = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false, fog: false, map: tex(256, 64, (c, w, hh) => { c.font = '900 34px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#000'; c.strokeText(name, w / 2, hh / 2); c.fillStyle = '#' + COL[k].toString(16).padStart(6, '0'); c.fillText(name, w / 2, hh / 2); }) })); ns.position.set(0, 2.62, 0); ns.scale.set(1.3, 0.325, 1); g.add(ns);
   let ball = null; if (ps.ball) { const A = ps.arms[0][1]; ball = new THREE.Group(); ball.userData.y0 = A[1] + Y + 0.125; ball.position.set(A[0], ball.userData.y0, A[2] + 0.02); b.add(ball); add(ball, SG, M(0xf4efe2), 0, 0, 0, 0.045); for (const r of [0.6, -0.6]) add(ball, new THREE.TorusGeometry(0.04, 0.004, 4, 16), M(0xc0392b), 0, 0, 0).rotation.set(r, r, 0); } // beyzbol topu
-  g.rotation.y = ps.ry; g.userData = { h, belly, k, ps, ball, eller, kupa, kupa0: kupa.position.clone() };
+  g.rotation.y = ps.ry; g.userData = { ns, h, belly, k, ps, ball, eller, kupa, kupa0: kupa.position.clone() };
   // iskeletli model: yüklenince eski kutu gövde gizlenir (top, kupa, tabure ve isim kalır)
   makeRig(ci, g).then((r) => { if (!r) return; for (const m of bacak) m.visible = false; for (const c of b.children) if (c !== ball) c.visible = false; g.userData.rig = r; g.userData.b = b; });
   return g;
@@ -87,7 +87,22 @@ export function topEli(t) {
   const karsila = u > 0.6 && u < 0.9 ? Math.sin(((u - 0.6) / 0.3) * Math.PI) : 0; // inen topa doğru kalkıp birlikte çöker
   return { dy: atis * 0.1 + karsila * 0.05 - (u > 0.72 && u < 0.85 ? (0.85 - u) * 0.5 : 0), bilek: -atis * 0.9 + karsila * 0.35, u };
 }
+// Mavi (ince uzun) oturmaz: taburenin yanında, sırtını tezgâha yaslamış, kollar göğsünde bağlı, salona bakar.
+const AQ = new THREE.Quaternion(), AY = new THREE.Vector3(0, 1, 0), AX = new THREE.Vector3(1, 0, 0), AT = new THREE.Vector3();
+function ayakta(u, g, t) {
+  const r = u.rig, gx = g.position.x + 0.62, hy = r.hipY - 0.04;
+  AQ.setFromAxisAngle(AY, Math.PI + 0.35 + Math.sin(t * 0.21) * 0.06).multiply(BQ.setFromAxisAngle(AX, -0.12)); // salona dönük, hafif geriye yaslı
+  BK.set(gx, hy, -0.2);
+  const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(AQ).add(BK); // gövdeye göre konum → dünya
+  const nefes = Math.sin(t * 1.5) * 0.012;
+  yer(BH.lh, -0.06, 0.31 + nefes, 0.17); yer(BH.rh, 0.06, 0.26 + nefes, 0.2); // kollar çapraz: her el öbür dirseğe
+  BH.lf.set(gx + 0.1, 0.13, -0.5); BH.rf.set(gx - 0.18, 0.13, -0.42);
+  EK.egil = nefes; EK.basEg = 0.05 + Math.sin(t * 0.33) * 0.06; EK.bilek[0] = EK.bilek[1] = 0; EK.kolDisa = true;
+  poseRig(r, BK, AQ, BH, u.h.rotation.y * 0.7 - 0.2, EK); EK.kolDisa = false;
+  u.ns.position.copy(g.worldToLocal(AT.set(gx, 2.55, -0.2))); // isim kendi başının üstünde
+}
 function barRig(u, g, t) {
+  if (u.k === 1) return ayakta(u, g, t);
   const b = u.b, ps = u.ps, k = u.k; b.updateWorldMatrix(true, false);
   BK.set(0, 0.06, 0); b.localToWorld(BK); b.getWorldQuaternion(BQ);
   u.eller[0].getWorldPosition(BH.lh); u.eller[1].getWorldPosition(BH.rh);
@@ -110,10 +125,33 @@ function barRig(u, g, t) {
   if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); BH.lh.y += s; BH.rh.y += s; } }
   poseRig(u.rig, BK, BQ, BH, bas, EK);
 }
+// ---------- barmen: haydut tezgâhın arkasında ----------
+// Tezgâhı bezle siler, sinsi sinsi etrafa bakar, arada ellerini ovuşturur. Oturan oyuncuların arasında görünecek yerde durur.
+const barmen = { g: new THREE.Group(), rig: null, x: 0 };
+bar.add(barmen.g); const bez = add(barmen.g, BG, M(0xe8e2d0), 0, 0, 0, 0.16, 0.03, 0.12);
+makeRig(0, barmen.g, 'haydut.glb').then((r) => { barmen.rig = r; });
+const MK = new THREE.Vector3(), MQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI), MH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }, MEK = { egil: 0, basEg: 0, bilek: [0, 0] };
+function drawBarmen(t, n) {
+  const r = barmen.rig; bez.visible = !!r; if (!r) return;
+  barmen.x += ((n % 2 ? 0.85 : 0) - barmen.x) * 0.03; const x = barmen.x, z = 1.38; // oyuncu sayısına göre taburelerin arasına geçer
+  const ovus = (t % 11) > 8.2, k = ovus ? Math.min(1, (t % 11) - 8.2) * Math.min(1, 11 - (t % 11)) * 2 : 0; // son 2,8 sn: eller ovuşturulur
+  MK.set(x, r.hipY, z);
+  // sağ el (barmenin sağı ekranda sağ, +x'in tersi) tezgâhı daire çizerek siler; sol el tezgâha dayanır
+  const a = t * 2.4;
+  MH.rh.set(x - 0.32 + Math.cos(a) * 0.17, 1.2, 0.72 + Math.sin(a) * 0.1);
+  MH.lh.set(x + 0.34, 1.2, 0.8);
+  if (k > 0) { const o = Math.sin(t * 14) * 0.04; MH.rh.lerp(MK.clone().set(x - 0.06, 1.38 + o, z - 0.32), k); MH.lh.lerp(MK.clone().set(x + 0.06, 1.38 - o, z - 0.32), k); }
+  MH.lf.set(x + 0.14, 0.13, z + 0.02); MH.rf.set(x - 0.14, 0.13, z + 0.02);
+  MEK.egil = 0.22 * (1 - k) + Math.sin(t * 1.4) * 0.02; MEK.basEg = -0.12 + Math.sin(t * 0.9) * 0.05 - k * 0.15; MEK.bilek[0] = 0; MEK.bilek[1] = Math.sin(a) * 0.3 * (1 - k);
+  // sinsi bakışlar: arada hızla sağa sola döner
+  const g = t % 5, bas = g < 0.5 ? 0.6 * Math.sin((g / 0.5) * Math.PI) : g > 2.5 && g < 3 ? -0.6 * Math.sin(((g - 2.5) / 0.5) * Math.PI) : Math.sin(t * 0.5) * 0.12;
+  poseRig(r, MK, MQ, MH, bas, MEK);
+  bez.position.set(MH.rh.x, 1.165, MH.rh.z); bez.rotation.y = a * 0.3; bez.visible = k < 0.5;
+}
 export function drawBar(V, dt) {
   barT += dt; const a = innerWidth / innerHeight; if (barCam.aspect !== a) { barCam.aspect = a; barCam.fov = a < 1 ? 70 : 50; barCam.updateProjectionMatrix(); }
   const d = clamp(3.7 / (Math.tan(barCam.fov * Math.PI / 360) * a), 4.7, 12); barCam.position.set(Math.sin(barT * 0.15) * 0.35, 1.75, -0.6 - d); barCam.lookAt(0, 1.25, -0.4);
-  const ids = new Set(), mid = (V.p.length - 1) / 2;
+  const ids = new Set(), mid = (V.p.length - 1) / 2; drawBarmen(barT, V.p.length);
   V.p.forEach((p, i) => { ids.add(p.id); let g = truckers.get(p.id); if (!g) { g = trucker(p.c, p.n); truckers.set(p.id, g); bar.add(g); }
     const u = g.userData; g.position.set((mid - i) * 1.7, 0, u.ps.z);
     u.h.rotation.y = u.ps.hy + Math.sin(barT * 0.45 + u.k * 2.1) * 0.22; u.h.rotation.x = 0.08 + Math.sin(barT * 0.3 + u.k) * 0.05; u.belly.scale.z = 0.33 * (1 + Math.sin(barT * 1.6 + u.k) * 0.05);
