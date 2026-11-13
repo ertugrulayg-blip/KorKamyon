@@ -95,10 +95,9 @@ function ayakta(u, g, t) {
   BK.set(gx, hy, -0.2);
   const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(AQ).add(BK); // gövdeye göre konum → dünya
   const nefes = Math.sin(t * 1.5) * 0.012;
-  yer(BH.lh, -0.06, 0.31 + nefes, 0.17); yer(BH.rh, 0.06, 0.26 + nefes, 0.2); // kollar çapraz: her el öbür dirseğe
   BH.lf.set(gx + 0.1, 0.13, -0.5); BH.rf.set(gx - 0.18, 0.13, -0.42);
-  EK.egil = nefes; EK.basEg = 0.05 + Math.sin(t * 0.33) * 0.06; EK.bilek[0] = EK.bilek[1] = 0; EK.kolDisa = true;
-  poseRig(r, BK, AQ, BH, u.h.rotation.y * 0.7 - 0.2, EK); EK.kolDisa = false;
+  EK.egil = nefes; EK.basEg = 0.05 + Math.sin(t * 0.33) * 0.06; EK.bilek[0] = EK.bilek[1] = 0; EK.kolBagla = nefes || true; // kollar çapraz: her el öbür dirseğe
+  poseRig(r, BK, AQ, BH, u.h.rotation.y * 0.7 - 0.2, EK); EK.kolBagla = false;
   u.ns.position.copy(g.worldToLocal(AT.set(gx, 2.55, -0.2))); // isim kendi başının üstünde
 }
 function barRig(u, g, t) {
@@ -122,8 +121,8 @@ function barRig(u, g, t) {
     EK.basEg -= kaldir * 0.45; bas *= 1 - kaldir; EK.bilek[el] = -kaldir * 0.6;
   } else u.kupa.rotation.x = 0;
   // kollar bağlı olan (yeşil): arada bir kahkaha, omuzlar sarsılır
-  if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); BH.lh.y += s; BH.rh.y += s; } }
-  poseRig(u.rig, BK, BQ, BH, bas, EK);
+  if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); EK.kolBagla = s || true; } else EK.kolBagla = true; } // kollar göğüste bağlı; gülerken sarsılır
+  poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false;
 }
 // ---------- barmen: haydut tezgâhın arkasında ----------
 // Tezgâhı bezle siler, sinsi sinsi etrafa bakar, arada ellerini ovuşturur. Oturan oyuncuların arasında görünecek yerde durur.

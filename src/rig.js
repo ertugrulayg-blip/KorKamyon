@@ -73,6 +73,7 @@ export async function makeRig(ci, parent, dosya = null) {
   };
 }
 
+const KL = new THREE.Vector3(), KR = new THREE.Vector3(), KO = new THREE.Vector3(), KY = new THREE.Vector3(), KI = new THREE.Vector3();
 const sol = new THREE.Vector3(), ileri = new THREE.Vector3(), yukari = new THREE.Vector3(), kutup = new THREE.Vector3(), M = new THREE.Matrix4(), P = new THREE.Vector3(), SC = new THREE.Vector3(1, 1, 1);
 // Karakteri yerleştirir. kalca: kalça kemiğinin dünya konumu; yon: gövdenin dünya yönelimi (+z ileri, +y yukarı);
 // hedef: { lh, rh, lf, rf } dünya konumları (el ve ayak kemikleri); bas: baş çevirme açısı (radyan, gövde eksenine göre).
@@ -89,8 +90,17 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   if (ek && ek.egil) { turn(r.B.Spine1, sol, ek.egil * 0.6); turn(r.B.Spine2, sol, ek.egil * 0.4); }
   if (ek && ek.egil) sol.set(1, 0, 0).applyQuaternion(yon); // (turn eksen vektörünü değiştirmez; açıklık için) // gövde: kollar IK'dan önce eğilir
   // kollar: dirsek geriye ve aşağı; bacaklar: diz ileri
-  // dirsek: normalde geriye ve aşağı; ek.kolDisa ile yana ve aşağı (kollar göğüste bağlıyken)
-  const disa = ek && ek.kolDisa;
+  // kollar göğüste bağlı: bilekler modelin kendi omuzlarına göre karşı dirseğe gider (her model farklı boyda)
+  if (ek && ek.kolBagla) {
+    r.B.LeftArm.getWorldPosition(KL); r.B.RightArm.getWorldPosition(KR);
+    const gen = KL.distanceTo(KR); KO.copy(KL).add(KR).multiplyScalar(0.5); KY.copy(KL).sub(KR).normalize(); KI.crossVectors(KY, yukari).normalize(); // KY: sola, KI: ileri
+    if (KI.dot(ileri) < 0) KI.negate();
+    const n = ek.kolBagla === true ? 0 : ek.kolBagla; // nefes/sarsıntı payı
+    hedef.lh.copy(KO).addScaledVector(KY, -gen * 0.12).addScaledVector(yukari, -gen * 0.42 + n).addScaledVector(KI, gen * 0.5);
+    hedef.rh.copy(KO).addScaledVector(KY, gen * 0.12).addScaledVector(yukari, -gen * 0.55 + n).addScaledVector(KI, gen * 0.56);
+  }
+  // dirsek: normalde geriye ve aşağı; kollar bağlıyken (ek.kolDisa / ek.kolBagla) yana ve aşağı
+  const disa = ek && (ek.kolDisa || ek.kolBagla);
   kutup.copy(ileri).multiplyScalar(disa ? 0.2 : -1).addScaledVector(yukari, -0.6); if (disa) kutup.addScaledVector(sol, 1);
   if (hedef.lh) ik(r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh, kutup, r.kol[0], r.kol[1]);
   if (disa) kutup.addScaledVector(sol, -2);
