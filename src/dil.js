@@ -12,7 +12,7 @@ const S = {
   tr: {
     // menü ve sabit metinler
     menuAciklama: 'Şoför önünü göremez, yolcu tarif eder, kasadakiler yakıt, lastik, yangın ve polisle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.',
-    adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
+    haydutAd: 'HAYDUT', adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
     tuslar: '⌨ Tuşlar', ayarlar: '⚙ Ayarlar', kapat: 'Kapat (Esc)', ses: 'SES', oyuncular: 'OYUNCULAR', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 İLERİSİ',
     muzik: 'Müzik', efekt: 'Efektler', oyuncuSes: 'Oyuncu sesleri', sesKisi: 'Ses', sen: ' (sen)', cikar: 'Çıkar', yalnizLobi: 'Yalnızca lobide',
     cikarSor: (a) => a + ' odadan çıkarılsın mı?', cikarNot: 'Oyuncu çıkarmak yalnızca lobide yapılabilir.',
@@ -56,7 +56,7 @@ const S = {
   },
   en: {
     menuAciklama: "The driver can't see the road, the passenger gives directions, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
-    adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
+    haydutAd: 'BANDIT', adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
     tuslar: '⌨ Controls', ayarlar: '⚙ Settings', kapat: 'Close (Esc)', ses: 'SOUND', oyuncular: 'PLAYERS', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 AHEAD',
     muzik: 'Music', efekt: 'Effects', oyuncuSes: 'Player voices', sesKisi: 'Volume', sen: ' (you)', cikar: 'Kick', yalnizLobi: 'Lobby only',
     cikarSor: (a) => 'Kick ' + a + ' from the room?', cikarNot: 'Players can only be kicked in the lobby.',

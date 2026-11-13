@@ -39,10 +39,16 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - 🙋 Tanıdıklara oynatıp "para verir miydin" diye sormak
 
 ## 3. Steam hesabı ve mağaza sayfası
-- 🙋 Steamworks hesabı, kayıt ücreti, vergi ve banka bilgisi
-- 🙋 İsim kontrolü: "Road Hogs" adında oyun/marka var mı
-- ⬜ Mağaza metni, kapak görselleri, ekran görüntüleri
-- 🙋 Sayfayı "yakında" olarak yayınlamak (istek listesi birikmeye başlasın)
+- 🙋 Steamworks hesabı, vergi formu (W-8BEN tamamlandı), banka bilgisi, kayıt ücreti
+- 🙋 İsim kontrolü: "Road Hogs" adında oyun/marka var mı (Overwatch'taki "Roadhog" karakterine dikkat)
+- 🙋 Meshy lisansının ticari kullanım hakkı
+- ✅ İngilizce sürüm (`src/dil.js`): tüm arayüz, ekran yazıları, tuş rehberi ve oyun mesajları
+- ✅ Mağaza metinleri İngilizce ve Türkçe (`marketing/STEAM-SAYFASI.md`)
+- ✅ Kapak görselleri, logo, simgeler ve 6 ekran görüntüsü (`marketing/steam/`, betikler `marketing/*.cjs`)
+- ✅ Tanıtım sayfası (`tanitim/`, GitHub Pages'te `/tanitim/`)
+- ⬜ Fragman — 🙋 oyun kaydı
+- ⬜ Sistem gereksinimleri — 🙋 düşük donanımda deneme
+- 🙋 Sayfayı "yakında" olarak yayınlamak
 
 ## 4. Steam ağı
 - ⬜ Oda kurma ve arkadaş daveti: Steam lobileri ve Steam ağına geçiş

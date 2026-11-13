@@ -30,6 +30,8 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/panel.js` — ayarlar (ses seviyeleri, oyuncu listesi, oda sahibi için lobide çıkarma) ve tuş rehberi. Ses ayarları `ui.ses`, `localStorage kk-ses`.
 - Karakter dosyaları oyuncu rengine göre `rig.js` içindeki `KARAKTER` listesinde; olmayan renk kırmızı modelin boyanmış hali.
 - `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
+- `marketing/` — Steam görselleri (`steam/`), mağaza metni (`STEAM-SAYFASI.md`), üretim betikleri (`cek.cjs` ekran görüntüleri, `hero.cjs` arka planlar, `kapak.cjs` kapaklar ve logo). `?temiz` adresi bardaki isimleri gizler.
+- `tanitim/` — tanıtım sayfası (tek HTML, iki dil), GitHub Pages'te `/tanitim/`.
 - `lib/` — three.js, GLTFLoader ve PeerJS kopyaları. `desktop/` — Electron sarmalayıcı.
 - Modüller sırayla bağımlıdır: dil → world → sim → models → scene → detail → rig → bar → audio → input → hud → panel → main. Geri yönde import ekleme.
 - Grafik kalitesi `ui.kalite` (0/1/2, `?kalite=N`). Yazılım GL'de yüksek kalite ~4 kare/sn: testler `kalite=0` ile koşar, ekran görüntüsü için `kalite=2` kullan ve uzun bekle.
