@@ -16,13 +16,27 @@ const duman = Array.from({ length: 14 }, () => { const m = add(scene, SG, new TH
 // oyuncunun başının üstündeki isim
 function isimEtiketi(ad, renk) { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d'); g.font = '900 36px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 7; g.strokeStyle = '#000'; g.strokeText(ad, 128, 34); g.fillStyle = renk; g.fillText(ad, 128, 34);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false, fog: false })); s.scale.set(1.5, 0.375, 1); s.renderOrder = 6; return s; }
+// polis aracı darbe alınca: yaylar çöker, burnu dalar, sarsılır, kıvılcım saçar; hasarlıysa kaputtan duman tüter
+const kivilcim = Array.from({ length: 14 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xffd23f }), 0, 0, 0, 0.05); m.visible = false; return m; });
+const polDuman = Array.from({ length: 16 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0x55575c, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; });
+const pd = { son: 0, acc: 0, i: 0 };
+function polDarbe(qs, qd, hp, dt) {
+  pol.scale.set(1, 1 - 0.18 * qd, 1); pol.rotation.x = 0.14 * qd; pol.rotation.z = Math.sin(performance.now() / 35) * 0.06 * qd; pol.position.y = -0.08 * qd;
+  if (qd > pd.son + 0.5) for (const k of kivilcim) { k.visible = true; k.userData = { t: 0, v: new THREE.Vector3((Math.random() - 0.5) * 6, 3 + Math.random() * 3, (Math.random() - 0.5) * 6) }; k.position.set(pol.position.x + (Math.random() - 0.5) * 1.2, 1.95, pol.position.z + (Math.random() - 0.5) * 1.6); }
+  pd.son = qd;
+  for (const k of kivilcim) if (k.visible) { const u = k.userData; u.t += dt; if (u.t > 0.5) { k.visible = false; continue; } u.v.y -= 14 * dt; k.position.addScaledVector(u.v, dt); }
+  pd.acc += pol.visible && qs === 2 && hp < 70 ? dt * (70 - hp) * 0.25 : 0;
+  while (pd.acc > 1) { pd.acc -= 1; const m = polDuman[pd.i++ % polDuman.length]; m.visible = true; m.userData.t = 0; m.position.set(pol.position.x + (Math.random() - 0.5) * 0.6, 1.3, pol.position.z + 1.5); m.material.color.setHex(hp < 35 ? 0x26272a : 0x6a6c70); }
+  for (const m of polDuman) if (m.visible) { const u = (m.userData.t += dt) / 1.1; if (u >= 1) { m.visible = false; continue; } m.position.y += dt * 1.8; m.position.z -= dt * 6; m.scale.setScalar(0.2 + u * 0.7); m.material.opacity = 0.5 * (1 - u); }
+}
 const fx = { m: '', shake: 0, acc: 0, i: 0, eg: 0, j: 0 }, dust = Array.from({ length: 28 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xb9b2a6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; }); // darbe sarsıntısı, teker tozu
 export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 9.5, -10.5), camL = new THREE.Vector3(0, 1.5, -1); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
 export function draw(V, dt) {
-  const t = V.T, [qs, qx, qz, qhp, qsl, qu, qo] = V.q, ch = t.s === 'run' && (qs === 1 || qs === 2); sfx(V, dt);
+  const t = V.T, [qs, qx, qz, qhp, qsl, qu, qo, qd = 0] = V.q, ch = t.s === 'run' && (qs === 1 || qs === 2); sfx(V, dt);
   cabG.rotation.y = t.ph; cpD = Math.cos(t.ph); spD = Math.sin(t.ph);
-  pol.visible = qs > 0 && t.s !== 'lobby'; pol.position.set(qx, 0, qz); pol.rotation.y = qsl ? pol.rotation.y + dt * 7 : qs === 3 ? 0.6 : 0; { const f = Math.sin(performance.now() / 90) > 0; polL[0].visible = f; polL[1].visible = !f; }
+  pol.visible = qs > 0 && t.s !== 'lobby'; pol.position.set(qx, 0, qz); pol.rotation.y = qsl ? pol.rotation.y + dt * 7 : qs === 3 ? 0.6 : 0;
+  polDarbe(qs, qd, qhp, dt); { const f = Math.sin(performance.now() / 90) > 0; polL[0].visible = f; polL[1].visible = !f; }
   crM.forEach((g, i) => { const c = V.cr[i]; g.visible = !!c; if (c) g.position.set(c[0], 0, c[1]); });
   exM.position.set(V.x[0], V.x[1], V.x[2]); exM.rotation.x = V.x[3] ? 1.2 : 0;
   fireG.visible = !!V.fr; if (V.fr) { fireG.position.set(V.fr[0], 0, V.fr[1]); const k = 0.45 + V.fr[2] / 180; flames.forEach((f, i) => { const s = k * (0.75 + 0.35 * Math.sin(performance.now() / (70 + i * 23) + i * 2)); f.scale.set(s, s * (1.1 + 0.3 * Math.sin(performance.now() / 50 + i)), s); f.position.y = 1.3 + 0.45 * f.scale.y; }); }
@@ -82,7 +96,7 @@ export function draw(V, dt) {
     while (fx.eg > 1) { fx.eg -= 1; const d = duman[fx.j++ % duman.length], b = BACA[fx.j & 1]; cabPt(d.position, b[0], b[1], b[2]); d.visible = true; d.userData.t = 0; d.userData.vz = -t.v * 0.35 - 0.3; }
     for (const d of duman) if (d.visible) { const u = (d.userData.t += dt) / 0.9; if (u >= 1) { d.visible = false; continue; } d.position.y += dt * 1.6; d.position.z += d.userData.vz * dt; d.scale.setScalar(0.12 + u * 0.4); d.material.opacity = 0.42 * (1 - u); }
     for (const d of dust) if (d.visible) { const u = (d.userData.t += dt) / d.userData.L; if (u >= 1) { d.visible = false; continue; } d.position.x += d.userData.vx * dt; d.position.y += dt * 1.1; d.position.z += d.userData.vz * dt; d.scale.setScalar((0.18 + u * 0.75) * d.userData.s); d.material.opacity = (d.userData.s < 1 ? 0.3 : 0.5) * (1 - u); } }
-  fogS.visible = false; glass.visible = camM === 's' && !!t.rn && !t.wp; // yağmurda şoförün camı buğulanır, silecek açar
+  fogS.visible = false; glass.visible = camM === 's' && !!t.rn; // yağmurda şoförün camı buğulanır
   if (t.s === 'lobby') drawBar(V, dt); else ren.render(scene, cam);
   { const pip = false, el = $('ileri'); if (pip) { const W = innerWidth, H = innerHeight, w = Math.round(Math.min(340, W * 0.34)), h = Math.round(w * 0.62), x = 12, y = TOUCH ? 150 : 175; fogS.visible = false;
       ren.setScissorTest(true); ren.setViewport(x, H - y - h, w, h); ren.setScissor(x, H - y - h, w, h); cam2.aspect = w / h; cam2.updateProjectionMatrix(); ren.render(scene, cam2); ren.setScissorTest(false); ren.setViewport(0, 0, W, H);
@@ -92,7 +106,7 @@ export function draw(V, dt) {
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
     el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = '⚠ TÜMSEK ' + Math.max(0, Math.round(d)) + ' m' + (hz ? ' — YAVAŞLA! (' + Math.round(BUMP_V * 3.6) + ' km/s altı)' : ' — hız uygun'); } }
   { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = ['', '⬅ SOLA', 'SAĞA ➡', '🐢 YAVAŞ', '⏩ HIZLAN'][sg || 0]; }
-  const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · V silecek · Q korna · R çivi · E kalk · T tanker' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su)';
+  const rol = t.s === 'lobby' ? '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…' : seat === 1 ? '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk' : seat === 2 ? '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · T tanker çağır · E kalk' : '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su)';
   let af = '';
   if (t.s === 'lobby') af += `<div>Oda kodu: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 oyuncu</div><div style="font-size:18px">${net.isHost ? 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat' : 'Oda sahibinin başlatması bekleniyor'}</div><div style="font-size:16px">Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!</div>`;
   if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>Yerlerinizi alın, kamyon kalkıyor!</div>`;
@@ -106,7 +120,7 @@ export function draw(V, dt) {
     if (t.sl) gv += `<div class="k">🌡 Motor stop</div>`; else if (t.ht >= 70) gv += `<div>🌡 Hararet %${t.ht}</div>`;
     if (V.fr) gv += `<div class="k">🔥 Yangın</div>`;
     if (hy) gv += `<div class="k">🥷 Haydut</div>`;
-    if (t.rn) gv += `<div>🌧 ${seat === 2 ? 'Silecek' + (t.wp ? ' ✓' : TOUCH ? '' : ' (V)') : 'Yağmur'}</div>`;
+    if (t.rn) gv += `<div>🌧 Yağmur</div>`;
     if (t.f < 25) gv += `<div class="k">⛽ Yakıt az · yolcu tanker çağırsın</div>`;
     if (ks === 2) gv += `<div>⛽ ${V.n[3] ? (kv ? 'Doluyor' : 'Vanayı aç') : 'Hortumu tak'}${V.k[4] > 0 ? ' %' + Math.round(V.k[4] * 100) : ''}</div>`;
     t.fl.forEach((f, i) => { if (f) gv += `<div>🛞 ${cap(WHEEL[i][3])}</div>`; });
