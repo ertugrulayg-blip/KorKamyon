@@ -2,6 +2,10 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-13 — Şoför görüşü: sis yerine alçak göz
+Şoför artık kendi koltuğundan bakar; göz tablonun üst kenarının biraz altında. Yol hiç görünmez, gökyüzü ve uzaktaki ağaç tepeleri görünür (virajları sezebilir).
+Neden: sahibi sis plakasını beğenmedi, "boyu kısa gibi" bir görüş istedi. Diğer oyuncular yukarıdan bakmaya devam ediyor.
+
 ## 2026-11-13 — Karakterler: Meshy + fizikle IK
 Karakterler Meshy AI ile üretiliyor (iskeletli GLB). Hareket animasyonla değil fizikle: kemikler fizik noktalarına IK ile bağlanır.
 Neden: sahibi sallanan, düşen fizik hareketini komik buluyor ve korunmasını istedi. Meshy'nin hazır animasyonları (yürüme, koşma) şimdilik kullanılmıyor.

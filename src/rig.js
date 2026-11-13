@@ -107,6 +107,9 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   if (hedef.lh) ik(r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh, kutup, r.kol[0], r.kol[1]);
   if (disa) kutup.addScaledVector(sol, -2);
   if (hedef.rh) ik(r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh, kutup, r.kol[0], r.kol[1]);
+  // ek.avuc: [sol, sağ] ön kolu kendi ekseni etrafında çevirir (avuç yukarı/aşağı). Yarısı ön kolda, yarısı bilekte: deri burulmasın
+  if (ek && ek.avuc) for (const [i, on, el] of [[0, r.B.LeftForeArm, r.B.LeftHand], [1, r.B.RightForeArm, r.B.RightHand]]) { const a = ek.avuc[i]; if (!a) continue;
+    el.getWorldPosition(KL); on.getWorldPosition(KR); KY.copy(KL).sub(KR).normalize(); turn(on, KY, a * 0.5); turn(el, KY, a * 0.5); }
   kutup.copy(ileri);
   const dizDisa = ek && ek.dizDisa; // dizler iki yana açık oturuş
   // oturuş: uyluk yatay öne, baldır dik aşağı (ek.otur: [sol, sağ] için [uyluk, baldır] oranları)

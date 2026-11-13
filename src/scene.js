@@ -24,7 +24,12 @@ for (const b of BOX) if (b !== TK && b.tag !== 'police' && b.tag !== 'crate') bo
 add(truck, CG, M(0x333333), 0, 0.9, HZ, 0.22, 0.5, 0.22); // mafsal pimi
 export const marks = WHEEL.map((w) => add(truck, CG, new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true }), Math.sign(w[0]) * 1.05, 1.32, clamp(w[2], -5.4, 0.55), 0.42, 0.03, 0.42)); // patlak lastik için durulacak yer
 export const wheels = WHEEL.map((w, i) => { const par = i < 2 ? cabIn : truck, m = add(par, CG, M(0x222222), w[0], w[1], w[2], 0.55, 0.44, 0.55); m.rotation.z = Math.PI / 2; add(par, CG, M(0x8d8d92), w[0] - Math.sign(w[0]) * 0.12, w[1], w[2], 0.12, 0.3, 0.12).rotation.z = Math.PI / 2; return m; }); // tekerler gövdeden dışarıda, aksla bağlı
-add(cabIn, BG, M(0x30415d), 0.7, 1.95, 1.45, 0.8, 0.9, 0.12); add(cabIn, BG, M(0x30415d), -0.7, 2.3, 1.45, 0.8, 1.0, 0.12);
+// koltuklar: oturak + sırtlık tek grup; koltuk fırlatınca grup havaya uçar (hud.js)
+export const koltuk = [null, [0.7, 1.95, 0.9], [-0.7, 2.3, 1.0]].map((k, s) => { if (!k) return null;
+  const g = new THREE.Group(); g.position.set(k[0], 1.3, 1.9); cabIn.add(g); g.userData.ev = g.position.clone();
+  const otur = BOX.filter((b) => b.tag === 'seat')[s - 1].mesh; otur.position.sub(g.position); g.add(otur);
+  add(g, BG, M(0x30415d), 0, k[1] - 1.3, -0.45, 0.8, k[2], 0.12); add(g, CG, M(0x888888), 0, -0.15, 0, 0.05, 0.3, 0.05); // sırtlık, yay
+  return g; });
 add(truck, CG, M(0xffd23f), INLET[0], 1.65, INLET[2], 0.09, 0.7, 0.09); add(truck, CG, M(0x222222), INLET[0], 2.0, INLET[2], 0.16, 0.08, 0.16);
 export const swheel = new THREE.Group(); swheel.position.set(0.7, 2.05, 2.85); swheel.rotation.x = -0.5; cabIn.add(swheel);
 add(swheel, new THREE.TorusGeometry(0.3, 0.045, 8, 24), M(0x111111), 0, 0, 0); add(swheel, BG, M(0x111111), 0, 0, 0, 0.6, 0.06, 0.04); add(swheel, BG, M(0xd8432f), 0, 0.15, 0, 0.06, 0.3, 0.04);
@@ -45,7 +50,7 @@ export const hpTag = WHEEL.map((w) => { const c = document.createElement('canvas
 // buğulu ön cam: yalnız şoför kamerasında görünür, dışarısı hayal meyal seçilir
 export const glass = add(cabIn, new THREE.PlaneGeometry(10, 4), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide, map: (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = 'rgba(226,234,240,0.92)'; g.fillRect(0, 0, 256, 256);
   g.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 26; i++) { const x = srnd() * 256, y = srnd() * 256, r = 18 + srnd() * 46, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })() }), 0, 4.7, 3.52); glass.visible = false; glass.renderOrder = 4;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })() }), 0, 3.0, 3.38); glass.scale.set(0.29, 0.155, 1); glass.visible = false; glass.renderOrder = 4;
 add(truck, CG, M(0x2a3d2f), OILB[0], 1.65, OILB[2] - 0.1, 0.26, 0.7, 0.26); add(truck, CG, M(0xffd23f), OILB[0], 1.65, OILB[2] - 0.1, 0.27, 0.14, 0.27); add(truck, CG, M(0x111111), OILB[0], 2.01, OILB[2] - 0.1, 0.2, 0.02, 0.2); // yağ varili
 export function mkPolice(g) { const kutu = new THREE.Group(), isik = []; g.add(kutu); // model gelene kadar kutu gövde görünür
   loadModel(KENNEY + 'car/police.glb').then((m) => { if (!m) return; const c = m.clone(); c.scale.setScalar(1.45); g.add(c); kutu.visible = false; isik.forEach((l) => { l.position.set(l.position.x * 0.8, 2.02, -0.25); l.scale.set(0.5, 0.14, 0.26); }); });
