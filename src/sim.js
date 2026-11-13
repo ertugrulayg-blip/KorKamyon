@@ -98,7 +98,7 @@ function yolcuGirdisi(pl, I) {
 }
 export function stepPlayer(pl, dt) {
   const P = pl.P, Q = pl.Q, I = pl.inp;
-  if (I.c !== undefined && I.c !== pl.lc) { pl.lc = I.c; if (T.state === 'run' && TKS.st === 0) { if (T.fuel >= 50) say('Depo yarıdan dolu: tanker gelmez (%50 altında çağır)'); else { TKS.st = 1; TKS.z = -50; TKS.x = 3.3; TKS.valve = 0; say(pl.name + ' tankeri çağırdı ☎'); } } }
+  if (I.c !== undefined && I.c !== pl.lc) { pl.lc = I.c; if (T.state === 'run' && pl.seat !== 2) say('📻 Tankeri yalnız yolcu telsizle çağırabilir'); else if (T.state === 'run' && TKS.st === 0) { /* tanker: yalnız yolcu */ if (T.fuel >= 50) say('Depo yarıdan dolu: tanker gelmez (%50 altında çağır)'); else { TKS.st = 1; TKS.z = -50; TKS.x = 3.3; TKS.valve = 0; say(pl.name + ' tankeri çağırdı ☎'); } } }
   yolcuGirdisi(pl, I);
   if (pl.dead > 0) { pl.dead -= dt; if (pl.dead <= 0) place(pl, rnd(-0.8, 0.8), 4, rnd(-4.5, -1.5)); return; }
   if (I.s !== undefined && I.s !== pl.ls) {
