@@ -5,11 +5,13 @@ import { $, BUMP, BUMP_V, COL, GATE, HZ, LEN, LIMIT, POLZ, WHEEL, cx } from './w
 import { SPOT } from './sim.js';
 import { BG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, cabG, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
+import { makeRig, poseRig } from './rig.js';
 import { drawBar, limbV, playerMesh, pm, qY } from './bar.js';
 import { sfx, sm } from './audio.js';
 import { TOUCH, joy, tb } from './input.js';
 
 export let rainK = 0; export let hose = null;
+const RH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }; // iskelet hedefleri: eller ve ayaklar
 const duman = Array.from({ length: 14 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0x4a4a4e, transparent: true, opacity: 0.4, depthWrite: false }), 0, 0, 0, 0.15); m.visible = false; return m; });
 // oyuncunun başının üstündeki isim
 function isimEtiketi(ad, renk) { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d'); g.font = '900 36px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 7; g.strokeStyle = '#000'; g.strokeText(ad, 128, 34); g.fillStyle = renk; g.fillText(ad, 128, 34);
@@ -46,15 +48,16 @@ export function draw(V, dt) {
   if (ks > 0) { const a = new THREE.Vector3(kx, 2, kz + 1), b = nozzle.position, pts = []; const sag = Math.max(0.1, (7.5 - a.distanceTo(b)) * 0.18); for (let i = 0; i <= 6; i++) { const u = i / 6; pts.push(a.clone().lerp(b, u).add(new THREE.Vector3(0, -Math.sin(u * Math.PI) * sag, 0))); } hose = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 14, 0.06, 6), hoseMat); scene.add(hose); }
   const me = V.p.find((p) => p.id === net.myId), seen = new Set();
   for (const p of V.p) {
-    seen.add(p.id); let o = pm.get(p.id); if (!o) { o = playerMesh(p.c); pm.set(p.id, o); if (p.bt) { add(o.body, SG, M(0x111111), 0, 1.03, 0.01, 0.265, 0.3, 0.265); add(o.body, BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 1.07, 0.25, 0.26, 0.05, 0.05); } o.tag = isimEtiketi(p.n, p.bt ? '#ff5a5f' : '#' + COL[p.c % 4].toString(16).padStart(6, '0')); o.g.add(o.tag); RP[p.id] = Float32Array.from(p.P); }
+    seen.add(p.id); let o = pm.get(p.id); if (!o) { o = playerMesh(p.c); pm.set(p.id, o); if (p.bt) { add(o.body, SG, M(0x111111), 0, 1.03, 0.01, 0.265, 0.3, 0.265); add(o.body, BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 1.07, 0.25, 0.26, 0.05, 0.05); } if (!p.bt) makeRig(p.c, scene).then((r) => { if (!r) return; if (!pm.has(p.id)) { scene.remove(r.root); return; } o.rig = r; o.body.visible = false; o.s.forEach((m) => (m.visible = false)); o.l.forEach((m) => (m.visible = false)); }); o.tag = isimEtiketi(p.n, p.bt ? '#ff5a5f' : '#' + COL[p.c % 4].toString(16).padStart(6, '0')); o.g.add(o.tag); RP[p.id] = Float32Array.from(p.P); }
     const P = RP[p.id]; for (let i = 0; i < 21; i++) P[i] = net.isHost || p.s || Math.abs(p.P[i] - P[i]) > 3 ? p.P[i] : P[i] + (p.P[i] - P[i]) * 0.4;
     o.g.visible = !p.d;
     const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
     o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3])); o.s[2].rotation.y = o.s[3].rotation.y = p.y;
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
+    if (o.rig) { o.rig.root.visible = !p.d; if (!p.d) { RH.lh.set(P[9], P[10], P[11]); RH.rh.set(P[12], P[13], P[14]); RH.lf.set(P[15], P[16], P[17]); RH.rf.set(P[18], P[19], P[20]); poseRig(o.rig, B.position, B.quaternion, RH); } }
     for (let k = 0; k < 4; k++) { const sd = k % 2 ? -1 : 1; v1.set(sd * (k < 2 ? 0.38 : 0.15), k < 2 ? 0.62 : -0.04, 0).applyQuaternion(B.quaternion).add(B.position); v2.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3]); limbV(o.l[k], v1, v2, k < 2 ? 0.1 : 0.115); }
   }
-  for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); pm.delete(id); delete RP[id]; }
+  for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(id); delete RP[id]; }
   const seat = ui.camMode >= 0 ? ui.camMode : me ? me.s : 0;
   if (ch) { v1.set(0, 14, -25); v2.set(0, 1, -5.5); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
   else { v1.set(0, 9.5, -10.5); v2.set(0, 1.5, -1); } // herkes yukarıdan bakar; şoförün ilerisi sisli, yolcunun ileri penceresi var

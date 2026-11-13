@@ -2,6 +2,12 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-13 — Karakterler: Meshy + fizikle IK
+Karakterler Meshy AI ile üretiliyor (iskeletli GLB). Hareket animasyonla değil fizikle: kemikler fizik noktalarına IK ile bağlanır.
+Neden: sahibi sallanan, düşen fizik hareketini komik buluyor ve korunmasını istedi. Meshy'nin hazır animasyonları (yürüme, koşma) şimdilik kullanılmıyor.
+Barda karakterler taburede oturur; eller eski pozların el noktalarına uzanır, bacaklar sarkar.
+Açık: Meshy'nin ticari kullanım şartları (sahibi kontrol edecek).
+
 ## 2026-11-12 — Sanat yönü: Kenney CC0 low-poly
 Görseller Kenney'nin ücretsiz, kamu malı (CC0) modelleriyle yapılıyor; ilk parti GitHub'daki başlangıç kitlerinden alındı (`assets/kenney/KAYNAK.md`).
 Neden: sahibi "şimdilik bedava kaynaklarla ilerleyelim" dedi; Kenney'nin tüm paketleri aynı tarzda olduğu için tutarlı görünüyor.
