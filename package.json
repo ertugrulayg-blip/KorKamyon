@@ -19,6 +19,7 @@
     "appId": "com.roadhogs.game",
     "productName": "Road Hogs",
     "files": ["index.html", "src/**", "lib/**", "assets/**", "desktop/**"],
+    "asarUnpack": ["node_modules/steamworks.js/**"],
     "directories": { "output": "dist" },
     "win": { "target": "portable" },
     "portable": { "artifactName": "RoadHogs-${version}.exe" }

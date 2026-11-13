@@ -72,6 +72,8 @@
   #dugmeler{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:none;gap:8px;z-index:6}
   #dugmeler b{pointer-events:auto;cursor:pointer;background:rgba(15,20,30,.62);border:2px solid rgba(255,255,255,.55);border-radius:12px;padding:5px 11px;font-size:15px;font-weight:800;text-shadow:none}
   #dugmeler b:hover{background:rgba(216,67,47,.85)}
+  /* Steam (masaüstü): oda kodu yerine davet */
+  #davetBtn,#steamNot{display:none} body.steam #davetBtn{display:inline-block} body.steam #steamNot{display:block;font-size:13px;opacity:.85;margin-top:6px;line-height:1.35} body.steam #menu .sat{display:none}
   .panel{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:8;text-shadow:none}
   .panel.kapali{display:none}
   .panel .kart2{background:#141a26;border:2px solid #39445a;border-radius:18px;padding:18px 20px;width:min(94vw,560px);max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
@@ -131,6 +133,7 @@
   <input id="ad" maxlength="12" data-tp="adin">
   <button id="kur" data-t="odaKur"></button>
   <div class="sat"><input id="kod" maxlength="4" data-tp="kod"><button id="katil" class="iki" data-t="katil"></button></div>
+  <div id="steamNot" data-t="steamNot"></div>
   <div id="durum"></div>
 </div></div>
 <div id="hud">
@@ -141,7 +144,7 @@
   <div id="afis"></div>
 </div>
 <div id="asama"></div>
-<div id="dugmeler"><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
+<div id="dugmeler"><b id="davetBtn" data-t="davet"></b><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
 <div id="ayar" class="panel kapali"><div class="kart2">
   <h2 data-t="ayarlar"></h2>
   <h3 data-t="dilBaslik"></h3><div class="dilsec ayar"><b data-dil="tr">Türkçe</b><b data-dil="en">English</b></div>
@@ -225,6 +228,6 @@
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=42"></script>
+<script type="module" src="src/main.js?v=43"></script>
 </body>
 </html>
