@@ -2,6 +2,10 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-13 — Steam görselleri bekletiliyor
+Steam kapakları, ekran görüntüleri ve mağaza metni oyun tamamlanana kadar güncellenmeyecek; mevcut hali `marketing/` altında taslak olarak duruyor.
+Neden: sahibi önce oyunun bitmesini istiyor. Oyun bitince `marketing/*.cjs` betikleriyle yeniden üretilir.
+
 ## 2026-11-13 — Aşamalar ve puanlama
 Oyun tek uzun yol yerine aşamalara bölündü (Eğitim, 100, 500, 1000, 1500, 2000, 2500 m). Yol aynı 2500 m'lik yol; aşama yalnız hedef çizgisinin yerini ve açık olayları belirler.
 Puanlar: sürüş 2/sn, yolculuk 1/sn, sandık taşıma 1/sn; lastik 50, tamir 40, yangın 60, soğutma 30, yakıt işleri 30 (çağırma 10), haydut kovma 50 (+5 şaplak), polis yağ 40 / atlayış 25 / saf dışı 50; çarpma −30, hızlı tümsek −20, hız cezası −20, düşme −25, koltuktan fırlama −10; aşama sonu herkese 100 + sandık başına 25.

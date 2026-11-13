@@ -60,7 +60,7 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - 🙋 Meshy lisansının ticari kullanım hakkı
 - ✅ İngilizce sürüm (`src/dil.js`): tüm arayüz, ekran yazıları, tuş rehberi ve oyun mesajları
 - ✅ Mağaza metinleri İngilizce ve Türkçe (`marketing/STEAM-SAYFASI.md`)
-- ✅ Kapak görselleri, logo, simgeler ve 6 ekran görüntüsü (`marketing/steam/`, betikler `marketing/*.cjs`)
+- ✅ Kapak görselleri, logo, simgeler ve 6 ekran görüntüsü (`marketing/steam/`, betikler `marketing/*.cjs`) — ⏸ oyun tamamlanınca yeniden üretilecek
 - ✅ Tanıtım sayfası (`tanitim/`, GitHub Pages'te `/tanitim/`)
 - ⬜ Fragman — 🙋 oyun kaydı
 - ⬜ Sistem gereksinimleri — 🙋 düşük donanımda deneme
