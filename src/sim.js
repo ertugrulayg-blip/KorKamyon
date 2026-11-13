@@ -278,7 +278,7 @@ export function stepTanker(dt) {
 }
 export function stepTruck(dt) {
   const y = [...players.values()].find((p) => p.seat === 2), yi = y ? y.inp : null; // yolcunun şoföre işareti: 1 sol, 2 sağ, 3 yavaş
-  T.sig = yi ? yi.sg || ((yi.mx || 0) > 0.5 ? 1 : (yi.mx || 0) < -0.5 ? 2 : (yi.mz || 0) < -0.5 ? 3 : 0) : 0;
+  T.sig = yi ? yi.sg || ((yi.mx || 0) > 0.5 ? 1 : (yi.mx || 0) < -0.5 ? 2 : (yi.mz || 0) < -0.5 ? 3 : (yi.mz || 0) > 0.5 ? 4 : 0) : 0; // 1 sol, 2 sağ, 3 yavaş, 4 hızlan
   if (T.state === 'lobby') { T.v = 0; T.pax = T.paz = 0; return; }
   if (T.state === 'run' && T.cd > 0) { T.cd -= dt; T.v = 0; T.pax = T.paz = 0; T.gas = T.br = 0; if (T.cd > 0) return; T.cd = 0; T.v = 8; say('Yola çıktınız! Kamyon durmasın'); } // başlangıç geri sayımı: kamyon bekler
   T.t += dt; T.msgT -= dt; T.wipeT -= dt; T.rain = run0() && RAIN.some(([a, b]) => T.Z > a && T.Z < b) ? 1 : 0;
