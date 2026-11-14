@@ -2,6 +2,12 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-14 — Lobide karakter seçimi; yeni karakter tarzı; iskelet Blender'da
+- Lobide herkes karakterini seçer (aşama panelinin üstünde). Oda sahibi denetler: başkasının aldığı karakter verilmez. Seçim girdiyle gider (`kr`), tarayıcıda hatırlanır (`kk-karakter`).
+- Şapka/maske gibi aksesuarlar da lobide seçilecek; yeni modeller gelince eklenecek.
+- Karakter tarzı değişecek: herkes aynı tıknaz gövdede (kafa-gövde tek parça, kısa bacak, eldiven eller), farkı renk, yelek ve aksesuar. Meshy ile üretilecek; Meshy'nin otomatik iskeleti beğenilmediği için iskelet ve ağırlıklar bu ortamda Blender (bpy 5.3, başsız) ile kurulacak, kemik adları oyunun beklediği Mixamo adları.
+Neden: sahibi gerçekçi modellerin sorun çıkardığını, Gang Beasts / Pummel Party tarzı ama onlara benzemeyen tek tip gövde istediğini söyledi.
+
 ## 2026-11-14 — Sonsuz yol
 - Aşama seçiminde "∞ Sonsuz" (hep açık): bitiş yok, kamyon durana ya da hurdaya dönene kadar gider. Son ekranda gidilen mesafe ve rekor (oda sahibinin bilgisayarında, `kk-rekor`).
 - Nasıl: yol 280 m'den sonra 2000 m'de bir kendini tekrarlar (`cx` dalga boyları 1000 ve 400 m). Engeller, tümsekler, yol ayrımları, polis noktaları ve yol kenarı süsleri [280, 2280) aralığında üretilir, 2280'den sonrası bunların kopyasıdır. Kamyon 2300 m'yi geçince 2000 m geri alınır (`donguBasa`); yağ lekeleri, çarpılmış engeller ve polis noktası durumu taşınır. Toplam mesafe `T.Z + tur × 2000`.

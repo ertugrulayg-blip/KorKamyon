@@ -7,4 +7,5 @@ const KQ = new URLSearchParams(location.search).get('kalite'), KS = localStorage
 const SES = (() => { try { return { muzik: 0.8, efekt: 1, oyuncu: 1, mod: 'kapali', ...JSON.parse(localStorage.getItem('kk-ses') || '{}'), kisi: {} }; } catch (e) { return { muzik: 0.8, efekt: 1, oyuncu: 1, mod: 'kapali', kisi: {} }; } })();
 export const sesKaydet = () => { try { localStorage.setItem('kk-ses', JSON.stringify({ muzik: SES.muzik, efekt: SES.efekt, oyuncu: SES.oyuncu, mod: SES.mod })); } catch (e) {} };
 export const sesSeviye = (id) => Math.min(1, SES.oyuncu * (SES.kisi[id] ?? 1));
-export const ui = { kalite: KQ !== null ? +KQ : KS !== null ? +KS : matchMedia('(pointer:coarse)').matches ? 1 : 2, camMode: -1, musOn: localStorage.getItem('kk-muz') !== '0', mouseL: false, ses: SES };
+export const ui = { kalite: KQ !== null ? +KQ : KS !== null ? +KS : matchMedia('(pointer:coarse)').matches ? 1 : 2, camMode: -1, musOn: localStorage.getItem('kk-muz') !== '0', mouseL: false, ses: SES,
+  karakter: (() => { try { const k = localStorage.getItem('kk-karakter'); return k === null ? -1 : +k; } catch (e) { return -1; } })() }; // lobide seçilen karakter (-1: verilen kalsın)

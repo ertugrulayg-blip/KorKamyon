@@ -36,15 +36,22 @@ const isaretMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: tr
 const radIsaret = add(cabIn, CG, isaretMat(0x3fa7ff), RAD[0], 1.33, RAD[2], 0.55, 0.03, 0.55), yagIsaret = add(truck, CG, isaretMat(0xffd23f), OILB[0] - 0.05, 1.32, OILB[2] + 0.5, 0.5, 0.03, 0.5), vanaIsaret = add(tanker, CG, isaretMat(0xff5a5f), 0, 2.03, -2, 0.6, 0.03, 0.6);
 const EV = new THREE.Vector3();
 // ---------- aşama seçimi, eğitim, puan, final ----------
-function asamaPanel(t) {
+function asamaPanel(t, V) {
   const el = $('asama'), goster = t.s === 'lobby';
   if (!goster) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
-  const iz = [t.lv, t.ac, t.rk, net.isHost, DIL].join(); if (el.dataset.iz === iz && el.style.display === 'block') return; el.dataset.iz = iz; el.style.display = 'block';
-  let h = `<div class="baslik">${L(net.isHost ? 'asamaSec' : 'sadeceSahip')}</div><div class="kutular">`;
+  const iz = [t.lv, t.ac, t.rk, net.isHost, DIL, V.p.map((p) => p.id + ':' + p.c).join()].join(); if (el.dataset.iz === iz && el.style.display === 'block') return; el.dataset.iz = iz; el.style.display = 'block';
+  // karakter seçimi: herkes kendi karakterini seçer, başkasının aldığı seçilemez
+  let h = `<div class="baslik">${L('karakterSec')}</div><div class="kutular karakterler">`;
+  for (let c = 0; c < 4; c++) {
+    const sahip = V.p.find((p) => !p.bt && p.c === c), ben = sahip && sahip.id === net.myId, renk = '#' + COL[c].toString(16).padStart(6, '0');
+    h += `<button data-kr="${c}" class="${ben ? 'secili' : ''}" ${sahip && !ben ? 'disabled' : ''} style="border-color:${renk}${ben ? ';background:' + renk + '55' : ''}"><b style="color:${renk}">●</b><span>${sahip ? sahip.n + (ben ? ' ✓' : '') : L('bos')}</span></button>`;
+  }
+  h += `</div><div class="baslik">${L(net.isHost ? 'asamaSec' : 'sadeceSahip')}</div><div class="kutular">`;
   ASAMA.forEach((a, i) => { const kilit = i > t.ac && !a.sonsuz; /* sonsuz yol hep açık */ h += `<button data-lv="${i}" class="${i === t.lv ? 'secili' : ''}${kilit ? ' kilitli' : ''}${a.sonsuz ? ' sonsuz' : ''}" ${!net.isHost || kilit ? 'disabled' : ''}><b>${a.sonsuz ? '∞' : i || '🎓'}</b><span>${kilit ? '🔒' : a.sonsuz ? L('sonsuzKisa') + (t.rk ? '<br><small>' + L('rekor', t.rk) + '</small>' : '') : i ? a.m + ' m' : L('egitimKisa')}</span></button>`; });
   h += '</div>' + (t.ac <= 1 ? `<div class="ipucu">${L('ilkKez')}</div>` : '') + (net.isHost ? `<button class="basla">${L('basla')}</button>` : '');
   el.innerHTML = h;
   for (const b of el.querySelectorAll('button[data-lv]')) b.onclick = () => asamaSec(+b.dataset.lv);
+  for (const b of el.querySelectorAll('button[data-kr]')) b.onclick = () => { ui.karakter = +b.dataset.kr; try { localStorage.setItem('kk-karakter', b.dataset.kr); } catch (e) {} };
   const bb = el.querySelector('.basla'); if (bb) bb.onclick = () => hostStart();
 }
 function egitimYazi(t) {
@@ -114,7 +121,7 @@ export function draw(V, dt) {
   if (ks > 0) { const a = new THREE.Vector3(kx, 2, kz + 1), b = nozzle.position, pts = []; const sag = Math.max(0.1, (7.5 - a.distanceTo(b)) * 0.18); for (let i = 0; i <= 6; i++) { const u = i / 6; pts.push(a.clone().lerp(b, u).add(new THREE.Vector3(0, -Math.sin(u * Math.PI) * sag, 0))); } hose = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 14, 0.06, 6), hoseMat); scene.add(hose); }
   const me = V.p.find((p) => p.id === net.myId), seen = new Set();
   for (const p of V.p) {
-    seen.add(p.id); let o = pm.get(p.id); if (!o) { o = playerMesh(p.c); pm.set(p.id, o); if (p.bt) { add(o.body, SG, M(0x111111), 0, 1.03, 0.01, 0.265, 0.3, 0.265); add(o.body, BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 1.07, 0.25, 0.26, 0.05, 0.05); } makeRig(p.c, scene, p.bt ? 'haydut.glb' : null).then((r) => { if (!r) return; if (!pm.has(p.id)) { scene.remove(r.root); return; } o.rig = r; o.body.visible = false; o.s.forEach((m) => (m.visible = false)); o.l.forEach((m) => (m.visible = false)); }); o.tag = isimEtiketi(p.bt ? L('haydutAd') : p.n, p.bt ? '#ff5a5f' : '#' + COL[p.c % 4].toString(16).padStart(6, '0')); o.g.add(o.tag); RP[p.id] = Float32Array.from(p.P); }
+    seen.add(p.id); let o = pm.get(p.id); if (o && o.c !== p.c) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(p.id); delete RP[p.id]; o = null; } /* lobide karakter değişti */ if (!o) { o = playerMesh(p.c); o.c = p.c; pm.set(p.id, o); if (p.bt) { add(o.body, SG, M(0x111111), 0, 1.03, 0.01, 0.265, 0.3, 0.265); add(o.body, BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 1.07, 0.25, 0.26, 0.05, 0.05); } makeRig(p.c, scene, p.bt ? 'haydut.glb' : null).then((r) => { if (!r) return; if (pm.get(p.id) !== o) { scene.remove(r.root); return; } o.rig = r; o.body.visible = false; o.s.forEach((m) => (m.visible = false)); o.l.forEach((m) => (m.visible = false)); }); o.tag = isimEtiketi(p.bt ? L('haydutAd') : p.n, p.bt ? '#ff5a5f' : '#' + COL[p.c % 4].toString(16).padStart(6, '0')); o.g.add(o.tag); RP[p.id] = Float32Array.from(p.P); }
     const P = RP[p.id]; for (let i = 0; i < 21; i++) P[i] = net.isHost || p.s || Math.abs(p.P[i] - P[i]) > 3 ? p.P[i] : P[i] + (p.P[i] - P[i]) * 0.4;
     o.g.visible = !p.d;
     const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
@@ -172,7 +179,7 @@ export function draw(V, dt) {
       else if (yagGerek && yak(OILB[0], OILB[2], 1.7)) ey = L('ey_yag') + (qo ? L('ey_bekle', qo) : '');
       else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) ey = L('ey_vana'); }
     const el = $('eylem'), metin = ey ? `<kbd>${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; } }
-  asamaPanel(t); egitimYazi(t); puanBalon(t, me); konfeti(t);
+  asamaPanel(t, V); egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
