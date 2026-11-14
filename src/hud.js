@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
-import { $, ASAMA, BUMP, BUMP_V, COL, GATE, HZ, LEN, LIMIT, POLZ, WHEEL, cx } from './world.js';
+import { $, ASAMA, BUMP, BUMP_V, COL, GATE, HZ, LEN, POLZ, WHEEL, cx } from './world.js';
 import { OILB, RAD, SPOT, asamaSec } from './sim.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
@@ -186,7 +186,7 @@ export function draw(V, dt) {
   let gv = ''; // görev listesi: sağda, kısa satırlar
   if (t.s === 'run' && !t.cd) { const hy = V.p.some((p) => p.bt);
     if (ch) gv += `<div class="k">${L('g_polis', qhp)}</div>`;
-    else if (seat !== 1) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) gv += `<div${t.v > LIMIT ? ' class="k"' : ''}>${L('g_radar', Math.max(0, Math.round(d)))}</div>`; }
+    else if (seat !== 1) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) gv += `<div class="k">${L('g_radar', Math.max(0, Math.round(d)))}</div>`; }
     if (seat === 2 && !ch) { const g = GATE.find((g) => g.z > t.Z + 4 && g.z < t.Z + 230); if (g) gv += `<div>${L('g_ayrim', Math.round(g.z - t.Z), g.open > 0)}</div>`; }
     if (t.sl) gv += `<div class="k">${L('g_motor')}</div>`; else if (t.ht >= 70) gv += `<div>${L('g_hararet', t.ht)}</div>`;
     if (V.fr) gv += `<div class="k">${L('g_yangin')}</div>`;

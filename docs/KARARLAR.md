@@ -2,6 +2,15 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-14 — Kaos geri artırıldı, polis hızdan bağımsız
+- Olaylar daha erken ve sık: ilk lastik 18–28 sn, ilk yangın 40–55 sn, ilk haydut 50–65 sn; tekrarlar lastik 22–38, yangın 35–55, haydut 35–50 sn (yol ilerledikçe `diff()` ile sıklaşır).
+- Lastik artık yangın, haydut ya da polis sırasında da patlayabilir; yangın, haydut ve polis birbirini beklemeye devam eder.
+- Aşamalar: 100 m'de lastik; 500 m'de lastik, ısınma, yangın, polis; 1000 m'den itibaren haydut da var.
+- Polis hız sınırına bakmaz: kamyon polis noktasının yanından geçince kovalar (hız cezası kalktı). İlk polis 380 m'ye alındı ki 500 m aşamasında da görülsün.
+- Koltuktan kalkan (kendisi, fırlatılan ya da direksiyonu kaptıran) 5 sn oturamaz: otur-kalk yaparak sürüş olmasın.
+- Dönüşte savrulma %35 arttı (yana ivme katsayısı 0,55 → 0,75).
+Neden: sahibinin son oyununda kaos fazla azalmış, oyun sıkıcı gelmiş; şoför sürekli otur-kalk yaparak sürebiliyormuş.
+
 ## 2026-11-13 — Steam görselleri bekletiliyor
 Steam kapakları, ekran görüntüleri ve mağaza metni oyun tamamlanana kadar güncellenmeyecek; mevcut hali `marketing/` altında taslak olarak duruyor.
 Neden: sahibi önce oyunun bitmesini istiyor. Oyun bitince `marketing/*.cjs` betikleriyle yeniden üretilir.

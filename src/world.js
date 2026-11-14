@@ -27,13 +27,13 @@ export const GATE = [640, 1180, 1700, 2150].map((z, i) => ({ z, open: [1, -1, -1
 for (const g of GATE) { for (let i = OBS.length - 1; i >= 0; i--) if (Math.abs(OBS[i].z - g.z) < 75) OBS.splice(i, 1); OBS.push({ z: g.z, x: cx(g.z) - g.open * 3.7, w: 3.7, gate: g, hit: false }); } OBS.sort((a, b) => a.z - b.z);
 export const RAIN = [[720, 1040], [1540, 1860]]; // yağmur bölgeleri
 export const BUMP = []; for (let z = 190; z < LEN - 80; z += 150 + ((z * 7) % 90)) { while (OBS.some((o) => Math.abs(o.z - z) < 28)) z += 14; BUMP.push(z); }
-export const LIMIT = 50 / 3.6, POLZ = [520, 980, 1450, 1900, 2280], SEAT_T = 30; // hız sınırı (m/s), radar noktaları, koltukta kalma süresi (sn)
+export const LIMIT = 50 / 3.6, POLZ = [380, 980, 1450, 1900, 2280], SEAT_T = 30; // hız sınırı (m/s), radar noktaları, koltukta kalma süresi (sn)
 // Aşamalar: 0 eğitim (adım adım öğretir), sonra giderek uzayan ve zorlaşan yollar. olay: o aşamada rastgele gelen sorunlar (isi: hararet hızı).
 export const ASAMA = [
   { m: 700, egitim: true, olay: {} },
-  { m: 100, olay: {} },
-  { m: 500, olay: { lastik: 1, isi: 0.5 } },
-  { m: 1000, olay: { lastik: 1, isi: 0.7, yangin: 1, polis: 1 } },
+  { m: 100, olay: { lastik: 1 } },
+  { m: 500, olay: { lastik: 1, isi: 0.7, yangin: 1, polis: 1 } },
+  { m: 1000, olay: { lastik: 1, isi: 0.8, yangin: 1, polis: 1, haydut: 1 } },
   { m: 1500, olay: { lastik: 1, isi: 0.85, yangin: 1, polis: 1, haydut: 1 } },
   { m: 2000, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
   { m: 2500, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
