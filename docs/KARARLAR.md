@@ -2,6 +2,13 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-14 — Sonsuz yol
+- Aşama seçiminde "∞ Sonsuz" (hep açık): bitiş yok, kamyon durana ya da hurdaya dönene kadar gider. Son ekranda gidilen mesafe ve rekor (oda sahibinin bilgisayarında, `kk-rekor`).
+- Nasıl: yol 280 m'den sonra 2000 m'de bir kendini tekrarlar (`cx` dalga boyları 1000 ve 400 m). Engeller, tümsekler, yol ayrımları, polis noktaları ve yol kenarı süsleri [280, 2280) aralığında üretilir, 2280'den sonrası bunların kopyasıdır. Kamyon 2300 m'yi geçince 2000 m geri alınır (`donguBasa`); yağ lekeleri, çarpılmış engeller ve polis noktası durumu taşınır. Toplam mesafe `T.Z + tur × 2000`.
+- Zorluk sonsuz yolda 5 km'de en üst düzeye çıkar (olay aralıkları 0,45 kata kadar kısalır).
+- Yan etki: yolun virajları biraz değişti (dalga boyları 1005/358 m idi), ilk polis 380 m, son polis 2380 m; orta şerit çizgileri 9 yerine 10 m arayla. Polis levhasında "50" yerine 🚓.
+Neden: sahibi "gidebildiği kadar gitsin" diye sonsuz yol tercihi istedi. Ayrı bir sonsuz yol üretmek yerine döngü seçildi: dünya bir kez kuruluyor, ağ ve çizim aynı kalıyor.
+
 ## 2026-11-14 — Kaos geri artırıldı, polis hızdan bağımsız
 - Olaylar daha erken ve sık: ilk lastik 18–28 sn, ilk yangın 40–55 sn, ilk haydut 50–65 sn; tekrarlar lastik 22–38, yangın 35–55, haydut 35–50 sn (yol ilerledikçe `diff()` ile sıklaşır).
 - Lastik artık yangın, haydut ya da polis sırasında da patlayabilir; yangın, haydut ve polis birbirini beklemeye devam eder.

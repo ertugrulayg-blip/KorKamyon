@@ -1,5 +1,5 @@
 // Oyun benzetimi: yalnız oda sahibinde çalışır. Kamyon, oyuncular, tanker, polis, yük, yangın, haydut.
-import { ASAMA, BOX, BUMP, BUMP_V, HZ, INLET, LEN, OBS, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
+import { ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
 
 export let cpc = 1, cps = 0, tX = 0, tZ = 0; // cpc/cps: kabin açısının cos/sin'i
 export const toCab = (x, z) => { tX = x * cpc - (z - HZ) * cps; tZ = HZ + x * cps + (z - HZ) * cpc; }, fromCab = (x, z) => { tX = x * cpc + (z - HZ) * cps; tZ = HZ - x * cps + (z - HZ) * cpc; };
@@ -20,7 +20,10 @@ export const EXT = [-1.2, 1.75, 0.55], EX = { p: EXT.slice(), holder: null, hand
 export const FIRE = { on: false, x: 0, z: 0, hp: 0, t: 0 }, FSPOT = [[0.5, -2.0], [-0.5, -0.3], [0, -4.0], [-0.6, -3.3]];
 export const RAD = [0, 1.9, 2.95]; // radyatör kapağı: kabinde, koltukların arasında
 export let BOT = null; // haydut
-export const diff = () => 1.25 - 0.6 * clamp(T.Z / (T.hedef || LEN), 0, 1); // yol ilerledikçe olaylar sıklaşır
+// Toplam gidilen yol (sonsuz yolda her döngü 2000 m ekler) ve 0..1 ilerleme. Sonsuz yolda 5 km'de en zor hale gelir.
+export const toplam = () => T.Z + (T.tur || 0) * PER;
+const ilerleme = () => clamp(toplam() / (T.sonsuz ? 5000 : T.hedef || LEN), 0, 1);
+export const diff = () => 1.25 - (T.sonsuz ? 0.8 : 0.6) * ilerleme(); // yol ilerledikçe olaylar sıklaşır
 export const tutan = (c) => { for (const p of players.values()) if ((p.pin[0] && p.pin[0].b === c.b) || (p.pin[1] && p.pin[1].b === c.b)) return p; return null; };
 export const held = (c) => !!tutan(c);
 export const jolt = (vx, vz) => { for (const c of CR) if (!c.lost && !held(c)) { const k = 0.55 + Math.random() * 0.45; c.vx += vx * k; c.vz += vz * k; } }; // her sandık biraz farklı savrulur
@@ -30,9 +33,10 @@ export const run0 = () => T.state === 'run';
 // Oyun mesajı: kod (ve isteğe bağlı parametre) olarak gönderilir; her oyuncu kendi dilinde görür (dil.js).
 // ---------- aşama ve puan ----------
 // oyun: oda sahibinin seçtiği aşama ve açılmış en yüksek aşama (tarayıcıda saklanır)
-export const oyun = { lv: 1, acik: (() => { try { return Math.max(1, Math.min(ASAMA.length - 1, +localStorage.getItem('kk-acik') || 1)); } catch (e) { return 1; } })() };
+export const oyun = { lv: 1, acik: (() => { try { return Math.max(1, Math.min(SONSUZ - 1, +localStorage.getItem('kk-acik') || 1)); } catch (e) { return 1; } })(),
+  rekor: (() => { try { return +localStorage.getItem('kk-rekor') || 0; } catch (e) { return 0; } })() }; // sonsuz yolda en uzun mesafe (m)
 oyun.lv = oyun.acik;
-export function asamaSec(lv) { if (T.state === 'lobby' && lv >= 0 && lv <= oyun.acik && lv < ASAMA.length) oyun.lv = lv; }
+export function asamaSec(lv) { if (T.state === 'lobby' && lv >= 0 && (lv <= oyun.acik || lv === SONSUZ) && lv < ASAMA.length) oyun.lv = lv; } // sonsuz yol hep açık
 // Puan: her oyuncuya ayrı. k verilirse final tablosundaki sayaç da artar.
 export function puan(pl, n, k) { if (!pl || pl.bot || T.state !== 'run') return; pl.puan = (pl.puan || 0) + n; if (k) pl.ist[k] = (pl.ist[k] || 0) + 1; }
 const surucu = () => [...players.values()].find((p) => p.seat === 1);
@@ -305,7 +309,7 @@ export function stepTruck(dt) {
     si = clamp((Math.atan2(cx(T.Z + 16) + off - T.X, 16) - T.th - T.phi) * 3, -1, 1); const vt = chase() ? 13 : 8; gas = T.v < vt ? 1 : 0; br = T.v > vt + 2 ? 0.6 : 0; }
   T.steer += (si - T.steer) * Math.min(1, dt * 3.5);
   let bias = 0, vmax = 20; for (let w = 0; w < 4; w++) if (T.flat[w]) { vmax -= 6; bias += Math.sign(WHEEL[w][0]) * 0.2 + Math.sin(T.t * 7) * 0.05; }
-  if (run) { T.heat = clamp(T.heat + dt * (0.5 + gas * 1.1) * (1 + 0.6 * T.Z / T.hedef) * (T.ol.isi || 0), 0, 100); if (T.heat >= 70) T.isiUyari = true; if (T.isiUyari && T.heat < 40) { T.isiUyari = false; puan(T.sogutan, 30, 'su'); } if (T.heat >= 100 && !T.stall) { T.stall = true; say('motorStop'); } if (T.stall && T.heat < 55) { T.stall = false; say('motorCalisti'); } if (T.stall) gas = 0; }
+  if (run) { T.heat = clamp(T.heat + dt * (0.5 + gas * 1.1) * (1 + 0.6 * ilerleme()) * (T.ol.isi || 0), 0, 100); if (T.heat >= 70) T.isiUyari = true; if (T.isiUyari && T.heat < 40) { T.isiUyari = false; puan(T.sogutan, 30, 'su'); } if (T.heat >= 100 && !T.stall) { T.stall = true; say('motorStop'); } if (T.stall && T.heat < 55) { T.stall = false; say('motorCalisti'); } if (T.stall) gas = 0; }
   if (T.fuel <= 0) gas = 0; T.gas = gas; T.br = br;
   const off = Math.abs(T.X - cx(T.Z)) > 7;
   const slow = T.v < 8.4; // ~30 km/s altı: kendi kendine neredeyse hiç yavaşlamaz, fren yumuşak
@@ -313,6 +317,7 @@ export function stepTruck(dt) {
   const ov = T.v; T.v = Math.max(0, T.v + a * dt); if (run && T.t < 6) T.v = Math.max(T.v, 7);
   const LT = 5, omt = (T.v / LT) * Math.sin(T.phi), thc = T.th + T.phi; // dorse çekicinin peşinden gecikmeli döner
   const om = (T.steer + bias) * T.v * 0.05 * (12 / (12 + T.v)); // hız arttıkça direksiyon yumuşar
+  if (T.sonsuz && T.Z > DONGU) donguBasa();
   const oz = T.Z; T.X += (Math.sin(thc) * T.v - omt * Math.cos(T.th) * HZ) * dt; T.Z += (Math.cos(thc) * T.v + omt * Math.sin(T.th) * HZ) * dt; T.th += omt * dt; T.phi = clamp(T.phi + (om - omt) * dt, -0.7, 0.7);
   { const c = cx(T.Z), e = T.X - c; T.hitCd -= dt; // yol kenarı bariyerleri: kamyon dışarı çıkamaz, çarptıkça hasar alır
     if (Math.abs(e) > BLIM) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
@@ -332,17 +337,30 @@ export function stepTruck(dt) {
   else if (T.dmg[0] + T.dmg[1] + T.dmg[2] + T.dmg[3] >= 100) { T.state = 'over'; T.why = 'hurda'; }
   else if (T.Z >= T.hedef && T.egitim < 0) bitir();
   else if (T.t > 6 && T.v < 0.4) { T.state = 'over'; T.why = T.fuel <= 0 ? 'yakitBitti' : 'durdu'; }
+  if (T.state === 'over' && T.sonsuz && !T.rekorBak) { // sonsuz yol bitti: mesafe ve rekor
+    T.rekorBak = true; const m = Math.round(toplam()); T.yeniRekor = m > oyun.rekor;
+    if (T.yeniRekor) { oyun.rekor = m; try { localStorage.setItem('kk-rekor', m); } catch (e) {} }
+  }
+}
+// Sonsuz yol: kamyon 2300 m'yi geçince 2000 m geri alınır. Yol aynı olduğu için kimse fark etmez; yoldaki yağ,
+// polis noktaları ve çarpılmış engeller de yeni yerlerine taşınır.
+function donguBasa() {
+  T.Z -= PER; T.tur = (T.tur || 0) + 1;
+  for (const o of OIL) o[1] -= PER;
+  for (const o of OBS) if (o.es === undefined) o.hit = false; // yeni tur: engeller yerinde
+  for (const o of OBS) if (o.es !== undefined) { OBS[o.es].hit = o.hit; o.hit = false; } // az önce çarpılan kopya, aslında da çarpılmış kalsın
+  const S = PC; S.used = S.used || []; const son = S.used[POLZ.length - 1]; S.used = []; if (son) S.used[0] = 1; // son polis noktası = ilkinin kopyası
 }
 // Aşama bitti: yıldız, ödül puanı, sonraki aşamanın kilidi
 export function bitir() {
   const kalan = CR.filter((c) => !c.lost).length, can = 100 - T.dmg.reduce((a, b) => a + b, 0);
   T.state = 'win'; T.why = 'hedef|' + kalan; T.yildiz = 1 + (kalan === CR.length ? 1 : 0) + (can >= 50 ? 1 : 0);
   for (const p of players.values()) if (!p.bot) p.puan += 100 + kalan * 25;
-  if (T.lv >= 1 && T.lv + 1 > oyun.acik && T.lv + 1 < ASAMA.length) { oyun.acik = T.lv + 1; try { localStorage.setItem('kk-acik', oyun.acik); } catch (e) {} }
+  if (T.lv >= 1 && T.lv + 1 > oyun.acik && T.lv + 1 < SONSUZ) { oyun.acik = T.lv + 1; try { localStorage.setItem('kk-acik', oyun.acik); } catch (e) {} }
   oyun.lv = Math.min(ASAMA.length - 1, T.lv === 0 ? 1 : T.lv + 1);
 }
 export function startGame(lv = oyun.lv) {
-  resetGame(); const a = ASAMA[lv]; Object.assign(T, { state: 'run', v: 0, cd: 5, lv, hedef: a.m, ol: a.olay, egitim: a.egitim ? 0 : -1, egT: 0, autoT: a.egitim ? 1e9 : 0 });
+  resetGame(); const a = ASAMA[lv]; Object.assign(T, { state: 'run', v: 0, cd: 5, lv, hedef: a.m, sonsuz: !!a.sonsuz, tur: 0, rekorBak: false, yeniRekor: false, ol: a.olay, egitim: a.egitim ? 0 : -1, egT: 0, autoT: a.egitim ? 1e9 : 0 });
   for (const p of players.values()) Object.assign(p, { puan: 0, ist: {}, sure: { surus: 0, yolcu: 0, temiz: 0, enTemiz: 0 } });
 }
 export function resetGame() {
@@ -356,4 +374,4 @@ export function simStep(dt) { stepAir(dt);
   for (let a = 0; a < L.length; a++) for (let b = a + 1; b < L.length; b++) { const p = L[a], q = L[b]; if (p.seat || q.seat || p.dead > 0 || q.dead > 0) continue; for (const k of [0, 1]) { const i = k * 3, dx = q.P[i] - p.P[i], dy = q.P[i + 1] - p.P[i + 1], dz = q.P[i + 2] - p.P[i + 2], d = Math.hypot(dx, dy, dz) || 1e-6; if (d < 0.56) { const s = ((0.56 - d) / d) * 0.5; p.P[i] -= dx * s; p.P[i + 2] -= dz * s; q.P[i] += dx * s; q.P[i + 2] += dz * s; } } }
 }
 export const r2 = (v) => Math.round(v * 100) / 100;
-export const snap = () => ({ t: 's', T: { lv: T.state === 'lobby' ? oyun.lv : T.lv, ac: oyun.acik, hd: T.hedef, yz: T.yildiz, eg: T.egitim, X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, dm: T.dmg.map(Math.ceil), ph: Math.round(T.phi * 1000) / 1000, ht: Math.round(T.heat), sl: T.stall ? 1 : 0, rn: T.rain, wp: T.wipeT > 0 ? 1 : 0, ej: T.ej, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], d: [r2(DH.p[0]), r2(DH.p[1]), r2(DH.p[2]), DH.holder ? 1 : 0], q: [PC.st, r2(PC.x), r2(PC.z), Math.max(0, Math.ceil(PC.hp)), PC.slip > 0 ? 1 : 0, PC.used.slice(), T.oilCd > 0 ? Math.ceil(T.oilCd) : 0, r2(PC.darbe || 0)], ol: OIL, cr: CR.map((c) => (c.lost ? 0 : [r2(c.x), r2(c.z), r2(c.lift || 0)])), fr: FIRE.on ? [FIRE.x, FIRE.z, Math.ceil(FIRE.hp)] : 0, x: [r2(EX.p[0]), r2(EX.p[1]), r2(EX.p[2]), EX.holder ? 1 : 0], p: [...players.values()].map((p) => ({ pu: Math.round(p.puan || 0), ...(T.state === 'over' || T.state === 'win' ? { ist: { ...p.ist, surus: Math.round(p.sure.surus), yolcu: Math.round(p.sure.yolcu), temiz: Math.round(p.sure.enTemiz) } } : {}), bt: p.bot ? 1 : 0, id: p.id, n: p.name, c: p.ci, s: p.seat, st: p.seat ? Math.max(0, Math.ceil(SEAT_T - p.seatT)) : 0, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, h: (p.pin[0] ? 1 : 0) | (p.pin[1] ? 2 : 0), P: Array.from(p.P, r2) })) });
+export const snap = () => ({ t: 's', T: { lv: T.state === 'lobby' ? oyun.lv : T.lv, ac: oyun.acik, hd: T.hedef, sn: T.sonsuz ? 1 : 0, tp: Math.round(toplam()), rk: oyun.rekor, yr: T.yeniRekor ? 1 : 0, yz: T.yildiz, eg: T.egitim, X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, dm: T.dmg.map(Math.ceil), ph: Math.round(T.phi * 1000) / 1000, ht: Math.round(T.heat), sl: T.stall ? 1 : 0, rn: T.rain, wp: T.wipeT > 0 ? 1 : 0, ej: T.ej, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], d: [r2(DH.p[0]), r2(DH.p[1]), r2(DH.p[2]), DH.holder ? 1 : 0], q: [PC.st, r2(PC.x), r2(PC.z), Math.max(0, Math.ceil(PC.hp)), PC.slip > 0 ? 1 : 0, PC.used.slice(), T.oilCd > 0 ? Math.ceil(T.oilCd) : 0, r2(PC.darbe || 0)], ol: OIL, cr: CR.map((c) => (c.lost ? 0 : [r2(c.x), r2(c.z), r2(c.lift || 0)])), fr: FIRE.on ? [FIRE.x, FIRE.z, Math.ceil(FIRE.hp)] : 0, x: [r2(EX.p[0]), r2(EX.p[1]), r2(EX.p[2]), EX.holder ? 1 : 0], p: [...players.values()].map((p) => ({ pu: Math.round(p.puan || 0), ...(T.state === 'over' || T.state === 'win' ? { ist: { ...p.ist, surus: Math.round(p.sure.surus), yolcu: Math.round(p.sure.yolcu), temiz: Math.round(p.sure.enTemiz) } } : {}), bt: p.bot ? 1 : 0, id: p.id, n: p.name, c: p.ci, s: p.seat, st: p.seat ? Math.max(0, Math.ceil(SEAT_T - p.seatT)) : 0, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, h: (p.pin[0] ? 1 : 0) | (p.pin[1] ? 2 : 0), P: Array.from(p.P, r2) })) });

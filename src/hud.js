@@ -39,9 +39,9 @@ const EV = new THREE.Vector3();
 function asamaPanel(t) {
   const el = $('asama'), goster = t.s === 'lobby';
   if (!goster) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
-  const iz = [t.lv, t.ac, net.isHost, DIL].join(); if (el.dataset.iz === iz && el.style.display === 'block') return; el.dataset.iz = iz; el.style.display = 'block';
+  const iz = [t.lv, t.ac, t.rk, net.isHost, DIL].join(); if (el.dataset.iz === iz && el.style.display === 'block') return; el.dataset.iz = iz; el.style.display = 'block';
   let h = `<div class="baslik">${L(net.isHost ? 'asamaSec' : 'sadeceSahip')}</div><div class="kutular">`;
-  ASAMA.forEach((a, i) => { const kilit = i > t.ac; h += `<button data-lv="${i}" class="${i === t.lv ? 'secili' : ''}${kilit ? ' kilitli' : ''}" ${!net.isHost || kilit ? 'disabled' : ''}><b>${i || '🎓'}</b><span>${kilit ? '🔒' : i ? a.m + ' m' : L('egitimKisa')}</span></button>`; });
+  ASAMA.forEach((a, i) => { const kilit = i > t.ac && !a.sonsuz; /* sonsuz yol hep açık */ h += `<button data-lv="${i}" class="${i === t.lv ? 'secili' : ''}${kilit ? ' kilitli' : ''}${a.sonsuz ? ' sonsuz' : ''}" ${!net.isHost || kilit ? 'disabled' : ''}><b>${a.sonsuz ? '∞' : i || '🎓'}</b><span>${kilit ? '🔒' : a.sonsuz ? L('sonsuzKisa') + (t.rk ? '<br><small>' + L('rekor', t.rk) + '</small>' : '') : i ? a.m + ' m' : L('egitimKisa')}</span></button>`; });
   h += '</div>' + (t.ac <= 1 ? `<div class="ipucu">${L('ilkKez')}</div>` : '') + (net.isHost ? `<button class="basla">${L('basla')}</button>` : '');
   el.innerHTML = h;
   for (const b of el.querySelectorAll('button[data-lv]')) b.onclick = () => asamaSec(+b.dataset.lv);
@@ -68,9 +68,10 @@ const NEG = ['carpma', 'dusme', 'firlama', 'ceza'], SIRA = ['surus', 'yolcu', 't
 function sonEkran(t, V) {
   const win = t.s === 'win', yaz = L('ist');
   let h = `<div class="buyuk">${win ? (t.lv === 0 ? L('egitimTamam') : L('asamaTamam', t.lv)) : L('oyunBitti')}</div>`;
+  if (t.sn) h += `<div class="yildiz" style="font-size:30px">${L('sonsuzBitti', t.tp)}</div><div class="uyari">${t.yr ? L('yeniRekor') : L('rekor', t.rk)}</div>`; // sonsuz yol: gidilen mesafe
   if (win && t.lv > 0) h += `<div class="yildiz">${'★'.repeat(t.yz || 1)}<i>${'★'.repeat(3 - (t.yz || 1))}</i></div>`;
   h += `<div>${mesaj(t.why)}</div>`;
-  if (win && t.lv > 0 && t.ac === t.lv + 1) h += `<div class="uyari">${L('yeniAsama', ASAMA[t.lv + 1].m)}</div>`;
+  if (win && t.lv > 0 && t.ac === t.lv + 1 && !ASAMA[t.lv + 1].sonsuz) h += `<div class="uyari">${L('yeniAsama', ASAMA[t.lv + 1].m)}</div>`;
   const oy = V.p.filter((p) => !p.bt).sort((a, b) => (b.pu || 0) - (a.pu || 0));
   h += '<table class="tablo">' + oy.map((p, i) => {
     const ist = p.ist || {}, cip = SIRA.filter((k) => ist[k] > 0 && (k !== 'temiz' || ist[k] >= 5)).map((k) => `<span class="${NEG.includes(k) ? 'neg' : ''}">${yaz[k](ist[k])}</span>`).join('');
@@ -84,7 +85,7 @@ export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 9.
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
 export function draw(V, dt) {
   const t = V.T, [qs, qx, qz, qhp, qsl, qu, qo, qd = 0] = V.q, ch = t.s === 'run' && (qs === 1 || qs === 2); sfx(V, dt);
-  { const hd = t.hd || LEN; bitis.position.set(cx(hd), 0, hd); bitis.rotation.y = Math.atan2(cx(hd + 1) - cx(hd - 1), 2); }
+  { const hd = t.hd || LEN; bitis.visible = !t.sn; bitis.position.set(cx(hd), 0, hd); bitis.rotation.y = Math.atan2(cx(hd + 1) - cx(hd - 1), 2); } // sonsuz yolda bitiş yok
   cabG.rotation.y = t.ph; cpD = Math.cos(t.ph); spD = Math.sin(t.ph);
   pol.visible = qs > 0 && t.s !== 'lobby'; pol.position.set(qx, 0, qz); pol.rotation.y = qsl ? pol.rotation.y + dt * 7 : qs === 3 ? 0.6 : 0;
   polDarbe(qs, qd, qhp, dt); { const f = Math.sin(performance.now() / 90) > 0; polL[0].visible = f; polL[1].visible = !f; }
@@ -179,7 +180,7 @@ export function draw(V, dt) {
   { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = L('isaret')[sg || 0]; }
   const rol = t.s === 'lobby' ? L('rolBar') : seat === 1 ? L('rolSofor') : seat === 2 ? L('rolYolcu') : L('rolKasa');
   let af = '';
-  if (t.s === 'lobby') af += `<div class="uyari">${L('asamaAd', t.lv, ASAMA[t.lv].m)}</div><div>${L('odaKodu')}: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 ${L('kisi')}</div><div style="font-size:18px">${net.isHost ? L('baslatHost') : L('baslatBekle')}</div><div style="font-size:16px">${L('lobiIpucu')}</div>`;
+  if (t.s === 'lobby') af += `<div class="uyari">${ASAMA[t.lv].sonsuz ? L('sonsuzAd') : L('asamaAd', t.lv, ASAMA[t.lv].m)}</div><div>${L('odaKodu')}: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 ${L('kisi')}</div><div style="font-size:18px">${net.isHost ? L('baslatHost') : L('baslatBekle')}</div><div style="font-size:16px">${L('lobiIpucu')}</div>`;
   if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>${L('geriSayim')}</div>`;
   if (t.s === 'over' || t.s === 'win') af += sonEkran(t, V);
   if (t.m) af += `<div>${mesaj(t.m)}</div>`;
@@ -196,7 +197,7 @@ export function draw(V, dt) {
     if (ks === 2) gv += `<div>⛽ ${V.n[3] ? (kv ? L('g_doluyor') : L('g_vana')) : L('g_hortum')}${V.k[4] > 0 ? ' ' + L('yuzde', Math.round(V.k[4] * 100)) : ''}</div>`;
     t.fl.forEach((f, i) => { if (f) gv += `<div>${L('g_lastik', i)}</div>`; });
     t.dm.forEach((d, i) => { if (d) gv += `<div>${L('g_hasar', i, d)}</div>`; }); }
-  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = DIL + (me ? me.pu : 0) + rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round(t.v);
-  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">${L('koltukSure', ((sl / 60) | 0) + ':' + String(sl % 60).padStart(2, '0'))}</span>` : '') + (TOUCH ? '' : '<br>' + L('muzikTus')); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧${L('yuzde', hp)} 🌡${L('yuzde', t.ht)} 📦${V.cr.filter((c) => c).length}/4<br>${Math.max(0, Math.round((t.hd || LEN) - t.Z))} m · ⭐${me ? me.pu || 0 : 0} · ${Math.round(t.v * 3.6)} ${L('kmh')}`; $('oda').textContent = L('oda') + ' ' + net.odaKodu; }
+  const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = DIL + (me ? me.pu : 0) + rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round((t.tp || 0) / 10) + Math.round(t.v);
+  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">${L('koltukSure', ((sl / 60) | 0) + ':' + String(sl % 60).padStart(2, '0'))}</span>` : '') + (TOUCH ? '' : '<br>' + L('muzikTus')); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧${L('yuzde', hp)} 🌡${L('yuzde', t.ht)} 📦${V.cr.filter((c) => c).length}/4<br>${t.sn ? L('gidilen', t.tp) : Math.max(0, Math.round((t.hd || LEN) - t.Z)) + ' m'} · ⭐${me ? me.pu || 0 : 0} · ${Math.round(t.v * 3.6)} ${L('kmh')}`; $('oda').textContent = L('oda') + ' ' + net.odaKodu; }
 }
 export const fit = () => { ren.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 80 : 62; cam.updateProjectionMatrix(); }; addEventListener('resize', fit); fit();

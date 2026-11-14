@@ -3,7 +3,12 @@
 export const $ = (i) => document.getElementById(i), DBG = location.search.includes('debug');
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v), rnd = (a, b) => a + Math.random() * (b - a);
 export const LEN = 2500, COL = [0xff5a5f, 0x3fa7ff, 0xffd23f, 0x7bd389], ODA = 'kor-kamyon-';
-export const cx = (z) => { const s = clamp((z - 80) / 200, 0, 1); return s * (26 * Math.sin(z / 160) + 10 * Math.sin(z / 57 + 1)); };
+// Yol 280 m'den sonra 2000 m'de bir kendini tekrarlar (dalga boyları 1000 ve 400 m). Sonsuz yolda kamyon 2300 m'yi
+// geçince 2000 m geri alınır; yol, engeller, tümsekler, polis ve süsler aynı olduğu için sıçrama görünmez.
+export const Z0 = 280, PER = 2000, DONGU = Z0 + PER + 20;
+export const cx = (z) => { const s = clamp((z - 80) / 200, 0, 1); return s * (26 * Math.sin((z * Math.PI) / 500) + 10 * Math.sin((z * Math.PI) / 200 + 1)); };
+// Döngü: [Z0, Z0+PER) içindeki bir şeyin z+PER'deki kopyası (görüş mesafesi kadar ileriye: sis 230 m)
+export const kopyaZ = (z) => z >= Z0 && z + PER < LEN + 160;
 export let tohum = 12345; export const srnd = () => { tohum = (tohum * 1664525 + 1013904223) >>> 0; return tohum / 4294967296; };
 
 // ---------- çarpışma kutuları (kamyon çerçevesi) ----------
@@ -22,12 +27,16 @@ export const PK = box(-1.0, 1.0, 0.45, 1.3, -2.2, 2.2, 'police', 0xffffff), PK2 
 export const SEAT = { 1: [0.7, 1.55, 1.9], 2: [-0.7, 2.0, 1.9] }; // 1 şoför (solda, kısa), 2 yolcu
 export const INLET = [1.25, 2.0, 0.4];
 export const WHEEL = [[1.78, 0.55, 2.2, 'sol ön'], [-1.78, 0.55, 2.2, 'sağ ön'], [1.78, 0.55, -4, 'sol arka'], [-1.78, 0.55, -4, 'sağ arka']];
-export const OBS = []; for (let z = 260; z < LEN - 60; z += 70 + srnd() * 60) OBS.push({ z, x: cx(z) + (srnd() * 9 - 4.5), hit: false });
+export const OBS = []; for (let z = 260; z < Z0 + PER - 20; z += 70 + srnd() * 60) OBS.push({ z, x: cx(z) + (srnd() * 9 - 4.5), hit: false });
 export const GATE = [640, 1180, 1700, 2150].map((z, i) => ({ z, open: [1, -1, -1, 1][i] })); // yol ayrımı: open = +1 sol şerit açık, -1 sağ şerit açık; kapalı şeritte duvar var
 for (const g of GATE) { for (let i = OBS.length - 1; i >= 0; i--) if (Math.abs(OBS[i].z - g.z) < 75) OBS.splice(i, 1); OBS.push({ z: g.z, x: cx(g.z) - g.open * 3.7, w: 3.7, gate: g, hit: false }); } OBS.sort((a, b) => a.z - b.z);
+// döngü kopyaları: es = aslının sırası (başa sarılınca çarpılmış hali aslına geçer)
+for (const g of GATE.slice()) if (kopyaZ(g.z)) GATE.push({ z: g.z + PER, open: g.open });
+OBS.slice().forEach((o, i) => { if (kopyaZ(o.z)) OBS.push({ ...o, z: o.z + PER, hit: false, es: i, gate: o.gate && GATE.find((g) => g.z === o.z + PER) }); });
 export const RAIN = [[720, 1040], [1540, 1860]]; // yağmur bölgeleri
-export const BUMP = []; for (let z = 190; z < LEN - 80; z += 150 + ((z * 7) % 90)) { while (OBS.some((o) => Math.abs(o.z - z) < 28)) z += 14; BUMP.push(z); }
-export const LIMIT = 50 / 3.6, POLZ = [380, 980, 1450, 1900, 2280], SEAT_T = 30; // hız sınırı (m/s), radar noktaları, koltukta kalma süresi (sn)
+export const BUMP = []; for (let z = 190; z < Z0 + PER - 30; z += 150 + ((z * 7) % 90)) { while (OBS.some((o) => Math.abs(o.z - z) < 28)) z += 14; BUMP.push(z); }
+for (const z of BUMP.slice()) if (kopyaZ(z)) BUMP.push(z + PER);
+export const LIMIT = 50 / 3.6, POLZ = [380, 980, 1450, 1900, 380 + 2000], SEAT_T = 30; // hız sınırı (m/s), radar noktaları, koltukta kalma süresi (sn)
 // Aşamalar: 0 eğitim (adım adım öğretir), sonra giderek uzayan ve zorlaşan yollar. olay: o aşamada rastgele gelen sorunlar (isi: hararet hızı).
 export const ASAMA = [
   { m: 700, egitim: true, olay: {} },
@@ -37,5 +46,7 @@ export const ASAMA = [
   { m: 1500, olay: { lastik: 1, isi: 0.85, yangin: 1, polis: 1, haydut: 1 } },
   { m: 2000, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
   { m: 2500, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
+  { m: 1e9, sonsuz: true, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } }, // sonsuz yol: gidebildiğin kadar (hep açık)
 ];
+export const SONSUZ = ASAMA.length - 1;
 export const BUMP_V = 8; // m/s (~29 km/s) üstünde tümseğe girilirse lastik patlar

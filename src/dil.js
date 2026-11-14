@@ -15,8 +15,8 @@ const S = {
     haydutAd: 'HAYDUT', adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
     tuslar: '⌨ Tuşlar', ayarlar: '⚙ Ayarlar', kapat: 'Kapat (Esc)', ses: 'SES', oyuncular: 'OYUNCULAR', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 İLERİSİ',
     // aşamalar, eğitim, puan
-    asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
-    asamaAd: (n, m) => (n ? 'Aşama ' + n : '🎓 Eğitim') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Eğitim ' + i + '/' + n,
+    asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', sonsuzKisa: 'Sonsuz', sonsuzBitti: (m) => '🛣 ' + m + ' m gittiniz!', rekor: (m) => '🏆 Rekor: ' + m + ' m', yeniRekor: '🏆 YENİ REKOR!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
+    sonsuzAd: '∞ Sonsuz yol · gidebildiğiniz kadar', asamaAd: (n, m) => (n ? 'Aşama ' + n : '🎓 Eğitim') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Eğitim ' + i + '/' + n,
     eg: [
       'Herkes yerine! Şoför sol koltuğa, yolcu sağ koltuğa otursun (yanına git, E). Şoför yolu göremez: yolcu A/D ile yön, S ile yavaşla, W ile hızlan gösterir. Kamyon şimdilik kendi gidiyor.',
       '🛞 Lastik patladı! Kasanın arkasındaki mavi kompresörden hortumu TUT (J), sarı işaretli lastiğin yanına götür ve bekle.',
@@ -80,8 +80,8 @@ const S = {
     menuAciklama: "The driver can't see the road, the passenger gives directions, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
     haydutAd: 'BANDIT', adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
     tuslar: '⌨ Controls', ayarlar: '⚙ Settings', kapat: 'Close (Esc)', ses: 'SOUND', oyuncular: 'PLAYERS', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 AHEAD',
-    asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
-    asamaAd: (n, m) => (n ? 'Stage ' + n : '🎓 Tutorial') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Tutorial ' + i + '/' + n,
+    asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', sonsuzKisa: 'Endless', sonsuzBitti: (m) => '🛣 You made it ' + m + ' m!', rekor: (m) => '🏆 Record: ' + m + ' m', yeniRekor: '🏆 NEW RECORD!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
+    sonsuzAd: '∞ Endless road · go as far as you can', asamaAd: (n, m) => (n ? 'Stage ' + n : '🎓 Tutorial') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Tutorial ' + i + '/' + n,
     eg: [
       "Take your places! The driver sits on the left, the passenger on the right (walk up, press E). The driver can't see the road: the passenger signals with A/D, S to slow down, W to speed up. For now the truck drives itself.",
       '🛞 Flat tyre! GRAB (J) the air hose from the blue compressor at the back, take it to the tyre with the yellow marker and hold it there.',

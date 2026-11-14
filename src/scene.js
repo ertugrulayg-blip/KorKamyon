@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, HZ, INLET, LEN, OBS, POLZ, TK, WHEEL, clamp, cx, srnd } from './world.js';
+import { BOX, BUMP, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd } from './world.js';
 import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT } from './sim.js';
 
 // ---------- görüntü ----------
@@ -104,23 +104,27 @@ class Dilimli {
   kenar.bitir(world); }
 { // orta şerit çizgileri
   const orta = new Dilimli(BG, new THREE.MeshBasicMaterial({ color: 0xffffff })), o = new THREE.Object3D();
-  for (let z = -80; z < LEN + 120; z += 9) { o.position.set(cx(z), 0.02, z); o.scale.set(0.25, 0.02, 3.5); o.rotation.set(0, Math.atan2(cx(z + 1) - cx(z), 1), 0); orta.ekle(o); }
+  for (let z = -80; z < LEN + 120; z += 10) { o.position.set(cx(z), 0.02, z); /* 10 m: döngü (2000 m) çizgilerle hizalı */ o.scale.set(0.25, 0.02, 3.5); o.rotation.set(0, Math.atan2(cx(z + 1) - cx(z), 1), 0); orta.ekle(o); }
   orta.bitir(world);
 }
 // yol kenarı süsleri: bariyerle manzara karoları arasındaki şeride ağaç, kaya, çalı, çiçek (Nature Kit). Düşük kalitede yok.
 if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 1013904223) >>> 0; return t2 / 4294967296; }, N = KENNEY + 'nature/', yer = {};
   const TUR = [['grass_large', 16, 3.2, 0], ['grass', 10, 3.2, 0], ['plant_bush', 7, 4, 0], ['plant_bushLarge', 5, 4.5, 0], ['plant_bushDetailed', 4, 4, 0], ['flower_redA', 4, 3.4, 0], ['flower_yellowA', 4, 3.4, 0], ['flower_purpleA', 4, 3.4, 0], ['rock_smallA', 3, 3, 0], ['rock_smallB', 3, 3, 0], ['rock_smallC', 2, 3, 0], ['rock_largeA', 2, 3.2, 1], ['rock_largeB', 2, 3.2, 1], ['stump_round', 2, 3.5, 0], ['log_stack', 1.5, 3.5, 1], ['mushroom_redGroup', 1.5, 3, 0], ['tree_oak', 2.5, 5.2, 1], ['tree_default', 2.5, 4.6, 1], ['tree_detailed', 2, 4.8, 1], ['tree_fat', 2, 5, 1], ['tree_pineRoundA', 2.5, 5.2, 1], ['tree_pineTallA', 2, 5.2, 1]];
   const top = TUR.reduce((a, t) => a + t[1], 0) / (ui.kalite > 1 ? 0.62 : 0.34); // geri kalan olasılık: boş
-  for (let z = -60; z < LEN + 140; z += 2.6) for (const sd of [-1, 1]) { let u = r() * top; const d = 10.7 + r() * 3.6, ry = r() * 6.28, bs = 0.8 + r() * 0.45;
+  for (let z = -60; z < Z0 + PER; z += 2.6) for (const sd of [-1, 1]) { let u = r() * top; const d = 10.7 + r() * 3.6, ry = r() * 6.28, bs = 0.8 + r() * 0.45;
     if (sd < 0 && POLZ.some((p) => Math.abs(p - z) < 9)) continue; // radar polisinin önünü kapatma
     for (const t of TUR) { if ((u -= t[1]) < 0) { (yer[t[0]] = yer[t[0]] || []).push([cx(z) + sd * (t[3] ? Math.max(d, 11.6) : d), 0, z, t[2] * bs, ry]); break; } } }
+  for (const k in yer) for (const y of yer[k].slice()) if (kopyaZ(y[2])) yer[k].push([y[0], y[1], y[2] + PER, y[3], y[4]]); // döngü kopyası
   for (const t of TUR) if (yer[t[0]]) scatter(N + t[0] + '.glb', world, yer[t[0]], { golge: !!t[3] }); }
 // yol kenarı manzarası: Kenney karoları (orman, çadır, boş arazi) ve yer yer küçük köyler. Modeller gelene kadar boş görünür.
 { const R = KENNEY + 'racing/', C = KENNEY + 'city/', KARO = [R + 'decoration-forest.glb', R + 'decoration-forest.glb', R + 'decoration-forest.glb', R + 'decoration-empty.glb', R + 'decoration-tents.glb'], BINA = ['building-small-a', 'building-small-b', 'building-small-c', 'building-small-d', 'building-garage'];
-  for (let z = -70; z < LEN + 160; z += 16.5) for (const sd of [-1, 1]) { const ry = Math.atan2(cx(z + 1) - cx(z), 1), koy = ((z / 16.5) | 0) % 19 === (sd > 0 ? 6 : 14);
+  const koy = []; // [model, x, y, z, ölçek, dönüş] — önce toplanır, döngü kopyası eklenip sonra yerleştirilir
+  for (let z = -70; z < Z0 + PER; z += 16.5) for (const sd of [-1, 1]) { const ry = Math.atan2(cx(z + 1) - cx(z), 1), koyMu = ((z / 16.5) | 0) % 19 === (sd > 0 ? 6 : 14);
     for (let sira = 0; sira < (ui.kalite > 1 ? 2 : 1); sira++) { if (ui.kalite < 1 && ((z / 16.5) | 0) % 2) { srnd(); continue; } const x = cx(z) + sd * (22.5 + sira * 16.2), r = srnd();
-      if (koy && sira === 0) for (let b = 0; b < 2; b++) spawn(C + BINA[(r * 5 + b * 2) % 5 | 0] + '.glb', world, x - sd * 3 + (b ? sd * 7 : 0), 0, z + (b ? 4 : -3.5), 7.5, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2));
-      else if (sira === 0 || r < 0.6) spawn(KARO[(r * 97) % KARO.length | 0], world, x, 0.01, z, 1.62, ry + ((r * 4) | 0) * Math.PI / 2); } } }
+      if (koyMu && sira === 0) for (let b = 0; b < 2; b++) koy.push([C + BINA[(r * 5 + b * 2) % 5 | 0] + '.glb', x - sd * 3 + (b ? sd * 7 : 0), 0, z + (b ? 4 : -3.5), 7.5, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2)]);
+      else if (sira === 0 || r < 0.6) koy.push([KARO[(r * 97) % KARO.length | 0], x, 0.01, z, 1.62, ry + ((r * 4) | 0) * Math.PI / 2]); } }
+  for (const k of koy.slice()) if (kopyaZ(k[3])) koy.push([k[0], k[1], k[2], k[3] + PER, k[4], k[5]]);
+  for (const k of koy) spawn(k[0], world, k[1], k[2], k[3], k[4], k[5]); }
 
 { // yol kenarı bariyerleri: ray ve direkler
   const ray = new Dilimli(BG, M(0xc9ced6), { golge: true }), direk = new Dilimli(BG, M(0x7d828c), { golge: true }), o = new THREE.Object3D();
@@ -133,12 +137,12 @@ if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 
   ray.bitir(world); direk.bitir(world); }
 export const tex = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
 export const polPark = POLZ.map((z) => { const g = new THREE.Group(); g.position.set(cx(z) - BARR - 1.9, 0, z); g.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); mkPolice(g); world.add(g); // radar: bariyerin dışında bekleyen polis + hız levhası
-  const zs = z - 75, xs = cx(zs) + BARR + 0.9; add(world, BG, M(0x888888), xs, 1.3, zs, 0.12, 2.6, 0.12); const lv = add(world, new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => { c.fillStyle = '#fff'; c.beginPath(); c.arc(64, 64, 58, 0, 7); c.fill(); c.lineWidth = 13; c.strokeStyle = '#d8232a'; c.stroke(); c.fillStyle = '#111'; c.font = '900 62px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('50', 64, 68); }) }), xs, 3.0, zs - 0.08); lv.rotation.y = Math.PI; return g; });
+  const zs = z - 75, xs = cx(zs) + BARR + 0.9; add(world, BG, M(0x888888), xs, 1.3, zs, 0.12, 2.6, 0.12); const lv = add(world, new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => { c.fillStyle = '#fff'; c.beginPath(); c.arc(64, 64, 58, 0, 7); c.fill(); c.lineWidth = 13; c.strokeStyle = '#d8232a'; c.stroke(); c.fillStyle = '#111'; c.font = '64px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🚓', 64, 70); /* polis noktası levhası */ }) }), xs, 3.0, zs - 0.08); lv.rotation.y = Math.PI; return g; });
 export const oilM = Array.from({ length: 5 }, () => { const m = add(world, CG, new THREE.MeshBasicMaterial({ color: 0x15110d, transparent: true, opacity: 0.85 }), 0, 0.03, 0, 2.3, 0.02, 2.9); m.visible = false; return m; });
 export const obsMesh = OBS.map((o) => { const g = new THREE.Group(); g.position.set(o.x, 0, o.z);
   if (o.gate) { add(g, BG, M(0xd8232a), 0, 0.9, 0, 7.4, 1.8, 0.6); for (const k of [-2.6, -0.85, 0.9, 2.65]) add(g, BG, M(0xffffff), k, 0.9, -0.02, 0.85, 1.8, 0.6); add(g, BG, M(0xffd23f), 0, 2.3, 0, 7.4, 0.5, 0.2);
     for (let k = 1; k <= 9; k++) { const z = o.z - k * 6; spawn(KENNEY + 'car/cone.glb', world, cx(z), 0, z, 1.15); } world.add(g); return g; }
-  { const kutu = new THREE.Group(), i = OBS.indexOf(o), sd = i % 2 ? 1 : -1; g.add(kutu); // arızalı araba: yola yan durmuş, önünde koniler (model gelmezse kırmızı-beyaz bariyer kalır)
+  { const kutu = new THREE.Group(), i = o.es ?? OBS.indexOf(o), sd = i % 2 ? 1 : -1; /* döngü kopyası aslıyla aynı araba */ g.add(kutu); // arızalı araba: yola yan durmuş, önünde koniler (model gelmezse kırmızı-beyaz bariyer kalır)
     spawn(KENNEY + 'car/' + ['sedan', 'taxi', 'van', 'suv', 'hatchback-sports'][i % 5] + '.glb', g, 0, 0, 0, 1.5, sd * (Math.PI / 2 + 0.25)).then((c) => { if (!c) return; kutu.visible = false; for (const x of [-2.4, 0, 2.4]) spawn(KENNEY + 'car/cone.glb', g, x, 0, -2.6, 1.15); });
     add(kutu, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(kutu, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; } add(g, BG, M(0xff5a5f), 0, 0.6, 0, 3, 1.2, 0.5); add(g, BG, M(0xffffff), 0, 0.6, 0.02, 1, 1.2, 0.5); world.add(g); return g; });
 // hedef çizgisi: aşamanın uzunluğuna göre hud.js taşır
