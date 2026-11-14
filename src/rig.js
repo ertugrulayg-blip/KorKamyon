@@ -70,6 +70,7 @@ export async function makeRig(ci, parent, dosya = null) {
     root, B, bind, ayak, el: elOlc(model, B),
     hipY: hips.y - root.getWorldPosition(new THREE.Vector3()).y, // modelin ayak tabanından kalça kemiğine yükseklik (ölçek 1)
     kalcaBacak: hips.y - w('LeftUpLeg').y, // kalça kemiği ile uyluk başı arası
+    bacakBoy: hips.y - w('LeftFoot').y, // kalça kemiğinden ayak bileğine (ayakta dik dururken)
     kol: [boy('LeftArm', 'LeftForeArm'), boy('LeftForeArm', 'LeftHand')],
     bacak: [boy('LeftUpLeg', 'LeftLeg'), boy('LeftLeg', 'LeftFoot')],
   };
@@ -120,6 +121,7 @@ function eliCevir(r, i, parmak, avuc, a = 1) {
   kemik.parent.getWorldQuaternion(q1); kemik.quaternion.copy(q1.invert().multiply(q2)); kemik.updateMatrixWorld(true);
 }
 
+const BY = new THREE.Vector3(), BI = new THREE.Vector3();
 const KL = new THREE.Vector3(), KR = new THREE.Vector3(), KO = new THREE.Vector3(), KY = new THREE.Vector3(), KI = new THREE.Vector3();
 const sol = new THREE.Vector3(), ileri = new THREE.Vector3(), yukari = new THREE.Vector3(), kutup = new THREE.Vector3(), M = new THREE.Matrix4(), P = new THREE.Vector3(), SC = new THREE.Vector3(1, 1, 1);
 // Karakteri yerleştirir. kalca: kalça kemiğinin dünya konumu; yon: gövdenin dünya yönelimi (+z ileri, +y yukarı);
@@ -145,6 +147,7 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
     const n = ek.kolBagla === true ? 0 : ek.kolBagla; // nefes/sarsıntı payı
     hedef.lh.copy(KO).addScaledVector(KY, -gen * 0.12).addScaledVector(yukari, -gen * 0.42 + n).addScaledVector(KI, gen * 0.5);
     hedef.rh.copy(KO).addScaledVector(KY, gen * 0.12).addScaledVector(yukari, -gen * 0.55 + n).addScaledVector(KI, gen * 0.56);
+    BY.copy(KY); BI.copy(KI);
   }
   // dirsek: normalde geriye ve aşağı; kollar bağlıyken (ek.kolDisa / ek.kolBagla) yana ve aşağı
   const disa = ek && (ek.kolDisa || ek.kolBagla);
@@ -155,6 +158,11 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   // ek.avuc: [sol, sağ] ön kolu kendi ekseni etrafında çevirir (avuç yukarı/aşağı). Yarısı ön kolda, yarısı bilekte: deri burulmasın
   if (ek && ek.avuc) for (const [i, on, el] of [[0, r.B.LeftForeArm, r.B.LeftHand], [1, r.B.RightForeArm, r.B.RightHand]]) { const a = ek.avuc[i]; if (!a) continue;
     el.getWorldPosition(KL); on.getWorldPosition(KR); KY.copy(KL).sub(KR).normalize(); turn(on, KY, a * 0.5); turn(el, KY, a * 0.5); }
+  // kollar bağlıyken eller öbür kolun dirseğini kavrar: parmaklar karşı yana, avuç gövdeye bakar (bilek kırık durmasın)
+  if (ek && ek.kolBagla) {
+    eliCevir(r, 0, KL.copy(BY).negate().addScaledVector(BI, -0.35), KR.copy(BI).negate());
+    eliCevir(r, 1, KL.copy(BY).addScaledVector(BI, -0.35), KR.copy(BI).negate());
+  }
   kutup.copy(ileri);
   const dizDisa = ek && ek.dizDisa; // dizler iki yana açık oturuş
   // oturuş: uyluk yatay öne, baldır dik aşağı (ek.otur: [sol, sağ] için [uyluk, baldır] oranları)
@@ -163,21 +171,25 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   if (hedef.lf) ik(r.B.LeftUpLeg, r.B.LeftLeg, r.B.LeftFoot, hedef.lf, kutup, r.bacak[0], r.bacak[1]);
   if (dizDisa) kutup.addScaledVector(sol, -2.2);
   if (hedef.rf) ik(r.B.RightUpLeg, r.B.RightLeg, r.B.RightFoot, hedef.rf, kutup, r.bacak[0], r.bacak[1]);
-  // ek.elDiz: eller dizlerin üstüne konur (bacaklar yerleştikten sonra diz kemiğine göre, kollar yeniden IK)
+  // ek.elDiz: eller uyluğun üstüne konur (bacaklar yerleştikten sonra, kollar yeniden IK). true: dizlerde;
+  // { f: [sol, sağ] uyluk boyunca yer (0 kalça, 1 diz), dy: [sol, sağ] eli kaldırma } — avuç uyluğa, parmaklar dize bakar
   if (ek && ek.elDiz) {
+    const f = ek.elDiz.f || [1, 1], dy = ek.elDiz.dy || [0, 0];
     kutup.copy(ileri).multiplyScalar(-0.3).addScaledVector(yukari, -0.6).addScaledVector(sol, 0.8);
-    r.B.LeftLeg.getWorldPosition(hedef.lh).addScaledVector(yukari, 0.09).addScaledVector(ileri, -0.03);
-    ik(r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh, kutup, r.kol[0], r.kol[1]);
-    kutup.addScaledVector(sol, -1.6);
-    r.B.RightLeg.getWorldPosition(hedef.rh).addScaledVector(yukari, 0.09).addScaledVector(ileri, -0.03);
-    ik(r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh, kutup, r.kol[0], r.kol[1]);
+    for (const [i, ust, diz, kol, on, el, h] of [[0, 'LeftUpLeg', 'LeftLeg', 'LeftArm', 'LeftForeArm', 'LeftHand', hedef.lh], [1, 'RightUpLeg', 'RightLeg', 'RightArm', 'RightForeArm', 'RightHand', hedef.rh]]) {
+      r.B[ust].getWorldPosition(KL); r.B[diz].getWorldPosition(KR); KY.subVectors(KR, KL).normalize(); // uyluk yönü
+      h.copy(KL).lerp(KR, f[i]).addScaledVector(yukari, 0.09 + dy[i]).addScaledVector(ileri, -0.03);
+      ik(r.B[kol], r.B[on], r.B[el], h, kutup, r.kol[0], r.kol[1]);
+      KI.copy(yukari).negate(); eliCevir(r, i, KY.addScaledVector(sol, i ? 0.25 : -0.25), KI, 1 - Math.min(1, dy[i] * 6)); // kalkan el serbest kalır
+      kutup.addScaledVector(sol, -1.6);
+    }
   }
   // ayak tabanı yere paralel kalsın
   for (const k of ['LeftFoot', 'RightFoot']) { const f = r.B[k]; q2.copy(yon).multiply(r.ayak[k]); f.parent.getWorldQuaternion(q1); f.quaternion.copy(q1.invert().multiply(q2)); f.updateMatrixWorld(true); }
   if (bas) turn(r.B.Head, yukari, bas);
   if (ek && ek.basEg) turn(r.B.Head, sol, ek.basEg);
-  // ek.tut: { i: 0 sol / 1 sağ, parmak, avuc, a } — el bir nesneyi kavrar (kupa)
-  if (ek && ek.tut) eliCevir(r, ek.tut.i, ek.tut.parmak, ek.tut.avuc, ek.tut.a);
+  // ek.tut: { i: 0 sol / 1 sağ, parmak, avuc, a } ya da bunların listesi — eli dünya yönüne çevirir (kupa kavrama, tezgâh silme)
+  if (ek && ek.tut) for (const t of [].concat(ek.tut)) eliCevir(r, t.i, t.parmak, t.avuc, t.a); // tek nesne ya da [sol, sağ]
   if (ek && ek.bilek) { if (ek.bilek[0]) turn(r.B.LeftHand, sol, ek.bilek[0]); if (ek.bilek[1]) turn(r.B.RightHand, sol, ek.bilek[1]); }
 }
 
