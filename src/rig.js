@@ -151,10 +151,19 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   }
   // dirsek: normalde geriye ve aşağı; kollar bağlıyken (ek.kolDisa / ek.kolBagla) yana ve aşağı
   const disa = ek && (ek.kolDisa || ek.kolBagla);
-  kutup.copy(ileri).multiplyScalar(disa ? 0.2 : -1).addScaledVector(yukari, -0.6); if (disa) kutup.addScaledVector(sol, 1);
-  if (hedef.lh) ik(r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh, kutup, r.kol[0], r.kol[1]);
-  if (disa) kutup.addScaledVector(sol, -2);
-  if (hedef.rh) ik(r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh, kutup, r.kol[0], r.kol[1]);
+  // El omuz hizasının üstüne çıktıkça (tırmanma, uzanma) dirsek yana ve hafif öne döner; yoksa kol kafanın arkasına katlanır.
+  for (const [i, omuz, on, el, h] of [[0, r.B.LeftArm, r.B.LeftForeArm, r.B.LeftHand, hedef.lh], [1, r.B.RightArm, r.B.RightForeArm, r.B.RightHand, hedef.rh]]) {
+    if (!h) continue;
+    const yan = i ? -1 : 1;
+    if (disa) kutup.copy(ileri).multiplyScalar(0.2).addScaledVector(yukari, -0.6).addScaledVector(sol, yan);
+    else {
+      omuz.getWorldPosition(KL); KR.subVectors(h, KL);
+      const yuksek = Math.min(1, Math.max(0, KR.dot(yukari) / (r.kol[0] + r.kol[1]) + 0.25)); // 0: el aşağıda, 1: el başın üstünde
+      const onde = Math.min(1, Math.max(0, KR.dot(ileri) / (r.kol[0] + r.kol[1]))); // el öne uzandıkça dirsek biraz dışa açılır
+      kutup.copy(ileri).multiplyScalar(-1 + yuksek * 1.3).addScaledVector(yukari, -0.6 * (1 - yuksek)).addScaledVector(sol, yan * (yuksek * 1.2 + onde * 0.5));
+    }
+    ik(omuz, on, el, h, kutup, r.kol[0], r.kol[1]);
+  }
   // ek.avuc: [sol, sağ] ön kolu kendi ekseni etrafında çevirir (avuç yukarı/aşağı). Yarısı ön kolda, yarısı bilekte: deri burulmasın
   if (ek && ek.avuc) for (const [i, on, el] of [[0, r.B.LeftForeArm, r.B.LeftHand], [1, r.B.RightForeArm, r.B.RightHand]]) { const a = ek.avuc[i]; if (!a) continue;
     el.getWorldPosition(KL); on.getWorldPosition(KR); KY.copy(KL).sub(KR).normalize(); turn(on, KY, a * 0.5); turn(el, KY, a * 0.5); }
