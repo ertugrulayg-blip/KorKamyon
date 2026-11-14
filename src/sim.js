@@ -371,6 +371,8 @@ export function simStep(dt) { stepAir(dt);
   cpc = Math.cos(T.phi); cps = Math.sin(T.phi);
   stepTruck(dt); stepTanker(dt); stepPolice(dt); stepExtras(dt);
   const L = [...players.values()]; for (const p of L) stepPlayer(p, dt);
+  // lobide karakter seçimi: istenen karakter boştaysa verilir (aynı karakteri iki kişi alamaz)
+  if (T.state === 'lobby') for (const p of L) { const k = p.inp && p.inp.kr; if (p.bot || !(k >= 0 && k < 4) || k === p.ci || L.some((q) => q !== p && !q.bot && q.ci === k)) continue; p.ci = k; }
   for (let a = 0; a < L.length; a++) for (let b = a + 1; b < L.length; b++) { const p = L[a], q = L[b]; if (p.seat || q.seat || p.dead > 0 || q.dead > 0) continue; for (const k of [0, 1]) { const i = k * 3, dx = q.P[i] - p.P[i], dy = q.P[i + 1] - p.P[i + 1], dz = q.P[i + 2] - p.P[i + 2], d = Math.hypot(dx, dy, dz) || 1e-6; if (d < 0.56) { const s = ((0.56 - d) / d) * 0.5; p.P[i] -= dx * s; p.P[i + 2] -= dz * s; q.P[i] += dx * s; q.P[i + 2] += dz * s; } } }
 }
 export const r2 = (v) => Math.round(v * 100) / 100;
