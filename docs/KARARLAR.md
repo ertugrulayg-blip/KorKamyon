@@ -57,3 +57,10 @@ Her değişiklik dalda yapılır, duman testi geçer, sahibin onayıyla `main`'e
 ## Açık kararlar
 - **İsim:** "Road Hogs" kalıcı mı; marka/Steam araması sahibinde.
 - **Fiyat ve çıkış biçimi:** erken erişim mi, tam sürüm mü.
+
+## Steam bağlantısı (2026-11-13)
+- Masaüstü sürümünde Steam açıksa oda **Steam lobisiyle** kurulur (yalnız arkadaşlar, 4 kişi). Arkadaşlar davetle ya da Steam arkadaş listesinden "Oyuna katıl" ile gelir; oda kodu gizlenir. Veri Steam'in aktarma ağından (P2P, güvenilir paket) gider. Ayrı sunucu yok: oda sahibi benzetir, eskisi gibi.
+- Kütüphane: **steamworks.js** (MIT, Electron için hazır). Steamworks SDK'sı depoya konmaz (SDK sözleşmesi; gereken dll'ler kütüphanenin içinde geliyor).
+- Steam yoksa (web, ya da Steam kapalı) PeerJS ve oda kodu aynen çalışır. Steam sürümüyle web sürümü birbirine bağlanamaz.
+- Sesli sohbet Steam'de de PeerJS (WebRTC) ile; ses eşinin kimliği Steam numarasından türer. Steam'in kendi sesine geçiş sonraki iş.
+- App ID: şimdilik Valve'ın deneme numarası 480. Steamworks (KYC + Steam Direct) bitince `desktop/steam.cjs` içindeki `APP_ID` değişir.

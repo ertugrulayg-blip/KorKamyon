@@ -124,11 +124,15 @@ function barRig(u, g, t) {
     BK.y -= 0.06; EK.otur = null; EK.dizDisa = true;
     const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(BQ).add(BK);
     yer(BH.lf, 0.3, -0.5, 0.22); yer(BH.rf, -0.3, -0.5, 0.22); BH.lf.y = BH.rf.y = 0.43; // ayaklar taburenin halkasında (0,33) duruyor
-    EK.elDiz = true; // eller dizlerin üstünde (rig.js diz kemiğine göre yerleştirir)
+    // kollar uyluklarda (dizlere yakın), arada bir ağır ağır dizini tıpışlar; gülerken sağ eliyle dizine vurur
+    const l = (t + 2) % 7, gul = l < 1.6 ? Math.sin((l / 1.6) * Math.PI) : 0, vur = l < 1.6 ? Math.max(0, Math.sin(l * 9)) * 0.12 * gul : 0;
+    const tip = Math.max(0, Math.sin(t * 5.2)) * 0.035 * (Math.sin(t * 0.4) > 0.6 ? 1 : 0); // ritim tutar gibi
+    EK.elDiz = { f: [0.72, 0.75], dy: [tip, vur] };
   }
   // nefes ve hafif sallanma
-  EK.egil = Math.sin(t * 1.6 + k) * 0.025 + Math.sin(t * 0.37 + k * 2) * 0.04 + (k === 3 ? 0.28 : 0); EK.basEg = Math.sin(t * 0.3 + k) * 0.08; EK.bilek[0] = EK.bilek[1] = 0;
+  EK.egil = Math.sin(t * 1.6 + k) * 0.025 + Math.sin(t * 0.37 + k * 2) * 0.04 + (k === 3 ? 0.1 : 0); EK.basEg = Math.sin(t * 0.3 + k) * 0.08 - (k === 3 ? 0.12 : 0); EK.bilek[0] = EK.bilek[1] = 0;
   let bas = k === 2 ? 0.55 + Math.sin(t * 0.45 + 1) * 0.35 : u.h.rotation.y; // sarı arada salona (kameraya) ters ters bakar
+  if (k === 3) { bas += Math.sin(t * 0.23) * 0.45; EK.basEg += Math.max(0, Math.sin(t * 0.7)) * Math.sin(t * 6) * 0.05; } // yaşlı: etrafa bakınır, arada başını sallar
   // top atma (sol el)
   if (u.ball) { const e = topEli(t); BH.lh.y += e.dy; EK.bilek[0] = e.bilek; bas = bas * 0.4 + 0.25; EK.basEg = -0.25 * (1 - Math.abs(e.u * 2 - 0.7)); } // gözü topta
   // bira: önce kupanın yolu hesaplanır (yerinden ağzın önüne, orada yudum için eğilir), el kupayı yanından kavrar.
@@ -157,7 +161,8 @@ function barRig(u, g, t) {
     EK.tut = { i: el, parmak, avuc, a: uzan }; ic = { el, uzan, kupa, bilek, KQ };
   }
   // kollar bağlı olan (yeşil): arada bir kahkaha, omuzlar sarsılır
-  if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const s = Math.sin(l * 22) * 0.06 * (1 - l / 1.6); EK.egil += s - 0.12 * Math.sin((l / 1.6) * Math.PI); EK.basEg -= 0.35 * Math.sin((l / 1.6) * Math.PI); BH.lh.y += s; BH.rh.y += s; } } // gülerken omuzları sarsılır
+  // yeşil: arada bir kahkaha — başını geriye atar, omuzları sarsılır (eller rig.js'te uyluklarda)
+  if (k === 3) { const l = (t + 2) % 7; if (l < 1.6) { const g = Math.sin((l / 1.6) * Math.PI), s = Math.sin(l * 22) * 0.05 * (1 - l / 1.6); EK.egil += s - 0.14 * g; EK.basEg -= 0.4 * g; } }
   EK.avuc = u.ball ? [AVUC(), 0] : null; // topu tutan elin avucu yukarı baksın
   poseRig(u.rig, BK, BQ, BH, bas, EK); EK.kolBagla = false; EK.otur = null; EK.dizDisa = false; EK.elDiz = false; EK.kolDisa = false; EK.avuc = null; EK.tut = null;
   // kupa elle birlikte: elin vardığı yere göre kaydırılır (IK yetişemese de kupa elde kalır); el uzanmamışsa yerinde durur
@@ -176,23 +181,28 @@ const AVUC = () => -2.0; // sol ön kolu bu kadar çevirince avuç yukarı bakar
 const barmen = { g: new THREE.Group(), rig: null, x: 0 };
 bar.add(barmen.g); const bez = add(barmen.g, BG, M(0xe8e2d0), 0, 0, 0, 0.16, 0.03, 0.12);
 makeRig(0, barmen.g, 'haydut.glb').then((r) => { barmen.rig = r; });
+const MD1 = new THREE.Vector3(), MD2 = new THREE.Vector3(), MD3 = new THREE.Vector3(), MD4 = new THREE.Vector3(), MD5 = new THREE.Vector3(), MD6 = new THREE.Vector3();
 const MK = new THREE.Vector3(), MQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI), MH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }, MEK = { egil: 0, basEg: 0, bilek: [0, 0] };
 function drawBarmen(t, n) {
   const r = barmen.rig; bez.visible = !!r; if (!r) return;
   barmen.x += ((n % 2 ? 0.85 : 0) - barmen.x) * 0.03; const x = barmen.x, z = 1.38; // oyuncu sayısına göre taburelerin arasına geçer
-  const ovus = (t % 11) > 8.2, k = ovus ? Math.min(1, (t % 11) - 8.2) * Math.min(1, 11 - (t % 11)) * 2 : 0; // son 2,8 sn: eller ovuşturulur
+  const ovus = (t % 11) > 8.2, k = ovus ? Math.min(1, ((t % 11) - 8.2) * 2) * Math.min(1, (11 - (t % 11)) * 2) : 0; // son 2,8 sn: eller ovuşturulur
   MK.set(x, r.hipY, z);
-  // sağ el (barmenin sağı ekranda sağ, +x'in tersi) tezgâhı daire çizerek siler; sol el tezgâha dayanır
+  // Barmen salona (-z) bakar: sağ eli +x yanında (kameradan bakınca solda), sol eli -x yanında.
+  // Sağ el tezgâhı daire çizerek siler; sol el tezgâhın kenarına dayanır.
   const a = t * 2.4;
-  MH.rh.set(x - 0.32 + Math.cos(a) * 0.17, 1.2, 0.72 + Math.sin(a) * 0.1);
-  MH.lh.set(x + 0.34, 1.2, 0.8);
-  if (k > 0) { const o = Math.sin(t * 14) * 0.04; MH.rh.lerp(MK.clone().set(x - 0.06, 1.38 + o, z - 0.32), k); MH.lh.lerp(MK.clone().set(x + 0.06, 1.38 - o, z - 0.32), k); }
+  MH.rh.set(x + 0.26 + Math.cos(a) * 0.13, 1.2, 0.86 + Math.sin(a) * 0.08);
+  MH.lh.set(x - 0.3, 1.2, 0.96);
+  // el ovuşturma: iki el göğsün önünde buluşur, sağ el sol elin üstünde ileri geri kayar
+  if (k > 0) { const o = Math.sin(t * 14) * 0.035; MH.rh.lerp(MK.clone().set(x + 0.045, 1.28 + o, z - 0.26), k); MH.lh.lerp(MK.clone().set(x - 0.045, 1.28 - o, z - 0.26), k); }
   MH.lf.set(x + 0.14, 0.13, z + 0.02); MH.rf.set(x - 0.14, 0.13, z + 0.02);
-  MEK.egil = 0.22 * (1 - k) + Math.sin(t * 1.4) * 0.02; MEK.basEg = -0.12 + Math.sin(t * 0.9) * 0.05 - k * 0.15; MEK.bilek[0] = 0; MEK.bilek[1] = Math.sin(a) * 0.3 * (1 - k);
+  MEK.egil = 0.22 * (1 - k) + Math.sin(t * 1.4) * 0.02; MEK.basEg = -0.12 + Math.sin(t * 0.9) * 0.05 - k * 0.15; MEK.bilek[0] = MEK.bilek[1] = 0;
+  // eller: silen elin avucu tezgâha bakar, parmaklar ileri; ovuştururken avuçlar birbirine
+  MEK.tut = [{ i: 1, parmak: MD1.set(-0.25, -0.35, -1).lerp(MD3.set(0, 0.8, -0.6), k), avuc: MD2.set(0, -1, 0).lerp(MD3.set(-1, 0, 0), k), a: 1 }, { i: 0, parmak: MD4.set(0.2, -0.4, -1).lerp(MD6.set(0, 0.8, -0.6), k), avuc: MD5.set(0, -1, 0).lerp(MD6.set(1, 0, 0), k), a: 1 }];
   // sinsi bakışlar: arada hızla sağa sola döner
   const g = t % 5, bas = g < 0.5 ? 0.6 * Math.sin((g / 0.5) * Math.PI) : g > 2.5 && g < 3 ? -0.6 * Math.sin(((g - 2.5) / 0.5) * Math.PI) : Math.sin(t * 0.5) * 0.12;
   poseRig(r, MK, MQ, MH, bas, MEK);
-  bez.position.set(MH.rh.x, 1.165, MH.rh.z); bez.rotation.y = a * 0.3; bez.visible = k < 0.5;
+  bez.position.set(MH.rh.x - 0.02, 1.165, MH.rh.z - 0.07); bez.rotation.y = a * 0.3; /* bez avucun altında */ bez.visible = k < 0.5;
 }
 export function drawBar(V, dt) {
   barT += dt; const a = innerWidth / innerHeight; if (barCam.aspect !== a) { barCam.aspect = a; barCam.fov = a < 1 ? 70 : 50; barCam.updateProjectionMatrix(); }

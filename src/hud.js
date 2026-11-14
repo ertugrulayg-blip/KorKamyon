@@ -12,6 +12,7 @@ import { sfx, sm } from './audio.js';
 import { TOUCH, hostStart, joy, tb } from './input.js';
 
 export let rainK = 0; export let hose = null;
+const RK = new THREE.Vector3(); // iskeletin çizilen kalça noktası
 const RH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }; // iskelet hedefleri: eller ve ayaklar
 const duman = Array.from({ length: 14 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0x4a4a4e, transparent: true, opacity: 0.4, depthWrite: false }), 0, 0, 0, 0.15); m.visible = false; return m; });
 // oyuncunun başının üstündeki isim
@@ -118,7 +119,16 @@ export function draw(V, dt) {
     const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
     o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3])); o.s[2].rotation.y = o.s[3].rotation.y = p.y;
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
-    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; /* koltuktan bakan kendini görmez */ if (!p.d) { RH.lh.set(P[9], P[10], P[11]); RH.rh.set(P[12], P[13], P[14]); RH.lf.set(P[15], P[16], P[17]); RH.rf.set(P[18], P[19], P[20]); poseRig(o.rig, B.position, B.quaternion, RH); } }
+    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; /* koltuktan bakan kendini görmez */ if (!p.d) {
+        // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
+        // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.
+        const ayak = Math.min(P[16], P[19]), dik = v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]).normalize().y;
+        const ister = !p.s && dik > 0.75 && ayak < P[1] ? Math.min(0.45, Math.max(0, o.rig.bacakBoy * 0.95 - (P[1] - ayak))) : 0;
+        o.kalk = (o.kalk || 0) + (ister - (o.kalk || 0)) * 0.25; const k = o.kalk;
+        RK.copy(B.position); RK.y += k; o.tag.position.y += k; // isim de başın üstünde kalsın
+        RH.lh.set(P[9], P[10] + (p.h & 1 ? 0 : k), P[11]); RH.rh.set(P[12], P[13] + (p.h & 2 ? 0 : k), P[14]); RH.lf.set(P[15], P[16], P[17]); RH.rf.set(P[18], P[19], P[20]);
+        poseRig(o.rig, RK, B.quaternion, RH);
+      } }
     for (let k = 0; k < 4; k++) { const sd = k % 2 ? -1 : 1; v1.set(sd * (k < 2 ? 0.38 : 0.15), k < 2 ? 0.62 : -0.04, 0).applyQuaternion(B.quaternion).add(B.position); v2.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3]); limbV(o.l[k], v1, v2, k < 2 ? 0.1 : 0.115); }
   }
   for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(id); delete RP[id]; }

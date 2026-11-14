@@ -41,7 +41,7 @@ const S = {
     b_sol: '⬅<br>SOLA DÖN', b_yavas: '🐢<br>YAVAŞLA', b_hizlan: '⏩<br>HIZLAN', b_sag: '➡<br>SAĞA DÖN',
     // bağlantı
     mikIzin: 'Mikrofon izni isteniyor…', baglaniyor: 'Bağlanıyor…', baglanamadi: 'Bağlanılamadı. Wi-Fi yerine mobil veriyle (ya da tersi) tekrar dene.',
-    baglantiHata: (a) => 'Bağlantı hatası: ' + a, odaDolu: 'Oda dolu (4 kişi)', sahipAyrildi: 'Oda sahibi ayrıldı', kodYaz: '4 harfli oda kodunu yaz', atildin: 'Oda sahibi seni odadan çıkardı.',
+    baglantiHata: (a) => 'Bağlantı hatası: ' + a, odaDolu: 'Oda dolu (4 kişi)', sahipAyrildi: 'Oda sahibi ayrıldı', kodYaz: '4 harfli oda kodunu yaz', davet: '👥 Arkadaş davet et', steamNot: 'Steam: odayı kur, sonra üstteki «Arkadaş davet et» düğmesiyle çağır. Arkadaşların Steam arkadaş listesinden «Oyuna katıl» da diyebilir.', steamHata: 'Steam odası kurulamadı ya da odaya girilemedi. Steam açık mı?', atildin: 'Oda sahibi seni odadan çıkardı.',
     // roller ve ekran
     rolBar: '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…',
     rolSofor: '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk',
@@ -105,7 +105,7 @@ const S = {
     b_tut: 'GRAB', b_saplak: 'SLAP', b_zipla: 'JUMP', b_kullan: 'USE', b_otur: 'SIT', b_kalk: 'STAND', b_fren: 'BRAKE', b_gaz: 'GAS', b_dir: '◀ STEERING ▶', b_hareket: 'MOVE', b_tanker: 'TANKER',
     b_sol: '⬅<br>TURN LEFT', b_yavas: '🐢<br>SLOW DOWN', b_hizlan: '⏩<br>SPEED UP', b_sag: '➡<br>TURN RIGHT',
     mikIzin: 'Asking for microphone access…', baglaniyor: 'Connecting…', baglanamadi: 'Could not connect. Try mobile data instead of Wi-Fi (or the other way round).',
-    baglantiHata: (a) => 'Connection error: ' + a, odaDolu: 'Room is full (4 players)', sahipAyrildi: 'The host left', kodYaz: 'Type the 4-letter room code', atildin: 'The host kicked you from the room.',
+    baglantiHata: (a) => 'Connection error: ' + a, odaDolu: 'Room is full (4 players)', sahipAyrildi: 'The host left', kodYaz: 'Type the 4-letter room code', davet: '👥 Invite friends', steamNot: 'Steam: create a room, then use the «Invite friends» button at the top. Friends can also click «Join Game» in their Steam friends list.', steamHata: 'Could not create or join the Steam room. Is Steam running?', atildin: 'The host kicked you from the room.',
     rolBar: '<b>🍺 TRUCKERS\' BAR</b><br>The crew is gathering…',
     rolSofor: "<b>🚚 YOU'RE DRIVING</b><br>You're too short to see over the dashboard. Listen to your passenger!<br>A/D steer · W gas · S brake · E stand up",
     rolYolcu: "<b>👀 YOU'RE THE PASSENGER</b><br>Only you can see the road: guide the driver!<br>A/D left/right sign · S slow down · W speed up · T call tanker · E stand up",

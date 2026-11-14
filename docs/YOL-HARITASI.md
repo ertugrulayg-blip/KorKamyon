@@ -55,7 +55,7 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - 🙋 Puan değerleri ve aşama zorluğu: oynayıp ayarlanmalı
 
 ## 3. Steam hesabı ve mağaza sayfası
-- 🙋 Steamworks hesabı, vergi formu (W-8BEN tamamlandı), banka bilgisi, kayıt ücreti
+- 🙋 Steamworks hesabı, vergi formu (W-8BEN tamamlandı), banka bilgisi, kayıt ücreti — KYC belge doğrulaması sürüyor (13.11)
 - 🙋 İsim kontrolü: "Road Hogs" adında oyun/marka var mı (Overwatch'taki "Roadhog" karakterine dikkat)
 - 🙋 Meshy lisansının ticari kullanım hakkı
 - ✅ İngilizce sürüm (`src/dil.js`): tüm arayüz, ekran yazıları, tuş rehberi ve oyun mesajları
@@ -67,8 +67,9 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 - 🙋 Sayfayı "yakında" olarak yayınlamak
 
 ## 4. Steam ağı
-- ⬜ Oda kurma ve arkadaş daveti: Steam lobileri ve Steam ağına geçiş
-- ⬜ Sesli sohbetin Steam üzerinden çalışması
+- ✅ Oda kurma ve arkadaş daveti: Steam lobileri ve Steam ağı (`src/steam.js`, `desktop/steam.cjs`; deneme numarası 480)
+- ✅ steamworks.js paketi eklendi (0.4.0)
+- ⬜ Sesli sohbetin Steam üzerinden çalışması (şimdilik Steam sürümünde de PeerJS ile)
 - 🙋 İki bilgisayarda Steam açıkken deneme
 
 ## 5. İçerik
