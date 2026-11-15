@@ -158,7 +158,7 @@ export function draw(V, dt) {
         // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
         // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.
         const ayak = Math.min(P[16], P[19]), dik = v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]).normalize().y;
-        const ister = !p.s && dik > 0.75 && ayak < P[1] ? Math.min(0.45, Math.max(0, o.rig.bacakBoy * 0.95 - (P[1] - ayak))) : 0;
+        const ister = !p.s && dik > 0.75 && ayak < P[1] ? Math.min(0.45, Math.max(-0.3, o.rig.bacakBoy * 0.95 - (P[1] - ayak))) : 0; // kısa bacaklı gövde aşağı iner
         o.kalk = (o.kalk || 0) + (ister - (o.kalk || 0)) * 0.25; const k = o.kalk;
         RK.copy(B.position); RK.y += k; o.tag.position.y += k; // isim de başın üstünde kalsın
         RH.lh.set(P[9], P[10] + (p.h & 1 ? 0 : k), P[11]); RH.rh.set(P[12], P[13] + (p.h & 2 ? 0 : k), P[14]); RH.lf.set(P[15], P[16], P[17]); RH.rf.set(P[18], P[19], P[20]);

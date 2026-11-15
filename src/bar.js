@@ -91,9 +91,9 @@ export function topEli(t) {
 // Mavi (ince uzun) oturmaz: taburenin yanında, sırtını tezgâha yaslamış, kollar göğsünde bağlı, salona bakar.
 // oturanların bacakları: [uyluk, baldır] oranları (sol, sağ) — biraz farklı olsun ki cansız durmasın
 // ağzın başa göre öne uzaklığı (sakallar farklı): kırmızı, mavi, sarı, yeşil
-const AGIZ = [0.25, 0.22, 0.44, 0.25];
+const AGIZ = [0.3, 0.3, 0.3, 0.3]; // hepsi aynı gövde (govde.glb): ağız başın 0,3 m önünde
 // kupa boyu: iri elli sarıda kupa da büyük (yoksa yumruğun içinde kaybolur)
-const KUPA = [1, 1, 1.35, 1];
+const KUPA = [1.2, 1.2, 1.2, 1.2]; // eldiven eller iri: kupa biraz büyük
 const OTUR = [[[0.95, 0.9], [1.0, 0.6]], null, [[0.95, 0.95], [0.9, 0.8]], [[0.95, 0.9], [0.95, 0.92]]];
 const KY = new THREE.Vector3(), KA = new THREE.Vector3(), KK = new THREE.Vector3(), KV = new THREE.Vector3(), KP = new THREE.Vector3(), KB = new THREE.Vector3(), KQ = new THREE.Quaternion();
 const AQ = new THREE.Quaternion(), AY = new THREE.Vector3(0, 1, 0), AX = new THREE.Vector3(1, 0, 0), AT = new THREE.Vector3();

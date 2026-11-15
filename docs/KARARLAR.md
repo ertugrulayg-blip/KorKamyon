@@ -2,6 +2,15 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-15 — Şoför yolu görür, birinci şahıs kamera, yolcunun işleri, uzun kasa, yeni gövde
+- Şoförün yolu görememesi kaldırıldı; şoför ön camdan bakar. Zor yollar (polisli bölüm, dağ, engebeli toprak) ileride şoförü zorlayacak.
+- Kasadakiler C ile birinci şahıs kameraya geçebilir (fareyle bakış, W baktığın yöne). Deneme amaçlı; yukarıdan bakış varsayılan.
+- Yolcu (yardımcı şoför): T ile telsizi açıp frekansı 1–4 ile tuşlayarak tankeri çağırır; polis peşteyken F ile kabindeki yağ kolunu çeker.
+- Kasa 1,5 m uzadı; yan kenarlar darbede kırılır, tahta yığınından tahta alınıp çakılarak onarılır (arıza dışı iş).
+- Yakıt çubuğu büyük ve yazılı, azalınca uyarı; polis yarı yarıya ve en az 2 dk arayla; ayarlarda grafik kalitesi ve mikrofon seçimi.
+- Oyuncu karakterleri tek gövde: Meshy'nin tıknaz "vinyl oyuncak" kamyoncusu, iskelet Blender'da (14 değil 40 bin yüz: azaltınca gövde yeleğin içinden taşıyordu). Kısa bacaklı gövde oyunda fiziğin kalçasından aşağı çizilir.
+Neden: sahibinin 15.11 notları ve arkadaşının oyun testi.
+
 ## 2026-11-14 — Lobide karakter seçimi; yeni karakter tarzı; iskelet Blender'da
 - Lobide herkes karakterini seçer (aşama panelinin üstünde). Oda sahibi denetler: başkasının aldığı karakter verilmez. Seçim girdiyle gider (`kr`), tarayıcıda hatırlanır (`kk-karakter`).
 - Şapka/maske gibi aksesuarlar da lobide seçilecek; yeni modeller gelince eklenecek.
