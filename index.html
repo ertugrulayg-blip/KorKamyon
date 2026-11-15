@@ -20,8 +20,11 @@
   #rol{position:absolute;left:12px;top:10px;font-size:14px;line-height:1.5;max-width:46vw}
   #rol b{font-size:20px}
   #sag{position:absolute;right:12px;top:10px;text-align:right;font-size:15px;font-weight:700}
-  #yakit,#can{width:180px;height:16px;border:2px solid #fff;border-radius:9px;overflow:hidden;margin:4px 0 4px auto;background:rgba(0,0,0,.3)}
+  #yakit,#can{position:relative;width:220px;height:24px;border:2px solid #fff;border-radius:12px;overflow:hidden;margin:4px 0 4px auto;background:rgba(0,0,0,.35)}
   #yakit i,#can i{display:block;height:100%;background:#7bd389}
+  #yakit b,#can b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;text-shadow:0 1px 3px #000}
+  #yakit{width:260px;height:30px}#yakit b{font-size:17px}
+  #yakit.az{border-color:#ff5a5f;animation:yakitAz .7s infinite alternate}@keyframes yakitAz{to{box-shadow:0 0 16px 4px #ff5a5f}}
   #afis{position:absolute;left:0;right:0;top:22%;text-align:center;font-size:26px;font-weight:900}
   #afis div{margin:6px 0}
   #afis .uyari{color:#ffe14d}#afis .buyuk{font-size:54px}
@@ -84,6 +87,7 @@
   .oyuncu .kay{flex:1;margin:0}.oyuncu .kay span{width:auto}
   .oyuncu .cikar{border:0;border-radius:8px;padding:6px 10px;background:#7a1f1f;color:#fff;font-weight:800;cursor:pointer}.oyuncu .cikar:disabled{opacity:.35;cursor:default}
   .panel .not{font-size:12px;color:#9aa4b5;margin-top:6px}
+  .kay select{max-width:220px;background:#1d2433;color:#fff;border:2px solid #39445a;border-radius:8px;padding:4px 6px;font-weight:700}
   .tus{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;font-size:14px}.tus div{display:flex;gap:8px;align-items:baseline}
   kbd{display:inline-block;min-width:16px;text-align:center;background:#f2f2ea;color:#141a26;border-radius:5px;padding:1px 6px;font:800 12px system-ui,Arial;box-shadow:0 2px 0 #9aa4b5}
   .gorevler{font-size:13px;line-height:1.55;color:#d7dce6}.gorevler b{color:#fff}
@@ -140,7 +144,7 @@
 </div></div>
 <div id="hud">
   <div id="rol"></div>
-  <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div><div id="gorev"></div></div>
+  <div id="sag"><div id="oda"></div><div id="yakit"><i></i><b></b></div><div id="can"><i></i><b></b></div><div id="bilgi"></div><div id="gorev"></div></div>
   <div id="tumsek"></div><div id="ileri" data-t="ileri"></div>
   <div id="egitim"></div><div id="isaret"></div><div id="eylem"></div>
   <div id="afis"></div>
@@ -230,6 +234,6 @@
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=47"></script>
+<script type="module" src="src/main.js?v=48"></script>
 </body>
 </html>

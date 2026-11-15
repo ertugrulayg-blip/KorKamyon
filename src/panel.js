@@ -1,7 +1,8 @@
 // Ayarlar paneli (ses seviyeleri, oyuncular, oyuncu çıkarma) ve tuş rehberi.
 import { net, sesKaydet, sesSeviye, ui } from './state.js';
 import { DIL, L, dilDegisince, dilSec, sayfayiCevir } from './dil.js';
-import { mikKipi, sesModu, sesleriUygula } from './sohbet.js';
+import { mikKipi, mikSec, mikrofonlar, sesModu, sesleriUygula } from './sohbet.js';
+import { kaliteUygula } from './scene.js';
 import { $, COL } from './world.js';
 import { TOUCH } from './input.js';
 
@@ -54,7 +55,15 @@ export function initPanel(opts) {
     s.appendChild(kaydirici(L('oyuncuSes'), ui.ses.oyuncu, (v) => { ui.ses.oyuncu = v; sesKaydet(); sesleriUygula(); }));
     // sesli sohbet kipi
     const k = document.createElement('div'); k.className = 'kay'; k.innerHTML = `<span>${L('ses_mod')}</span><div class="kip"></div>`; s.appendChild(k);
-    for (const m of ['kapali', 'acik', 'bas']) { const b = document.createElement('button'); b.textContent = L('mod_' + m); b.className = mikKipi() === m ? 'secili' : ''; b.onclick = async () => { await sesModu(m); sesler(); }; k.lastChild.appendChild(b); } };
+    for (const m of ['kapali', 'acik', 'bas']) { const b = document.createElement('button'); b.textContent = L('mod_' + m); b.className = mikKipi() === m ? 'secili' : ''; b.onclick = async () => { await sesModu(m); sesler(); }; k.lastChild.appendChild(b); }
+    // hangi mikrofon (adlar izin verildikten sonra görünür)
+    const m = document.createElement('div'); m.className = 'kay'; m.innerHTML = `<span>${L('mikrofon')}</span><select class="mikSec"><option value="">${L('varsayilan')}</option></select>`; s.appendChild(m);
+    const sec = m.querySelector('select'); mikrofonlar().then((L2) => { L2.forEach((d, i) => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || L('mikrofon') + ' ' + (i + 1); sec.appendChild(o); }); sec.value = ui.ses.mik || ''; });
+    sec.onchange = () => mikSec(sec.value);
+    // grafik kalitesi
+    const g = document.createElement('div'); g.className = 'kay'; g.innerHTML = `<span>${L('grafik')}</span><div class="kip"></div>`; s.appendChild(g);
+    for (const k of [0, 1, 2]) { const b = document.createElement('button'); b.textContent = L('kalite' + k); b.className = ui.kalite === k ? 'secili' : ''; b.onclick = () => { kaliteUygula(k); sesler(); }; g.lastChild.appendChild(b); }
+    const n = document.createElement('div'); n.className = 'not'; n.textContent = L('grafikNot'); s.appendChild(n); };
   sesler(); dilDegisince(() => { sesler(); listeIz = ''; if (acik('ayar')) oyuncuListesi(); });
   $('ayarBtn').onclick = () => ayarAc(); $('tusBtn').onclick = () => tuslarAc();
   for (const b of document.querySelectorAll('.pkapat')) b.onclick = () => { ayarAc(false); tuslarAc(false); };

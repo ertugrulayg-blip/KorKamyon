@@ -15,7 +15,7 @@ const S = {
     haydutAd: 'HAYDUT', adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
     tuslar: '⌨ Tuşlar', ayarlar: '⚙ Ayarlar', kapat: 'Kapat (Esc)', ses: 'SES', oyuncular: 'OYUNCULAR', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 İLERİSİ',
     // aşamalar, eğitim, puan
-    asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', karakterSec: 'Karakterin (alınmış olanı seçemezsin)', bos: 'Boş', sonsuzKisa: 'Sonsuz', sonsuzBitti: (m) => '🛣 ' + m + ' m gittiniz!', rekor: (m) => '🏆 Rekor: ' + m + ' m', yeniRekor: '🏆 YENİ REKOR!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
+    asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', mikrofon: 'Mikrofon', varsayilan: 'Varsayılan', grafik: 'Grafik', kalite0: 'Düşük', kalite1: 'Orta', kalite2: 'Yüksek', grafikNot: 'Gölge ve çözünürlük hemen değişir; yol kenarındaki ağaç ve süs yoğunluğu oyunu yeniden açınca.', yakitYazi: (n) => '⛽ Yakıt %' + n, canYazi: (n) => '🔧 Kamyon %' + n, karakterSec: 'Karakterin (alınmış olanı seçemezsin)', bos: 'Boş', sonsuzKisa: 'Sonsuz', sonsuzBitti: (m) => '🛣 ' + m + ' m gittiniz!', rekor: (m) => '🏆 Rekor: ' + m + ' m', yeniRekor: '🏆 YENİ REKOR!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
     sonsuzAd: '∞ Sonsuz yol · gidebildiğiniz kadar', asamaAd: (n, m) => (n ? 'Aşama ' + n : '🎓 Eğitim') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Eğitim ' + i + '/' + n,
     eg: [
       'Herkes yerine! Şoför sol koltuğa, yolcu sağ koltuğa otursun (yanına git, E). Şoför yolu göremez: yolcu A/D ile yön, S ile yavaşla, W ile hızlan gösterir. Kamyon şimdilik kendi gidiyor.',
@@ -61,7 +61,7 @@ const S = {
       egTamam: '✅ Tamam! Sıradaki görev', yolaCiktiniz: 'Yola çıktınız! Kamyon durmasın',
  hortumTak: 'Hortum depoya takıldı! Vanayı aç', firladi: (a) => a + ' koltuktan fırladı! 🪑',
       yagKaydi: (a) => a + ' yola yağ döktü — polis kaydı! 🛢', yag: (a) => a + ' yola yağ döktü 🛢', haydutUctu: '🥷 Haydut kamyondan uçtu! 👋', direksiyon: (a) => a + ' direksiyona geçti!',
-      tankerYolcu: '📻 Tankeri yalnız yolcu telsizle çağırabilir', tankerDolu: 'Depo yarıdan dolu: tanker gelmez (%50 altında çağır)', tankerCagirdi: (a) => a + ' tankeri çağırdı ☎',
+      yakitAz: (n) => '⛽ Yakıt %' + n + ' kaldı! Yolcu telsizle tankeri çağırsın', tankerYolcu: '📻 Tankeri yalnız yolcu telsizle çağırabilir', tankerDolu: 'Depo yarıdan dolu: tanker gelmez (%50 altında çağır)', tankerCagirdi: (a) => a + ' tankeri çağırdı ☎',
       vanaAcildi: 'Vana açıldı ⛽', dustu: (a) => a + ' kamyondan düştü!', havaKurtuldu: 'Basınç hortumu elinden kurtuldu!', lastikSisirdi: (a) => a + ' lastiği şişirdi 🛞',
       matkapKurtuldu: 'Matkap elinden kurtuldu!', hasarOnardi: (a) => a + ' hasarı onardı 🔧', yanginSondu: (a) => a + ' yangını söndürdü 🧯',
       yangin: '🔥 Kasada yangın! Sağ öndeki söndürücüyü TUT, ateşe götür', haydutGeldi: '🥷 Haydut kasaya atladı! Şaplakla kovun',
@@ -80,7 +80,7 @@ const S = {
     menuAciklama: "The driver can't see the road, the passenger gives directions, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
     haydutAd: 'BANDIT', adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
     tuslar: '⌨ Controls', ayarlar: '⚙ Settings', kapat: 'Close (Esc)', ses: 'SOUND', oyuncular: 'PLAYERS', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 AHEAD',
-    asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', karakterSec: 'Your character (taken ones are locked)', bos: 'Free', sonsuzKisa: 'Endless', sonsuzBitti: (m) => '🛣 You made it ' + m + ' m!', rekor: (m) => '🏆 Record: ' + m + ' m', yeniRekor: '🏆 NEW RECORD!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
+    asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', mikrofon: 'Microphone', varsayilan: 'Default', grafik: 'Graphics', kalite0: 'Low', kalite1: 'Medium', kalite2: 'High', grafikNot: 'Shadows and resolution change right away; roadside trees and details change after restarting the game.', yakitYazi: (n) => '⛽ Fuel ' + n + '%', canYazi: (n) => '🔧 Truck ' + n + '%', karakterSec: 'Your character (taken ones are locked)', bos: 'Free', sonsuzKisa: 'Endless', sonsuzBitti: (m) => '🛣 You made it ' + m + ' m!', rekor: (m) => '🏆 Record: ' + m + ' m', yeniRekor: '🏆 NEW RECORD!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
     sonsuzAd: '∞ Endless road · go as far as you can', asamaAd: (n, m) => (n ? 'Stage ' + n : '🎓 Tutorial') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Tutorial ' + i + '/' + n,
     eg: [
       "Take your places! The driver sits on the left, the passenger on the right (walk up, press E). The driver can't see the road: the passenger signals with A/D, S to slow down, W to speed up. For now the truck drives itself.",
@@ -123,7 +123,7 @@ const S = {
       egTamam: '✅ Done! Next task', yolaCiktiniz: "You're on the road! Don't let the truck stop",
  hortumTak: 'Hose connected! Open the valve', firladi: (a) => a + ' got ejected from the seat! 🪑',
       yagKaydi: (a) => a + ' spilled oil — the police car skids! 🛢', yag: (a) => a + ' spilled oil on the road 🛢', haydutUctu: '🥷 The bandit flew off the truck! 👋', direksiyon: (a) => a + ' took the wheel!',
-      tankerYolcu: '📻 Only the passenger can radio the tanker', tankerDolu: "Tank is over half full: the tanker won't come (call below 50%)", tankerCagirdi: (a) => a + ' called the tanker ☎',
+      yakitAz: (n) => '⛽ Only ' + n + '% fuel left! Passenger, radio the tanker', tankerYolcu: '📻 Only the passenger can radio the tanker', tankerDolu: "Tank is over half full: the tanker won't come (call below 50%)", tankerCagirdi: (a) => a + ' called the tanker ☎',
       vanaAcildi: 'Valve open ⛽', dustu: (a) => a + ' fell off the truck!', havaKurtuldu: 'The air hose slipped out of your hand!', lastikSisirdi: (a) => a + ' pumped up the tyre 🛞',
       matkapKurtuldu: 'The drill slipped out of your hand!', hasarOnardi: (a) => a + ' fixed the damage 🔧', yanginSondu: (a) => a + ' put out the fire 🧯',
       yangin: '🔥 Fire in the back! GRAB the extinguisher at the front right and take it to the flames', haydutGeldi: '🥷 A bandit jumped on! Slap him off',

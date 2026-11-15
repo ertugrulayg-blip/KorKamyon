@@ -6,7 +6,7 @@ import { BOX, BUMP, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, ko
 import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT } from './sim.js';
 
 // ---------- görüntü ----------
-export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
+export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(ui.kalite === 0 ? 1 : ui.kalite === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
 ren.shadowMap.enabled = ui.kalite > 0; ren.shadowMap.type = THREE.PCFSoftShadowMap;
 export const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9fd4ff); scene.fog = new THREE.Fog(0x9fd4ff, 70, 230);
 export const cam = new THREE.PerspectiveCamera(62, 1, 0.05, 400);
@@ -151,3 +151,12 @@ add(bitis, BG, M(0x222222), 10, 4, 0, 0.5, 8, 0.5); add(bitis, BG, M(0x222222), 
 add(bitis, new THREE.PlaneGeometry(13, 1.6), new THREE.MeshBasicMaterial({ map: tex(256, 32, (g, w, h) => { for (let x = 0; x < 16; x++) for (let y = 0; y < 2; y++) { g.fillStyle = (x + y) % 2 ? '#111' : '#f2f2ea'; g.fillRect(x * 16, y * 16, 16, 16); } }) }), 0, 0.03, 0).rotation.x = -Math.PI / 2;
 for (const z of BUMP) { const g = new THREE.Group(); g.position.set(cx(z), 0, z); g.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); for (let k = -3; k <= 3; k++) add(g, BG, M(k % 2 ? 0x222222 : 0xffd23f), k * 1.9, 0.08, 0, 1.9, 0.16, 0.9); world.add(g);
   const zs = z - 35, xs = cx(zs) - 10.4; add(world, BG, M(0x888888), xs, 1.2, zs, 0.12, 2.4, 0.12); const lv = add(world, BG, M(0xffd23f), xs, 2.7, zs, 1.1, 1.1, 0.08); lv.rotation.z = Math.PI / 4; }
+
+// Ayarlardan grafik kalitesi: gölge ve çözünürlük hemen değişir; yol kenarı süslerinin yoğunluğu yeniden açınca.
+export function kaliteUygula(k) {
+  ui.kalite = k; try { localStorage.setItem('kk-kalite', k); } catch (e) {}
+  ren.setPixelRatio(k === 0 ? 1 : k === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio));
+  ren.shadowMap.enabled = k > 0; sun.castShadow = k > 0; sun.shadow.mapSize.set(k > 1 ? 2048 : 1024, k > 1 ? 2048 : 1024);
+  if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+  scene.traverse((o) => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; });
+}
