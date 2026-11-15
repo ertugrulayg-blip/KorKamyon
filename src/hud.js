@@ -2,14 +2,15 @@
 import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
-import { $, ASAMA, BUMP, BUMP_V, COL, GATE, HZ, LEN, POLZ, WHEEL, cx } from './world.js';
-import { OILB, RAD, SPOT, asamaSec } from './sim.js';
+import { $, ASAMA, BUMP, BUMP_V, COL, GATE, HZ, KENAR, LEN, POLZ, WHEEL, cx } from './world.js';
+import { OILB, RAD, SPOT, TAHTA, asamaSec } from './sim.js';
+import { kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
 import { drawBar, limbV, playerMesh, pm, qY } from './bar.js';
 import { sfx, sm } from './audio.js';
-import { TOUCH, hostStart, joy, tb } from './input.js';
+import { TOUCH, cnt, hostStart, joy, tb } from './input.js';
 
 export let rainK = 0; export let hose = null;
 const RK = new THREE.Vector3(); // iskeletin çizilen kalça noktası
@@ -54,6 +55,31 @@ function asamaPanel(t, V) {
   for (const b of el.querySelectorAll('button[data-kr]')) b.onclick = () => { ui.karakter = +b.dataset.kr; try { localStorage.setItem('kk-karakter', b.dataset.kr); } catch (e) {} };
   const bb = el.querySelector('.basla'); if (bb) bb.onclick = () => hostStart();
 }
+// Yolcunun telsizi: T ile açılır; ekrandaki 3 haneli frekans 1-4 tuşlarıyla girilince tanker çağrılır.
+// Yolcu değilse T eskisi gibi çağrı gönderir (oda sahibi "yalnız yolcu çağırabilir" der).
+const TZ = { acik: false, kod: '', girilen: '', kapanT: 0 };
+function telsizPanel(t, me, dt) {
+  const el = $('telsiz'), yolcu = me && me.s === 2 && t.s === 'run' && !t.cd;
+  if (!el.dataset.kur) { el.dataset.kur = 1; for (const b of el.querySelectorAll('b[data-n]')) b.addEventListener('pointerdown', (e) => { e.preventDefault(); ui.telsizTus = +b.dataset.n; }); }
+  if (ui.telsizAc) {
+    ui.telsizAc = false;
+    if (!yolcu) cnt.c++;
+    else if (TZ.acik) TZ.acik = false;
+    else { TZ.acik = true; TZ.girilen = ''; TZ.kapanT = 0; TZ.kod = Array.from({ length: 3 }, () => 1 + ((Math.random() * 4) | 0)).join(''); }
+  }
+  if (!yolcu) TZ.acik = false;
+  if (TZ.acik && ui.telsizTus && !TZ.kapanT) {
+    const n = String(ui.telsizTus); ui.telsizTus = 0;
+    if (TZ.kod[TZ.girilen.length] === n) { TZ.girilen += n; if (TZ.girilen === TZ.kod) { cnt.c++; TZ.kapanT = 1.1; } }
+    else { TZ.girilen = ''; el.classList.remove('yanlis'); void el.offsetWidth; el.classList.add('yanlis'); }
+  }
+  ui.telsizTus = 0;
+  if (TZ.kapanT) { TZ.kapanT -= dt; if (TZ.kapanT <= 0) { TZ.kapanT = 0; TZ.acik = false; } }
+  el.style.display = TZ.acik ? 'block' : 'none'; if (!TZ.acik) return;
+  const kod = [...TZ.kod].map((c, i) => (i < TZ.girilen.length ? c : '·')).join(' ');
+  const ic = `${L('telsizBaslik')}|${TZ.kod.split('').join(' · ')}|${TZ.kapanT ? L('telsizTamam') : kod}|${L('telsizAlt')}`;
+  if (el.dataset.ic !== ic) { el.dataset.ic = ic; const p = ic.split('|'); el.querySelector('.ust span').textContent = p[0] + ': ' + p[1]; el.querySelector('.kod').textContent = p[2]; el.querySelector('.alt').textContent = p[3]; }
+}
 function egitimYazi(t) {
   const el = $('egitim'), on = t.s === 'run' && t.eg >= 0 && !t.cd, metin = on ? `<b>${L('egBaslik', t.eg + 1, L('eg').length)}</b>${L('eg')[t.eg]}` : '';
   if (el.dataset.m !== metin + DIL) { el.dataset.m = metin + DIL; el.innerHTML = metin; el.style.display = on ? 'block' : 'none'; document.body.classList.toggle('egitimde', on); }
@@ -71,7 +97,7 @@ function konfeti(t) {
   const r = ['#ffd23f', '#ff6a3d', '#3fa7ff', '#7bd389', '#ff5a5f', '#ffffff'];
   for (let i = 0; i < 110; i++) { const k = document.createElement('i'); k.className = 'konfeti'; k.style.left = Math.random() * 100 + 'vw'; k.style.background = r[i % r.length]; k.style.animationDelay = Math.random() * 1.2 + 's'; k.style.animationDuration = 2.4 + Math.random() * 1.6 + 's'; document.body.appendChild(k); setTimeout(() => k.remove(), 4500); }
 }
-const NEG = ['carpma', 'dusme', 'firlama', 'ceza'], SIRA = ['surus', 'yolcu', 'temiz', 'lastik', 'hasar', 'yangin', 'su', 'yakit', 'haydut', 'polis', 'carpma', 'dusme', 'firlama', 'ceza'];
+const NEG = ['carpma', 'dusme', 'firlama', 'ceza'], SIRA = ['surus', 'yolcu', 'temiz', 'lastik', 'hasar', 'tahta', 'yangin', 'su', 'yakit', 'haydut', 'polis', 'carpma', 'dusme', 'firlama', 'ceza'];
 function sonEkran(t, V) {
   const win = t.s === 'win', yaz = L('ist');
   let h = `<div class="buyuk">${win ? (t.lv === 0 ? L('egitimTamam') : L('asamaTamam', t.lv)) : L('oyunBitti')}</div>`;
@@ -88,7 +114,7 @@ function sonEkran(t, V) {
 }
 const SARS = ['bariyer', 'kapaliSerit', 'engel', 'tumsekPat', 'lastikPat', 'polisVurdu', 'polisAtladi']; // ekranı sarsan olaylar
 const fx = { m: '', shake: 0, acc: 0, i: 0, eg: 0, j: 0 }, dust = Array.from({ length: 28 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xb9b2a6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; }); // darbe sarsıntısı, teker tozu
-export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 9.5, -10.5), camL = new THREE.Vector3(0, 1.5, -1); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
+export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 10.2, -12.2), camL = new THREE.Vector3(0, 1.5, -1.8); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
 export function draw(V, dt) {
   const t = V.T, [qs, qx, qz, qhp, qsl, qu, qo, qd = 0] = V.q, ch = t.s === 'run' && (qs === 1 || qs === 2); sfx(V, dt);
@@ -127,11 +153,12 @@ export function draw(V, dt) {
     const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
     o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3])); o.s[2].rotation.y = o.s[3].rotation.y = p.y;
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
-    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; /* koltuktan bakan kendini görmez */ if (!p.d) {
+    if (p.th && !o.tahta) { o.tahta = add(scene, BG, tahtaRenk, 0, 0, 0, 0.26, 0.05, 1.3); } if (o.tahta) { o.tahta.visible = !!p.th && !p.d; if (p.th) { o.tahta.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.05, (P[11] + P[14]) / 2); o.tahta.rotation.set(0, p.y + Math.PI / 2, 0.15); } } // elindeki tahta (kollar arasında, yana doğru)
+    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; /* koltuktan bakan kendini görmez */ if (!p.d) {
         // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
         // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.
         const ayak = Math.min(P[16], P[19]), dik = v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]).normalize().y;
-        const ister = !p.s && dik > 0.75 && ayak < P[1] ? Math.min(0.45, Math.max(0, o.rig.bacakBoy * 0.95 - (P[1] - ayak))) : 0;
+        const ister = !p.s && dik > 0.75 && ayak < P[1] ? Math.min(0.45, Math.max(-0.3, o.rig.bacakBoy * 0.95 - (P[1] - ayak))) : 0; // kısa bacaklı gövde aşağı iner
         o.kalk = (o.kalk || 0) + (ister - (o.kalk || 0)) * 0.25; const k = o.kalk;
         RK.copy(B.position); RK.y += k; o.tag.position.y += k; // isim de başın üstünde kalsın
         RH.lh.set(P[9], P[10] + (p.h & 1 ? 0 : k), P[11]); RH.rh.set(P[12], P[13] + (p.h & 2 ? 0 : k), P[14]); RH.lf.set(P[15], P[16], P[17]); RH.rf.set(P[18], P[19], P[20]);
@@ -139,13 +166,17 @@ export function draw(V, dt) {
       } }
     for (let k = 0; k < 4; k++) { const sd = k % 2 ? -1 : 1; v1.set(sd * (k < 2 ? 0.38 : 0.15), k < 2 ? 0.62 : -0.04, 0).applyQuaternion(B.quaternion).add(B.position); v2.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3]); limbV(o.l[k], v1, v2, k < 2 ? 0.1 : 0.115); }
   }
-  for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(id); delete RP[id]; }
+  for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); if (o.tahta) scene.remove(o.tahta); if (o.rig) scene.remove(o.rig.root); pm.delete(id); delete RP[id]; }
   const seat = ui.camMode >= 0 ? ui.camMode : me ? me.s : 0;
-  if (ch) { v1.set(0, 14, -25); v2.set(0, 1, -5.5); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
-  else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.62, 1.95); cabPt(v2, 0.7, 3.05, 14); }
+  const fp = ui.birinci && !ch && seat === 0 && t.s === 'run' && me && !me.d && RP[me.id]; ui.fpAktif = !!fp; // kasada birinci şahıs
+  if (fp && ui.bakisIlk) { ui.bakisIlk = false; ui.bakis = me.y || 0; }
+  if (!fp && document.pointerLockElement) document.exitPointerLock();
+  if (ch) { v1.set(0, 14, -26.5); v2.set(0, 1, -7); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
+  else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.95, 2.0); cabPt(v2, 0.55, 2.4, 30); } // şoför: kendi koltuğundan yolu görür
   else if (seat === 2 && t.s === 'run') { cabPt(v1, -0.7, 3.0, 2.0); cabPt(v2, -0.4, 2.3, 30); } // yolcu: kendi koltuğundan yolu net görür // şoför: boyu kısa, göz tablonun hizasında — gökyüzü ve ağaç tepeleri görünür, yol görünmez
-  else { v1.set(0, 9.5, -10.5); v2.set(0, 1.5, -1); } // diğerleri yukarıdan bakar; yolcunun ileri penceresi var
-  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
+  else if (fp) { const P = RP[me.id]; v1.set(P[6], P[7] + 0.14 + (pm.get(me.id)?.kalk || 0), P[8]); /* çizilen gövde kalkık olabilir */ const c = Math.cos(ui.egim); v2.set(v1.x + Math.sin(ui.bakis) * c, v1.y + Math.sin(ui.egim), v1.z + Math.cos(ui.bakis) * c); } // birinci şahıs: gözden
+  else { v1.set(0, 10.2, -12.2); v2.set(0, 1.5, -1.8); } // diğerleri yukarıdan bakar (kasa uzun); yolcunun ileri penceresi var
+  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : fp ? 'b' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
   // koltuk fırlatma: koltuk yerinden fırlar, takla atar, birkaç saniye sonra yerine düşer
   for (const s of [1, 2]) { const g = koltuk[s], u = g.userData, e = t.ej ? t.ej[s] : 0;
     if (u.son === undefined) u.son = e; if (e !== u.son) { u.son = e; u.t = 0; }
@@ -171,15 +202,19 @@ export function draw(V, dt) {
       if (el.style.display !== 'block') el.style.display = 'block'; el.style.width = w + 'px'; el.style.height = h + 'px'; el.style.top = y + 'px'; } else if (el.style.display !== 'none') el.style.display = 'none'; }
   // yakındaki eylem: ipucu ve işaretler
   { const nabiz = 0.45 + 0.4 * Math.sin(performance.now() / 140), run = t.s === 'run' && !t.cd, mp = me && !me.s && !me.d ? (RP[me.id] || me.P) : null;
+    const kirikVar = run && (t.kk || '').includes('1');
+    KENAR.forEach((k, i) => { const kr = (t.kk || '')[i] === '1'; if (k.b.mesh) k.b.mesh.visible = !kr; kirikM[i].visible = kr; kirikM[i].userData.isaret.material.opacity = nabiz; });
     const suGerek = run && (t.ht >= 60 || t.sl), yagGerek = run && qs === 2, vanaGerek = run && ks === 2 && V.n[3] && !kv;
     radIsaret.visible = suGerek; yagIsaret.visible = yagGerek; vanaIsaret.visible = vanaGerek; for (const m of [radIsaret, yagIsaret, vanaIsaret]) m.material.opacity = nabiz;
     let ey = '';
     if (mp) { const yak = (x, z, r) => Math.hypot(mp[3] - x, mp[5] - z) < r;
       if (suGerek && (cabPt(EV, RAD[0], 0, RAD[2]), yak(EV.x, EV.z, 1.7))) ey = L('ey_su');
       else if (yagGerek && yak(OILB[0], OILB[2], 1.7)) ey = L('ey_yag') + (qo ? L('ey_bekle', qo) : '');
-      else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) ey = L('ey_vana'); }
+      else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) ey = L('ey_vana');
+      else if (kirikVar && !me.th && yak(TAHTA[0], TAHTA[2], 1.2)) ey = L('ey_tahta');
+      else if (me.th) { const i = KENAR.findIndex((k, i) => t.kk[i] === '1' && Math.sign(mp[3]) === k.s && Math.abs(mp[3]) > 0.7 && mp[5] > k.z0 - 0.5 && mp[5] < k.z1 + 0.5); ey = i >= 0 ? L('ey_cak', Math.round((me.ck || 0) * 100)) : ''; } }
     const el = $('eylem'), metin = ey ? `<kbd>${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; } }
-  asamaPanel(t, V); egitimYazi(t); puanBalon(t, me); konfeti(t);
+  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / 0.6) * Math.PI) * 0.9; telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
@@ -205,6 +240,6 @@ export function draw(V, dt) {
     t.fl.forEach((f, i) => { if (f) gv += `<div>${L('g_lastik', i)}</div>`; });
     t.dm.forEach((d, i) => { if (d) gv += `<div>${L('g_hasar', i, d)}</div>`; }); }
   const hp = Math.max(0, 100 - t.dm.reduce((a, b) => a + b, 0)), sl = me && me.st && t.s === 'run' && !t.cd ? me.st : 0, h = DIL + (me ? me.pu : 0) + rol + af + gv + hp + sl + t.ht + V.cr.join() + Math.round(t.f) + Math.round(t.Z / 10) + Math.round((t.tp || 0) / 10) + Math.round(t.v);
-  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">${L('koltukSure', ((sl / 60) | 0) + ':' + String(sl % 60).padStart(2, '0'))}</span>` : '') + (TOUCH ? '' : '<br>' + L('muzikTus')); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : '#7bd389'; $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧${L('yuzde', hp)} 🌡${L('yuzde', t.ht)} 📦${V.cr.filter((c) => c).length}/4<br>${t.sn ? L('gidilen', t.tp) : Math.max(0, Math.round((t.hd || LEN) - t.Z)) + ' m'} · ⭐${me ? me.pu || 0 : 0} · ${Math.round(t.v * 3.6)} ${L('kmh')}`; $('oda').textContent = L('oda') + ' ' + net.odaKodu; }
+  if (h !== lastHud) { lastHud = h; $('rol').innerHTML = (TOUCH ? rol.split('<br>').slice(0, 2).join('<br>') : rol) + (sl ? `<br><span style="color:${sl <= 15 ? '#ff5a5f' : '#ffe14d'}">${L('koltukSure', ((sl / 60) | 0) + ':' + String(sl % 60).padStart(2, '0'))}</span>` : '') + (TOUCH ? '' : '<br>' + L('muzikTus')); $('afis').innerHTML = af; $('gorev').innerHTML = gv; $('afis').className = t.s === 'lobby' ? 'alt' : t.s !== 'run' || t.cd ? 'orta' : ''; $('yakit').firstChild.style.width = t.f + '%'; $('yakit').firstChild.style.background = t.f < 25 ? '#ff5a5f' : t.f < 50 ? '#ffd23f' : '#7bd389'; $('yakit').lastChild.textContent = L('yakitYazi', Math.round(t.f)); $('yakit').classList.toggle('az', t.f < 25 && t.s === 'run'); $('can').lastChild.textContent = L('canYazi', Math.round(hp)); $('can').firstChild.style.width = hp + '%'; $('can').firstChild.style.background = hp < 35 ? '#ff5a5f' : '#3fa7ff'; $('bilgi').innerHTML = `🔧${L('yuzde', hp)} 🌡${L('yuzde', t.ht)} 📦${V.cr.filter((c) => c).length}/4<br>${t.sn ? L('gidilen', t.tp) : Math.max(0, Math.round((t.hd || LEN) - t.Z)) + ' m'} · ⭐${me ? me.pu || 0 : 0} · ${Math.round(t.v * 3.6)} ${L('kmh')}`; $('oda').textContent = L('oda') + ' ' + net.odaKodu; }
 }
 export const fit = () => { ren.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 80 : 62; cam.updateProjectionMatrix(); }; addEventListener('resize', fit); fit();

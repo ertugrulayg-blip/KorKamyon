@@ -2,11 +2,11 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd } from './world.js';
-import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT } from './sim.js';
+import { BOX, BUMP, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd } from './world.js';
+import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT, TAHTA } from './sim.js';
 
 // ---------- görüntü ----------
-export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
+export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(ui.kalite === 0 ? 1 : ui.kalite === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
 ren.shadowMap.enabled = ui.kalite > 0; ren.shadowMap.type = THREE.PCFSoftShadowMap;
 export const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9fd4ff); scene.fog = new THREE.Fog(0x9fd4ff, 70, 230);
 export const cam = new THREE.PerspectiveCamera(62, 1, 0.05, 400);
@@ -151,3 +151,29 @@ add(bitis, BG, M(0x222222), 10, 4, 0, 0.5, 8, 0.5); add(bitis, BG, M(0x222222), 
 add(bitis, new THREE.PlaneGeometry(13, 1.6), new THREE.MeshBasicMaterial({ map: tex(256, 32, (g, w, h) => { for (let x = 0; x < 16; x++) for (let y = 0; y < 2; y++) { g.fillStyle = (x + y) % 2 ? '#111' : '#f2f2ea'; g.fillRect(x * 16, y * 16, 16, 16); } }) }), 0, 0.03, 0).rotation.x = -Math.PI / 2;
 for (const z of BUMP) { const g = new THREE.Group(); g.position.set(cx(z), 0, z); g.rotation.y = Math.atan2(cx(z + 1) - cx(z), 1); for (let k = -3; k <= 3; k++) add(g, BG, M(k % 2 ? 0x222222 : 0xffd23f), k * 1.9, 0.08, 0, 1.9, 0.16, 0.9); world.add(g);
   const zs = z - 35, xs = cx(zs) - 10.4; add(world, BG, M(0x888888), xs, 1.2, zs, 0.12, 2.4, 0.12); const lv = add(world, BG, M(0xffd23f), xs, 2.7, zs, 1.1, 1.1, 0.08); lv.rotation.z = Math.PI / 4; }
+
+// Ayarlardan grafik kalitesi: gölge ve çözünürlük hemen değişir; yol kenarı süslerinin yoğunluğu yeniden açınca.
+export function kaliteUygula(k) {
+  ui.kalite = k; try { localStorage.setItem('kk-kalite', k); } catch (e) {}
+  ren.setPixelRatio(k === 0 ? 1 : k === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio));
+  ren.shadowMap.enabled = k > 0; sun.castShadow = k > 0; sun.shadow.mapSize.set(k > 1 ? 2048 : 1024, k > 1 ? 2048 : 1024);
+  if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+  scene.traverse((o) => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; });
+}
+
+// Yolcunun kabin işleri: kapı dibinde yağ kolu (polise karşı yağ döker), torpidoda telsiz (tankeri çağırır)
+export const yagKolu = new THREE.Group(); yagKolu.position.set(-1.22, 1.32, 2.45); cabIn.add(yagKolu);
+add(cabIn, BG, M(0x3a3f48), -1.22, 1.33, 2.45, 0.22, 0.06, 0.3); // kolun tabanı
+add(yagKolu, CG, M(0x9aa1ab), 0, 0.24, 0, 0.035, 0.48, 0.035); add(yagKolu, SG, M(0xd8232a), 0, 0.5, 0, 0.07); // sap ve kırmızı topuz
+export const telsizM = new THREE.Group(); telsizM.position.set(-0.95, 2.18, 3.12); cabIn.add(telsizM);
+add(telsizM, BG, M(0x2b3a2e), 0, 0, 0, 0.3, 0.12, 0.08); add(telsizM, BG, M(0x9dff8a), -0.05, 0.01, -0.045, 0.12, 0.05, 0.01); add(telsizM, CG, M(0x111111), 0.11, 0.12, 0, 0.012, 0.16, 0.012); // gövde, ekran, anten
+
+// Tahta yığını (kırık kenara çakılacak tahtalar) ve kırık kenar görüntüleri
+export const tahtaRenk = M(0xb98a52);
+{ const g = new THREE.Group(); g.position.set(TAHTA[0], 1.3, TAHTA[2]); truck.add(g);
+  for (let i = 0; i < 4; i++) { const m = add(g, BG, tahtaRenk, (i % 2) * 0.04 - 0.02, 0.04 + i * 0.07, (i % 3) * 0.05 - 0.05, 0.28, 0.06, 1.5); m.rotation.y = (i % 2 ? 0.05 : -0.04); } }
+export const kirikM = KENAR.map((k) => { const g = new THREE.Group(); g.position.set(k.s * 1.45, 1.3, k.z); g.visible = false; truck.add(g);
+  const boy = k.z1 - k.z0, kirik = M(0x6b4a2a); // iki uçta kalan kırık parçalar, ortası boş
+  for (const u of [-1, 1]) { const m = add(g, BG, kirik, 0, 0.22, u * (boy / 2 - 0.18), 0.1, 0.36, 0.36); m.rotation.x = u * 0.35; }
+  g.userData.isaret = add(g, CG, new THREE.MeshBasicMaterial({ color: 0xff8a3d, transparent: true, depthWrite: false }), -k.s * 0.35, 0.03, 0, 0.6, 0.03, boy * 0.8);
+  return g; });

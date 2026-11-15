@@ -14,8 +14,12 @@ export let tohum = 12345; export const srnd = () => { tohum = (tohum * 1664525 +
 // ---------- çarpışma kutuları (kamyon çerçevesi) ----------
 export const BOX = [];
 export const box = (x0, x1, y0, y1, z0, z1, tag, c) => { const b = { a: [x0, y0, z0], b: [x1, y1, z1], o: [0, 0, 0], tag, c, on: true }; BOX.push(b); return b; };
-box(-1.5, 1.5, 0.5, 1.3, -6, 1, 'floor', 0xb9853f); box(-1.5, 1.5, 0.5, 1.3, 1, 3.2, 'floor', 0x8a6a3a);
-box(1.4, 1.5, 1.3, 1.8, -6, 1, 'rail', 0x8a8f98); box(-1.5, -1.4, 1.3, 1.8, -6, 1, 'rail', 0x8a8f98); box(-1.5, 1.5, 1.3, 1.8, -6.1, -6, 'rail', 0x8a8f98);
+// kasa: z = ARKA'dan 1'e (kabin önde). Yan kenarlar 5 parça: hasarda biri kırılır, tahta çakılarak onarılır (KENAR).
+export const ARKA = -7.5;
+box(-1.5, 1.5, 0.5, 1.3, ARKA, 1, 'floor', 0xb9853f); box(-1.5, 1.5, 0.5, 1.3, 1, 3.2, 'floor', 0x8a6a3a);
+export const KENAR = [];
+for (const s of [1, -1]) for (let i = 0; i < 5; i++) { const z0 = ARKA + (i * (1 - ARKA)) / 5, z1 = ARKA + ((i + 1) * (1 - ARKA)) / 5; KENAR.push({ s, z0, z1, z: (z0 + z1) / 2, kirik: false, b: box(s > 0 ? 1.4 : -1.5, s > 0 ? 1.5 : -1.4, 1.3, 1.8, z0, z1, 'rail', 0x8a8f98) }); }
+box(-1.5, 1.5, 1.3, 1.8, ARKA - 0.1, ARKA, 'rail', 0x8a8f98);
 box(1.4, 1.5, 1.3, 2.7, 1, 3.2, 'door', 0xd8432f); box(-1.5, -1.4, 1.3, 2.7, 1, 3.2, 'door', 0xd8432f);
 box(-1.5, 1.5, 1.3, 2.7, 3.2, 3.5, 'dash', 0x2b2f38);
 box(-1.5, 1.5, 0.5, 2.1, 3.5, 5.3, 'hood', 0xd8432f);
@@ -26,7 +30,7 @@ export const TK = box(-1.2, 1.2, 0.5, 2.0, -3.5, 3.5, 'tanker', 0xe9e9e9); TK.on
 export const PK = box(-1.0, 1.0, 0.45, 1.3, -2.2, 2.2, 'police', 0xffffff), PK2 = box(-0.85, 0.85, 1.3, 1.85, -1.3, 0.5, 'police', 0x1f3a6b); PK.on = PK2.on = false;
 export const SEAT = { 1: [0.7, 1.55, 1.9], 2: [-0.7, 2.0, 1.9] }; // 1 şoför (solda, kısa), 2 yolcu
 export const INLET = [1.25, 2.0, 0.4];
-export const WHEEL = [[1.78, 0.55, 2.2, 'sol ön'], [-1.78, 0.55, 2.2, 'sağ ön'], [1.78, 0.55, -4, 'sol arka'], [-1.78, 0.55, -4, 'sağ arka']];
+export const WHEEL = [[1.78, 0.55, 2.2, 'sol ön'], [-1.78, 0.55, 2.2, 'sağ ön'], [1.78, 0.55, -5.2, 'sol arka'], [-1.78, 0.55, -5.2, 'sağ arka']];
 export const OBS = []; for (let z = 260; z < Z0 + PER - 20; z += 70 + srnd() * 60) OBS.push({ z, x: cx(z) + (srnd() * 9 - 4.5), hit: false });
 export const GATE = [640, 1180, 1700, 2150].map((z, i) => ({ z, open: [1, -1, -1, 1][i] })); // yol ayrımı: open = +1 sol şerit açık, -1 sağ şerit açık; kapalı şeritte duvar var
 for (const g of GATE) { for (let i = OBS.length - 1; i >= 0; i--) if (Math.abs(OBS[i].z - g.z) < 75) OBS.splice(i, 1); OBS.push({ z: g.z, x: cx(g.z) - g.open * 3.7, w: 3.7, gate: g, hit: false }); } OBS.sort((a, b) => a.z - b.z);

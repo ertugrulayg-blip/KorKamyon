@@ -20,8 +20,11 @@
   #rol{position:absolute;left:12px;top:10px;font-size:14px;line-height:1.5;max-width:46vw}
   #rol b{font-size:20px}
   #sag{position:absolute;right:12px;top:10px;text-align:right;font-size:15px;font-weight:700}
-  #yakit,#can{width:180px;height:16px;border:2px solid #fff;border-radius:9px;overflow:hidden;margin:4px 0 4px auto;background:rgba(0,0,0,.3)}
+  #yakit,#can{position:relative;width:220px;height:24px;border:2px solid #fff;border-radius:12px;overflow:hidden;margin:4px 0 4px auto;background:rgba(0,0,0,.35)}
   #yakit i,#can i{display:block;height:100%;background:#7bd389}
+  #yakit b,#can b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;text-shadow:0 1px 3px #000}
+  #yakit{width:260px;height:30px}#yakit b{font-size:17px}
+  #yakit.az{border-color:#ff5a5f;animation:yakitAz .7s infinite alternate}@keyframes yakitAz{to{box-shadow:0 0 16px 4px #ff5a5f}}
   #afis{position:absolute;left:0;right:0;top:22%;text-align:center;font-size:26px;font-weight:900}
   #afis div{margin:6px 0}
   #afis .uyari{color:#ffe14d}#afis .buyuk{font-size:54px}
@@ -61,7 +64,7 @@
   #ps .kucuk{left:12px;bottom:calc(var(--PH) + 26px)}
   #py .ok{bottom:14px;width:23vw;height:var(--OH);font-size:calc(26px*var(--k))}
   #py .ok[data-k="sl"]{left:2vw}#py .ok[data-k="yv"]{left:26.5vw}#py .ok[data-k="hz"]{left:51vw}#py .ok[data-k="sr"]{right:2vw}
-  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}
+  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="t"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="u"]{left:calc(2vw + 240px*var(--k));bottom:calc(var(--OH) + 24px)}
   @media (pointer:coarse){#egitim{bottom:auto;top:52px;font-size:14px}body.egitimde #rol{display:none}#dok{display:block}
     #rol{font-size:16px;line-height:1.35;max-width:46vw}#rol b{font-size:26px}
     #sag{font-size:17px}#gorev{font-size:14px;max-width:44vw}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
@@ -72,6 +75,11 @@
   #dugmeler{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:none;gap:8px;z-index:6}
   #dugmeler b{pointer-events:auto;cursor:pointer;background:rgba(15,20,30,.62);border:2px solid rgba(255,255,255,.55);border-radius:12px;padding:5px 11px;font-size:15px;font-weight:800;text-shadow:none}
   #dugmeler b:hover{background:rgba(216,67,47,.85)}
+  /* yolcunun telsizi: frekansı tuşla, tanker gelsin */
+  #telsiz{position:fixed;left:50%;bottom:16%;transform:translateX(-50%);z-index:7;background:#2b3a2e;border:4px solid #1a231c;border-radius:18px;padding:12px 16px;color:#d6f5c9;font-weight:900;text-align:center;box-shadow:0 8px 24px #0008;pointer-events:auto}
+  #telsiz .kod{font:900 30px ui-monospace,monospace;letter-spacing:8px;background:#0e1510;border-radius:8px;padding:6px 10px;margin:8px 0;color:#9dff8a}
+  #telsiz .tuslar{display:flex;gap:8px;justify-content:center}#telsiz .tuslar b{width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:24px;background:#44574a;border-radius:10px;cursor:pointer;border-bottom:4px solid #1a231c}#telsiz .tuslar b:active{transform:translateY(2px)}
+  #telsiz .alt{font-size:13px;margin-top:6px;opacity:.8}#telsiz.yanlis{animation:telsizSars .3s}@keyframes telsizSars{25%{margin-left:-10px}75%{margin-left:10px}}
   /* Steam (masaüstü): oda kodu yerine davet */
   #davetBtn,#steamNot{display:none} body.steam #davetBtn{display:inline-block} body.steam #steamNot{display:block;font-size:13px;opacity:.85;margin-top:6px;line-height:1.35} body.steam #menu .sat{display:none}
   .panel{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:8;text-shadow:none}
@@ -84,6 +92,7 @@
   .oyuncu .kay{flex:1;margin:0}.oyuncu .kay span{width:auto}
   .oyuncu .cikar{border:0;border-radius:8px;padding:6px 10px;background:#7a1f1f;color:#fff;font-weight:800;cursor:pointer}.oyuncu .cikar:disabled{opacity:.35;cursor:default}
   .panel .not{font-size:12px;color:#9aa4b5;margin-top:6px}
+  .kay select{max-width:220px;background:#1d2433;color:#fff;border:2px solid #39445a;border-radius:8px;padding:4px 6px;font-weight:700}
   .tus{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;font-size:14px}.tus div{display:flex;gap:8px;align-items:baseline}
   kbd{display:inline-block;min-width:16px;text-align:center;background:#f2f2ea;color:#141a26;border-radius:5px;padding:1px 6px;font:800 12px system-ui,Arial;box-shadow:0 2px 0 #9aa4b5}
   .gorevler{font-size:13px;line-height:1.55;color:#d7dce6}.gorevler b{color:#fff}
@@ -140,13 +149,14 @@
 </div></div>
 <div id="hud">
   <div id="rol"></div>
-  <div id="sag"><div id="oda"></div><div id="yakit"><i></i></div><div id="can"><i></i></div><div id="bilgi"></div><div id="gorev"></div></div>
+  <div id="sag"><div id="oda"></div><div id="yakit"><i></i><b></b></div><div id="can"><i></i><b></b></div><div id="bilgi"></div><div id="gorev"></div></div>
   <div id="tumsek"></div><div id="ileri" data-t="ileri"></div>
   <div id="egitim"></div><div id="isaret"></div><div id="eylem"></div>
   <div id="afis"></div>
 </div>
 <div id="asama"></div>
-<div id="dugmeler"><b id="davetBtn" data-t="davet"></b><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
+<div id="telsiz" style="display:none"><div class="ust">📻 <span></span></div><div class="kod"></div><div class="tuslar"><b data-n="1">1</b><b data-n="2">2</b><b data-n="3">3</b><b data-n="4">4</b></div><div class="alt"></div></div>
+<div id="dugmeler"><b id="davetBtn" data-t="davet"></b><b id="kamBtn" title="C">🎥</b><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
 <div id="ayar" class="panel kapali"><div class="kart2">
   <h2 data-t="ayarlar"></h2>
   <h3 data-t="dilBaslik"></h3><div class="dilsec ayar"><b data-dil="tr">Türkçe</b><b data-dil="en">English</b></div>
@@ -167,7 +177,7 @@
   </div>
   <h3>YOLCU</h3><div class="tus">
     <div><kbd>A</kbd> <kbd>D</kbd> sola / sağa işaret</div><div><kbd>S</kbd> yavaşla · <kbd>W</kbd> hızlan işareti</div>
-    <div><kbd>T</kbd> tanker çağır (yalnız yolcu, yakıt %50 altı)</div>
+    <div><kbd>C</kbd> kamera: yukarıdan / birinci şahıs (fareyle bak, tıklayınca fare kilitlenir, Esc bırakır)</div><div><kbd>T</kbd> telsiz: frekansı <kbd>1</kbd>–<kbd>4</kbd> ile tuşla, tanker gelir (yalnız yolcu, yakıt %50 altı)</div><div><kbd>F</kbd> koltuktayken yağ kolu: polis peşteyken yola yağ döker (yolcu)</div>
   </div>
   <h3>GENEL</h3><div class="tus">
     <div><kbd>Enter</kbd> oyunu başlat (oda sahibi)</div><div><kbd>V</kbd> bas-konuş · <kbd>M</kbd> sustur · <kbd>N</kbd> müzik</div>
@@ -194,7 +204,7 @@
   </div>
   <h3>PASSENGER</h3><div class="tus">
     <div><kbd>A</kbd> <kbd>D</kbd> left / right sign</div><div><kbd>S</kbd> slow down · <kbd>W</kbd> speed up sign</div>
-    <div><kbd>T</kbd> call the tanker (passenger only, fuel under 50%)</div>
+    <div><kbd>C</kbd> camera: overhead / first person (look with the mouse; click to lock it, Esc releases)</div><div><kbd>T</kbd> radio: dial the frequency with <kbd>1</kbd>–<kbd>4</kbd> to call the tanker (passenger only, fuel under 50%)</div><div><kbd>F</kbd> in the seat: oil lever, spills oil when the police chase you (passenger)</div>
   </div>
   <h3>GENERAL</h3><div class="tus">
     <div><kbd>Enter</kbd> start the game (host)</div><div><kbd>V</kbd> push to talk · <kbd>M</kbd> mute · <kbd>N</kbd> music</div>
@@ -226,10 +236,10 @@
     <b data-k="ga" class="pedal gaz" data-t="b_gaz"></b>
   </div>
   <div id="py" class="pan">
-    <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="c" class="kucuk" data-t="b_tanker"></b>
+    <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="t" class="kucuk" data-t="b_tanker"></b><b data-k="u" class="kucuk" data-t="b_kol"></b>
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=47"></script>
+<script type="module" src="src/main.js?v=52"></script>
 </body>
 </html>

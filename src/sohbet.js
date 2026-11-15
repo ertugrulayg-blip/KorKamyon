@@ -38,10 +38,22 @@ export async function sesModu(m) {
   ui.ses.mod = m; sesKaydet(); izinYok = false;
   if (m !== 'kapali' && !gercek) {
     try {
-      const s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const s = await navigator.mediaDevices.getUserMedia({ audio: mikAyar() });
       gercek = s.getAudioTracks()[0]; net.mic = s; net.micOk = true; for (const c of cagrilar) parcaDegistir(c);
     } catch (e) { izinYok = true; ui.ses.mod = 'kapali'; sesKaydet(); }
   }
+  uygula();
+}
+// Hangi mikrofon: ui.ses.mik (cihaz kimliği); boşsa sistemin varsayılanı
+function mikAyar() { const a = { echoCancellation: true, noiseSuppression: true, autoGainControl: true }; if (ui.ses.mik) a.deviceId = { exact: ui.ses.mik }; return a; }
+export async function mikrofonlar() { try { return (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput'); } catch (e) { return []; } }
+export async function mikSec(id) {
+  ui.ses.mik = id || ''; sesKaydet();
+  if (!gercek) return; // mikrofon kapalıysa açılınca seçilen kullanılır
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ audio: mikAyar() }), yeni = s.getAudioTracks()[0];
+    const eski = gercek; gercek = yeni; net.mic = s; for (const c of cagrilar) parcaDegistir(c); eski.stop();
+  } catch (e) { ui.ses.mik = ''; sesKaydet(); }
   uygula();
 }
 function uygula() { if (gercek) gercek.enabled = ui.ses.mod === 'acik' ? !susturuldu : ui.ses.mod === 'bas' ? ptt : false; dugme(); }

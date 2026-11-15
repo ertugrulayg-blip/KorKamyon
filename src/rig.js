@@ -6,7 +6,8 @@ import { loadModel, recolor } from './models.js';
 
 export const CHAR_URL = 'assets/chars/trucker.glb';
 // Oyuncu rengine göre karakter dosyası. Olmayanlar için kırmızı kamyoncu boyanarak kullanılır.
-const KARAKTER = ['trucker.glb', 'mavi.glb', 'sari.glb', 'yesil.glb'];
+// Herkes aynı gövde (govde.glb, Meshy + Blender iskeleti); renk oyuncuya göre kırmızının boyanmasıyla verilir.
+const GOVDE = 'govde.glb', KARAKTER = [GOVDE, GOVDE, GOVDE, GOVDE];
 const KEMIK = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
 
 // Oyuncu rengine göre tişört ve kepin kırmızısını başka renge çevirir (0: kırmızı, olduğu gibi).
@@ -54,7 +55,7 @@ function ik(ust, orta, uc, hedef, kutup, a, b) {
 export async function makeRig(ci, parent, dosya = null) {
   const ozel = dosya || KARAKTER[ci % 4], mo = ozel && (await loadModel('assets/chars/' + ozel)), m = mo || (await loadModel(CHAR_URL)); if (!m) return null;
   const root = new THREE.Group(), model = cloneSkinned(m);
-  const boya = mo || dosya ? null : kirmiziyiBoya(ci); if (boya) recolor(model, 'rig' + (ci % 4), boya); // kendi modeli olmayan renk: kırmızı kamyoncu boyanır
+  const boya = (mo && ozel !== GOVDE) || dosya ? null : kirmiziyiBoya(ci); if (boya) recolor(model, 'rig' + (ci % 4), boya); // kendi modeli olmayan renk: kırmızı kamyoncu boyanır
   model.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; o.receiveShadow = false; } });
   root.add(model); root.matrixAutoUpdate = false; parent.add(root);
   const B = {}; model.traverse((o) => { if (o.isBone) { const ad = o.name.replace(/^mixamorig:?/, ''); if (KEMIK.includes(ad)) B[ad] = o; } });
