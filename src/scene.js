@@ -160,3 +160,10 @@ export function kaliteUygula(k) {
   if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
   scene.traverse((o) => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; });
 }
+
+// Yolcunun kabin işleri: kapı dibinde yağ kolu (polise karşı yağ döker), torpidoda telsiz (tankeri çağırır)
+export const yagKolu = new THREE.Group(); yagKolu.position.set(-1.22, 1.32, 2.45); cabIn.add(yagKolu);
+add(cabIn, BG, M(0x3a3f48), -1.22, 1.33, 2.45, 0.22, 0.06, 0.3); // kolun tabanı
+add(yagKolu, CG, M(0x9aa1ab), 0, 0.24, 0, 0.035, 0.48, 0.035); add(yagKolu, SG, M(0xd8232a), 0, 0.5, 0, 0.07); // sap ve kırmızı topuz
+export const telsizM = new THREE.Group(); telsizM.position.set(-0.95, 2.18, 3.12); cabIn.add(telsizM);
+add(telsizM, BG, M(0x2b3a2e), 0, 0, 0, 0.3, 0.12, 0.08); add(telsizM, BG, M(0x9dff8a), -0.05, 0.01, -0.045, 0.12, 0.05, 0.01); add(telsizM, CG, M(0x111111), 0.11, 0.12, 0, 0.012, 0.16, 0.012); // gövde, ekran, anten

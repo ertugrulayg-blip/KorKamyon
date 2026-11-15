@@ -4,12 +4,13 @@ import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
 import { $, ASAMA, BUMP, BUMP_V, COL, GATE, HZ, LEN, POLZ, WHEEL, cx } from './world.js';
 import { OILB, RAD, SPOT, asamaSec } from './sim.js';
+import { telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
 import { drawBar, limbV, playerMesh, pm, qY } from './bar.js';
 import { sfx, sm } from './audio.js';
-import { TOUCH, hostStart, joy, tb } from './input.js';
+import { TOUCH, cnt, hostStart, joy, tb } from './input.js';
 
 export let rainK = 0; export let hose = null;
 const RK = new THREE.Vector3(); // iskeletin çizilen kalça noktası
@@ -53,6 +54,31 @@ function asamaPanel(t, V) {
   for (const b of el.querySelectorAll('button[data-lv]')) b.onclick = () => asamaSec(+b.dataset.lv);
   for (const b of el.querySelectorAll('button[data-kr]')) b.onclick = () => { ui.karakter = +b.dataset.kr; try { localStorage.setItem('kk-karakter', b.dataset.kr); } catch (e) {} };
   const bb = el.querySelector('.basla'); if (bb) bb.onclick = () => hostStart();
+}
+// Yolcunun telsizi: T ile açılır; ekrandaki 3 haneli frekans 1-4 tuşlarıyla girilince tanker çağrılır.
+// Yolcu değilse T eskisi gibi çağrı gönderir (oda sahibi "yalnız yolcu çağırabilir" der).
+const TZ = { acik: false, kod: '', girilen: '', kapanT: 0 };
+function telsizPanel(t, me, dt) {
+  const el = $('telsiz'), yolcu = me && me.s === 2 && t.s === 'run' && !t.cd;
+  if (!el.dataset.kur) { el.dataset.kur = 1; for (const b of el.querySelectorAll('b[data-n]')) b.addEventListener('pointerdown', (e) => { e.preventDefault(); ui.telsizTus = +b.dataset.n; }); }
+  if (ui.telsizAc) {
+    ui.telsizAc = false;
+    if (!yolcu) cnt.c++;
+    else if (TZ.acik) TZ.acik = false;
+    else { TZ.acik = true; TZ.girilen = ''; TZ.kapanT = 0; TZ.kod = Array.from({ length: 3 }, () => 1 + ((Math.random() * 4) | 0)).join(''); }
+  }
+  if (!yolcu) TZ.acik = false;
+  if (TZ.acik && ui.telsizTus && !TZ.kapanT) {
+    const n = String(ui.telsizTus); ui.telsizTus = 0;
+    if (TZ.kod[TZ.girilen.length] === n) { TZ.girilen += n; if (TZ.girilen === TZ.kod) { cnt.c++; TZ.kapanT = 1.1; } }
+    else { TZ.girilen = ''; el.classList.remove('yanlis'); void el.offsetWidth; el.classList.add('yanlis'); }
+  }
+  ui.telsizTus = 0;
+  if (TZ.kapanT) { TZ.kapanT -= dt; if (TZ.kapanT <= 0) { TZ.kapanT = 0; TZ.acik = false; } }
+  el.style.display = TZ.acik ? 'block' : 'none'; if (!TZ.acik) return;
+  const kod = [...TZ.kod].map((c, i) => (i < TZ.girilen.length ? c : '·')).join(' ');
+  const ic = `${L('telsizBaslik')}|${TZ.kod.split('').join(' · ')}|${TZ.kapanT ? L('telsizTamam') : kod}|${L('telsizAlt')}`;
+  if (el.dataset.ic !== ic) { el.dataset.ic = ic; const p = ic.split('|'); el.querySelector('.ust span').textContent = p[0] + ': ' + p[1]; el.querySelector('.kod').textContent = p[2]; el.querySelector('.alt').textContent = p[3]; }
 }
 function egitimYazi(t) {
   const el = $('egitim'), on = t.s === 'run' && t.eg >= 0 && !t.cd, metin = on ? `<b>${L('egBaslik', t.eg + 1, L('eg').length)}</b>${L('eg')[t.eg]}` : '';
@@ -179,7 +205,7 @@ export function draw(V, dt) {
       else if (yagGerek && yak(OILB[0], OILB[2], 1.7)) ey = L('ey_yag') + (qo ? L('ey_bekle', qo) : '');
       else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) ey = L('ey_vana'); }
     const el = $('eylem'), metin = ey ? `<kbd>${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; } }
-  asamaPanel(t, V); egitimYazi(t); puanBalon(t, me); konfeti(t);
+  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / 0.6) * Math.PI) * 0.9; telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;

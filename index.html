@@ -64,7 +64,7 @@
   #ps .kucuk{left:12px;bottom:calc(var(--PH) + 26px)}
   #py .ok{bottom:14px;width:23vw;height:var(--OH);font-size:calc(26px*var(--k))}
   #py .ok[data-k="sl"]{left:2vw}#py .ok[data-k="yv"]{left:26.5vw}#py .ok[data-k="hz"]{left:51vw}#py .ok[data-k="sr"]{right:2vw}
-  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="c"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}
+  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="t"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="u"]{left:calc(2vw + 240px*var(--k));bottom:calc(var(--OH) + 24px)}
   @media (pointer:coarse){#egitim{bottom:auto;top:52px;font-size:14px}body.egitimde #rol{display:none}#dok{display:block}
     #rol{font-size:16px;line-height:1.35;max-width:46vw}#rol b{font-size:26px}
     #sag{font-size:17px}#gorev{font-size:14px;max-width:44vw}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
@@ -75,6 +75,11 @@
   #dugmeler{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:none;gap:8px;z-index:6}
   #dugmeler b{pointer-events:auto;cursor:pointer;background:rgba(15,20,30,.62);border:2px solid rgba(255,255,255,.55);border-radius:12px;padding:5px 11px;font-size:15px;font-weight:800;text-shadow:none}
   #dugmeler b:hover{background:rgba(216,67,47,.85)}
+  /* yolcunun telsizi: frekansı tuşla, tanker gelsin */
+  #telsiz{position:fixed;left:50%;bottom:16%;transform:translateX(-50%);z-index:7;background:#2b3a2e;border:4px solid #1a231c;border-radius:18px;padding:12px 16px;color:#d6f5c9;font-weight:900;text-align:center;box-shadow:0 8px 24px #0008;pointer-events:auto}
+  #telsiz .kod{font:900 30px ui-monospace,monospace;letter-spacing:8px;background:#0e1510;border-radius:8px;padding:6px 10px;margin:8px 0;color:#9dff8a}
+  #telsiz .tuslar{display:flex;gap:8px;justify-content:center}#telsiz .tuslar b{width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:24px;background:#44574a;border-radius:10px;cursor:pointer;border-bottom:4px solid #1a231c}#telsiz .tuslar b:active{transform:translateY(2px)}
+  #telsiz .alt{font-size:13px;margin-top:6px;opacity:.8}#telsiz.yanlis{animation:telsizSars .3s}@keyframes telsizSars{25%{margin-left:-10px}75%{margin-left:10px}}
   /* Steam (masaüstü): oda kodu yerine davet */
   #davetBtn,#steamNot{display:none} body.steam #davetBtn{display:inline-block} body.steam #steamNot{display:block;font-size:13px;opacity:.85;margin-top:6px;line-height:1.35} body.steam #menu .sat{display:none}
   .panel{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:8;text-shadow:none}
@@ -150,6 +155,7 @@
   <div id="afis"></div>
 </div>
 <div id="asama"></div>
+<div id="telsiz" style="display:none"><div class="ust">📻 <span></span></div><div class="kod"></div><div class="tuslar"><b data-n="1">1</b><b data-n="2">2</b><b data-n="3">3</b><b data-n="4">4</b></div><div class="alt"></div></div>
 <div id="dugmeler"><b id="davetBtn" data-t="davet"></b><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
 <div id="ayar" class="panel kapali"><div class="kart2">
   <h2 data-t="ayarlar"></h2>
@@ -171,7 +177,7 @@
   </div>
   <h3>YOLCU</h3><div class="tus">
     <div><kbd>A</kbd> <kbd>D</kbd> sola / sağa işaret</div><div><kbd>S</kbd> yavaşla · <kbd>W</kbd> hızlan işareti</div>
-    <div><kbd>T</kbd> tanker çağır (yalnız yolcu, yakıt %50 altı)</div>
+    <div><kbd>T</kbd> telsiz: frekansı <kbd>1</kbd>–<kbd>4</kbd> ile tuşla, tanker gelir (yalnız yolcu, yakıt %50 altı)</div><div><kbd>F</kbd> koltuktayken yağ kolu: polis peşteyken yola yağ döker (yolcu)</div>
   </div>
   <h3>GENEL</h3><div class="tus">
     <div><kbd>Enter</kbd> oyunu başlat (oda sahibi)</div><div><kbd>V</kbd> bas-konuş · <kbd>M</kbd> sustur · <kbd>N</kbd> müzik</div>
@@ -198,7 +204,7 @@
   </div>
   <h3>PASSENGER</h3><div class="tus">
     <div><kbd>A</kbd> <kbd>D</kbd> left / right sign</div><div><kbd>S</kbd> slow down · <kbd>W</kbd> speed up sign</div>
-    <div><kbd>T</kbd> call the tanker (passenger only, fuel under 50%)</div>
+    <div><kbd>T</kbd> radio: dial the frequency with <kbd>1</kbd>–<kbd>4</kbd> to call the tanker (passenger only, fuel under 50%)</div><div><kbd>F</kbd> in the seat: oil lever, spills oil when the police chase you (passenger)</div>
   </div>
   <h3>GENERAL</h3><div class="tus">
     <div><kbd>Enter</kbd> start the game (host)</div><div><kbd>V</kbd> push to talk · <kbd>M</kbd> mute · <kbd>N</kbd> music</div>
@@ -230,10 +236,10 @@
     <b data-k="ga" class="pedal gaz" data-t="b_gaz"></b>
   </div>
   <div id="py" class="pan">
-    <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="c" class="kucuk" data-t="b_tanker"></b>
+    <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="t" class="kucuk" data-t="b_tanker"></b><b data-k="u" class="kucuk" data-t="b_kol"></b>
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=48"></script>
+<script type="module" src="src/main.js?v=49"></script>
 </body>
 </html>
