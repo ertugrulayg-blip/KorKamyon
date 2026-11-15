@@ -27,11 +27,11 @@ const ilerleme = () => clamp(toplam() / (T.sonsuz ? 5000 : T.hedef || LEN), 0, 1
 export const diff = () => 1.25 - (T.sonsuz ? 0.8 : 0.6) * ilerleme(); // yol ilerledikçe olaylar sıklaşır
 export const tutan = (c) => { for (const p of players.values()) if ((p.pin[0] && p.pin[0].b === c.b) || (p.pin[1] && p.pin[1].b === c.b)) return p; return null; };
 export const held = (c) => !!tutan(c);
-export const jolt = (vx, vz) => { for (const c of CR) if (!c.lost && !held(c)) { const k = 0.55 + Math.random() * 0.45; c.vx += vx * k; c.vz += vz * k; } }; // her sandık biraz farklı savrulur
+export const jolt = (vx, vz) => { for (const c of CR) if (!c.lost && !held(c)) { const k = 0.4 + Math.random() * 0.35; c.vx += vx * k; c.vz += vz * k; } }; // her sandık biraz farklı savrulur
 export const loseCrate = (c, m) => { c.lost = true; c.b.on = false; say(m); };
 // Kasa kenarı kırılır (sd: 1 sol, -1 sağ, 0 fark etmez; z: darbenin yeri). Aynı anda en çok 3 kırık; kırık yerden düşülür.
 export function kenarKir(sd, z) {
-  if (T.state !== 'run' || KENAR.filter((k) => k.kirik).length >= 3) return;
+  if (T.state !== 'run' || !(T.ol.kenar || (T.sonsuz && toplam() > 1500)) || KENAR.filter((k) => k.kirik).length >= 3) return; // kenar kırılması sonraki aşamalarda (yeni başlayanlar her şeyle bir anda uğraşmasın)
   const aday = KENAR.filter((k) => !k.kirik && (!sd || k.s === sd)).sort((a, b) => Math.abs(a.z - z) - Math.abs(b.z - z))[0];
   if (!aday) return; aday.kirik = true; aday.b.on = false; say('kenarKirik', aday.s > 0 ? 1 : 2);
 }
@@ -254,7 +254,7 @@ export function stepExtras(dt) {
     if (!run) FIRE.on = false; }
   else if (run && T.ol.yangin && !BOT && !chase() && !T.stall) { T.nFire -= dt; if (T.nFire <= 0) { yanginCikar(); } }
   // yük sandıkları
-  const mu = T.rain ? 2.0 : 2.8; // sürtünme: sandıklar ağır, kolay kaymaz
+  const mu = T.rain ? 2.7 : 3.6; // sürtünme: sandıklar ağır, kolay kaymaz (oyuncular daha çok savrulur, sandıklar daha az)
   for (const c of CR) { if (c.lost) continue;
     const ta = tutan(c);
     if (ta && !ta.seat && ta.dead <= 0) { // taşınıyor: oyuncunun önünde, biraz yukarıda
@@ -262,12 +262,12 @@ export function stepExtras(dt) {
       puan(ta, dt); c.x += (tx - c.x) * k; c.z += (tz - c.z) * k; c.lift = Math.min(0.35, (c.lift || 0) + dt * 1.5); c.vx = c.vz = 0;
     } else c.lift = Math.max(0, (c.lift || 0) - dt * 2.5); // bırakılınca yere iner
     if (ta || !run) c.vx = c.vz = 0;
-    else { const ax = clamp(T.pax, -4.5, 4.5), az = clamp(T.paz, -4.5, 4.5), // ani sıçramalar yükü tümden savurmasın
+    else { const ax = clamp(T.pax * 0.75, -4, 4), az = clamp(T.paz * 0.75, -4, 4), // ani sıçramalar yükü tümden savurmasın
       sp = Math.hypot(c.vx, c.vz); if (sp < 0.05 && Math.hypot(ax, az) < mu) c.vx = c.vz = 0; else { c.vx += ax * dt; c.vz += az * dt; const s2 = Math.hypot(c.vx, c.vz), f = Math.min(s2, mu * 0.85 * dt); if (s2 > 0) { c.vx -= (c.vx / s2) * f; c.vz -= (c.vz / s2) * f; } } }
     c.x += c.vx * dt; c.z += c.vz * dt;
     for (const o of CR) if (o !== c && !o.lost && Math.abs(o.x - c.x) < 0.62 && Math.abs(o.z - c.z) < 0.62) { if (Math.abs(o.x - c.x) > Math.abs(o.z - c.z)) { c.x = o.x + Math.sign(c.x - o.x || 1) * 0.62; c.vx *= 0.3; } else { c.z = o.z + Math.sign(c.z - o.z || 1) * 0.62; c.vz *= 0.3; } }
     if (c.z < ARKA + 1.2) { c.z = ARKA + 1.2; c.vz = 0; } if (c.z > 0.55) { c.z = 0.55; c.vz = 0; }
-    if (Math.abs(c.x) > 1.05) { if (Math.abs(c.vx) > 2.6 || kirikMi(Math.sign(c.x), c.z)) loseCrate(c, 'sandikDustu'); else { c.x = Math.sign(c.x) * 1.05; c.vx *= -0.25; } } // korkuluğa yavaş çarpan sandık geri seker
+    if (Math.abs(c.x) > 1.05) { if (Math.abs(c.vx) > 3.6 || kirikMi(Math.sign(c.x), c.z)) loseCrate(c, 'sandikDustu'); else { c.x = Math.sign(c.x) * 1.05; c.vx *= -0.25; } } // korkuluğa yavaş çarpan sandık geri seker
     c.b.o[0] = c.x; c.b.o[1] = c.lift || 0; c.b.o[2] = c.z; c.b.on = !c.lost; }
   if (run && T.egitim < 0 && !CR.some((c) => !c.lost)) { T.state = 'over'; T.why = 'yukDokuldu'; }
   // haydut: kasaya atlar, sandıkları aşağı atar; şaplakla kovulur
@@ -340,7 +340,7 @@ export function stepTruck(dt) {
   { const c = cx(T.Z), e = T.X - c; T.hitCd -= dt; // yol kenarı bariyerleri: kamyon dışarı çıkamaz, çarptıkça hasar alır
     if (Math.abs(e) > BLIM) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
       T.X = c + sd * BLIM; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
-      if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; carpti(); jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say('bariyer', w); if (Math.random() < 0.5) kenarKir(sd, rnd(ARKA, 0)); for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }
+      if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; carpti(); jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say('bariyer', w); if (Math.random() < 0.5) kenarKir(sd, rnd(ARKA, 0)); if (T.ol.lastik && Math.random() < 0.35) { const yan = [0, 1, 2, 3].filter((k) => !T.flat[k] && Math.sign(WHEEL[k][0]) === sd); if (yan.length) { const k = yan[(Math.random() * yan.length) | 0]; T.flat[k] = 1; say('lastikPat', k); } } /* bariyere sürtünen yandaki lastik patlayabilir */ for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }
   T.pax = -T.v * omt * 0.75 + (off ? Math.sin(T.t * 23) * 3 : 0); T.paz = -((T.v - ov) / dt) * 0.6;
   if (!run) return;
   { const once = T.fuel; T.fuel = Math.max(0, T.fuel - dt * (0.45 + gas * 0.75)); for (const e of [40, 25, 10]) if (once > e && T.fuel <= e && TKS.st === 0) say('yakitAz', e); } // azaldıkça uyarı
@@ -350,7 +350,7 @@ export function stepTruck(dt) {
     if (auto) {} else if (T.v > BUMP_V) { jolt((Math.random() < 0.5 ? -1 : 1) * 1.7, 0); const c = [0, 1, 2, 3].filter((w) => !T.flat[w]); if (c.length) { const w = c.includes(0) || c.includes(1) ? c.filter((w) => w < 2)[(Math.random() * c.filter((w) => w < 2).length) | 0] : c[0]; T.flat[w] = 1; say('tumsekPat', w); carpti(20); } }
     else say('tumsekYavas');
   }
-  if (T.ol.lastik) T.nextFlat -= dt; /* lastik her zaman patlayabilir; yangın, haydut ve polis birbirini beklemeye devam eder */ if (T.nextFlat <= 0) { const c = [0, 1, 2, 3].filter((w) => !T.flat[w]); if (c.length > 2) { const w = c[(Math.random() * c.length) | 0]; T.flat[w] = 1; say('lastikPat', w); } T.nextFlat = rnd(22, 38) * diff(); }
+  // lastik kendiliğinden patlamaz: yalnız bariyere çarpınca ya da tümsekten hızlı geçince (aşağıda ve tümsek kodunda)
   if (T.egitim >= 0) {}
   else if (T.dmg[0] + T.dmg[1] + T.dmg[2] + T.dmg[3] >= 100) { T.state = 'over'; T.why = 'hurda'; }
   else if (T.Z >= T.hedef && T.egitim < 0) bitir();

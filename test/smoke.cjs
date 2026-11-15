@@ -22,7 +22,7 @@ const PORT = 8791, OUT = path.join(__dirname, 'out'); fs.mkdirSync(OUT, { recurs
     await bekle(3800); ok('kamyon yola çıktı', await olana(() => G.T.v > 6 && G.T.Z > 1), await ev(() => 'v=' + G.T.v.toFixed(1)));
     const sabit = () => ev(() => { const T = G.T; T.state = 'run'; T.why = ''; T.autoT = 9999; T.nextFlat = T.nFire = T.nBot = 999; T.fuel = 90; T.heat = 0; T.dmg = [0, 0, 0, 0]; T.flat = [0, 0, 0, 0]; G.PC.used = [1, 1, 1, 1, 1]; for (const c of G.CR) Object.assign(c, { lost: false, x: c.x0, z: c.z0, vx: 0, vz: 0 }); });
     await sabit(); await shot('2-yol');
-    await ev(() => G.jolt(6, 0)); await bekle(1200); ok('sert sarsıntıda sandık düşer', await olana(() => G.CR.filter((c) => c.lost).length >= 1)); await sabit();
+    await ev(() => G.jolt(11, 0)); await bekle(1200); ok('sert sarsıntıda sandık düşer', await olana(() => G.CR.filter((c) => c.lost).length >= 1)); await sabit();
     await ev(() => { G.T.nFire = 0; }); await bekle(600); ok('yangın çıktı', await olana(() => G.FIRE.on)); await ev(() => { G.FIRE.hp = 0.1; G.EX.holder = 'ben'; G.EX.p = [G.FIRE.x, 1.8, G.FIRE.z]; G.players.get('ben').inp.g = 1; });
     await ev(() => { G.FIRE.on = false; G.T.nFire = 999; G.T.nBot = 0; }); await bekle(1500); ok('haydut geldi', await olana(() => !!G.BOT));
     await ev(() => { const me = G.players.get('ben'); for (let i = 0; i < 3; i++) G.hitPlayer(me, G.BOT, 1, 0); }); await bekle(2500); ok('üç şaplakta haydut gitti', await olana(() => !G.BOT)); await sabit();

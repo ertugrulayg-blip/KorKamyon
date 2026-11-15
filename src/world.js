@@ -48,8 +48,8 @@ export const ASAMA = [
   { m: 500, olay: { lastik: 1, isi: 0.7, yangin: 1, polis: 1 } },
   { m: 1000, olay: { lastik: 1, isi: 0.8, yangin: 1, polis: 1, haydut: 1 } },
   { m: 1500, olay: { lastik: 1, isi: 0.85, yangin: 1, polis: 1, haydut: 1 } },
-  { m: 2000, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
-  { m: 2500, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
+  { m: 2000, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1, kenar: 1 } },
+  { m: 2500, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1, kenar: 1 } },
   { m: 1e9, sonsuz: true, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } }, // sonsuz yol: gidebildiğin kadar (hep açık)
 ];
 export const SONSUZ = ASAMA.length - 1;
