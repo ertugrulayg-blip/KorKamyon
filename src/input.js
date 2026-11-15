@@ -24,18 +24,33 @@ export function hostStart() { if (!net.isHost) return; if (T.state === 'lobby') 
 // ---------- birinci şahıs kamera ----------
 // C (dokunmatikte 🎥) kamerayı karakterin gözüne alır. Fare (tıklayınca kilitlenir) ya da ekranı kaydırma bakışı çevirir.
 // Kasadayken W baktığın yöne yürütür; bakış yönü oda sahibine gider, eller ve şaplak o yöne uzanır.
-export function kameraDegis() { ui.birinci = !ui.birinci; ui.bakisIlk = true; try { localStorage.setItem('kk-kamera', ui.birinci ? '1' : '0'); } catch (e) {} if (!ui.birinci && document.pointerLockElement) document.exitPointerLock(); }
+export function kameraDegis() {
+  ui.kamera = (ui.kamera + 1) % 3; ui.bakisIlk = true; try { localStorage.setItem('kk-kamera', ui.kamera); } catch (e) {}
+  if (!ui.kamera) { if (document.pointerLockElement) document.exitPointerLock(); }
+  else if (!TOUCH && !document.pointerLockElement) try { fareSus(); ren.domElement.requestPointerLock(); } catch (e) {} // tuşa basmak kullanıcı hareketi sayılır: fare hemen kilitlenir
+}
 const cevir = (dx, dy, k) => { ui.bakis -= dx * k; ui.egim = clamp(ui.egim - dy * k, -1.2, 1.0); };
-ren.domElement.addEventListener('click', () => { if (ui.birinci && ui.fpAktif && !TOUCH && !document.pointerLockElement) ren.domElement.requestPointerLock?.(); });
-addEventListener('mousemove', (e) => { if (document.pointerLockElement === ren.domElement) cevir(e.movementX, e.movementY, 0.0025); });
+ren.domElement.addEventListener('click', () => { if (ui.kamera && ui.fpAktif && !TOUCH && !document.pointerLockElement) { fareSus(); ren.domElement.requestPointerLock?.(); } });
+// fare kilitli değilken de (ör. kilit reddedildiyse) oyun alanında fareyi oynatmak bakışı çevirir
+addEventListener('mousemove', (e) => {
+  if (!ui.fpAktif) return;
+  let dx = e.movementX || (FARE.x === null ? 0 : e.clientX - FARE.x), dy = e.movementY || (FARE.y === null ? 0 : e.clientY - FARE.y); FARE.x = e.clientX; FARE.y = e.clientY; // movementX gelmezse konum farkı
+  if (performance.now() < FARE.sus) return; // fare kilitlenirken tarayıcı sahte büyük hareketler yollar: kısa süre yok say
+  if (Math.abs(dx) > 250 || Math.abs(dy) > 250) return; // imleç ışınlanması gibi sahte sıçramalar
+  const t = e.target; if (document.pointerLockElement !== ren.domElement && t && t.closest && t.closest('button, b, input, select, label, .panel:not(.kapali), #telsiz')) return; // kilitsizken düğme ve panellerin üstünde bakış dönmez
+  cevir(dx, dy, 0.0025);
+});
+const FARE = { x: null, y: null, sus: 0 };
+const fareSus = () => { FARE.sus = performance.now() + 250; FARE.x = FARE.y = null; };
+document.addEventListener('pointerlockchange', fareSus);
 { let son = null; // dokunmatik: joystick ve tuşlar dışında ekranı kaydırmak bakışı çevirir
   ren.domElement.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; son = { id: t.identifier, x: t.clientX, y: t.clientY }; }, { passive: true });
-  ren.domElement.addEventListener('touchmove', (e) => { if (!son || !ui.birinci) return; for (const t of e.changedTouches) if (t.identifier === son.id) { cevir(t.clientX - son.x, t.clientY - son.y, 0.006); son.x = t.clientX; son.y = t.clientY; } }, { passive: true });
+  ren.domElement.addEventListener('touchmove', (e) => { if (!son || !ui.kamera) return; for (const t of e.changedTouches) if (t.identifier === son.id) { cevir(t.clientX - son.x, t.clientY - son.y, 0.006); son.x = t.clientX; son.y = t.clientY; } }, { passive: true });
   ren.domElement.addEventListener('touchend', () => { son = null; }, { passive: true }); }
 // hareket girdisini bakış yönüne çevirir (yalnız kasada, birinci şahısta): W ileri, A/D yana
 function bakisaGore(I) {
   if (!ui.fpAktif) return I;
   const h = ui.bakis, s = Math.sin(h), c = Math.cos(h), mx = I.mx, mz = I.mz;
-  I.mx = mz * s + mx * c; I.mz = mz * c - mx * s; I.yw = Math.round(h * 100) / 100; return I;
+  I.mx = mz * s + mx * c; I.mz = mz * c - mx * s; I.yw = Math.round(h * 100) / 100; if (ui.kamera === 1) I.fp = 1; return I;
 }
 $('kamBtn').addEventListener('click', kameraDegis);

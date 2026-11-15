@@ -35,7 +35,7 @@ function polDarbe(qs, qd, hp, dt) {
 // eylem yerleri: yanıp sönen işaretler (radyatör, yağ varili, tanker vanası)
 const isaretMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, depthWrite: false });
 const radIsaret = add(cabIn, CG, isaretMat(0x3fa7ff), RAD[0], 1.33, RAD[2], 0.55, 0.03, 0.55), yagIsaret = add(truck, CG, isaretMat(0xffd23f), OILB[0] - 0.05, 1.32, OILB[2] + 0.5, 0.5, 0.03, 0.5), vanaIsaret = add(tanker, CG, isaretMat(0xff5a5f), 0, 2.03, -2, 0.6, 0.03, 0.6);
-const EV = new THREE.Vector3(), EY = { tut: 0 };
+const EV = new THREE.Vector3(), EY = { tut: 0 }, GOZ = { p: new THREE.Vector3(), hedef: new THREE.Vector3(), ilk: true };
 // Yangın tüpü: tutan kişi yangının yanındayken tüpün ağzından yangına doğru köpük fışkırır
 const KOPUK = Array.from({ length: 48 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xf2f6ff, transparent: true, depthWrite: false }), 0, -9, 0, 0.06); m.visible = false; m.userData = { t: 1, v: new THREE.Vector3() }; return m; });
 let kopukSira = 0, kopukBirikim = 0;
@@ -171,7 +171,8 @@ export function draw(V, dt) {
     o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3])); o.s[2].rotation.y = o.s[3].rotation.y = p.y;
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
     if (p.th && !o.tahta) { o.tahta = add(scene, BG, tahtaRenk, 0, 0, 0, 0.26, 0.05, 1.3); } if (o.tahta) { o.tahta.visible = !!p.th && !p.d; if (p.th) { o.tahta.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.05, (P[11] + P[14]) / 2); o.tahta.rotation.set(0, p.y + Math.PI / 2, 0.15); } } // elindeki tahta (kollar arasında, yana doğru)
-    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; /* koltuktan bakan kendini görmez */ if (!p.d) {
+    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde;
+      const eller = p === me && camM === 'b' && !p.d; for (const k of [0, 1]) { o.s[k].visible = eller; if (eller) { o.s[k].material = o.elMat || (o.elMat = M(COL[p.c % 4])); o.s[k].scale.setScalar(0.075); } } /* birinci şahısta kendi eldivenlerin görünür */ /* koltuktan bakan kendini görmez */ if (!p.d) {
         // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
         // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.
         const ayak = Math.min(P[16], P[19]), dik = v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]).normalize().y;
@@ -185,15 +186,21 @@ export function draw(V, dt) {
   }
   for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); if (o.tahta) scene.remove(o.tahta); if (o.rig) scene.remove(o.rig.root); pm.delete(id); delete RP[id]; }
   const seat = ui.camMode >= 0 ? ui.camMode : me ? me.s : 0;
-  const fp = ui.birinci && !ch && seat === 0 && t.s === 'run' && me && !me.d && RP[me.id]; ui.fpAktif = !!fp; // kasada birinci şahıs
+  const fp = ui.kamera > 0 && !ch && seat === 0 && t.s === 'run' && me && !me.d && RP[me.id]; ui.fpAktif = !!fp; // kasada birinci / üçüncü şahıs
   if (fp && ui.bakisIlk) { ui.bakisIlk = false; ui.bakis = me.y || 0; }
+  if (!fp) GOZ.ilk = true;
   if (!fp && document.pointerLockElement) document.exitPointerLock();
   if (ch) { v1.set(0, 14, -26.5); v2.set(0, 1, -7); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
   else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.95, 2.0); cabPt(v2, 0.55, 2.4, 30); } // şoför: kendi koltuğundan yolu görür
   else if (seat === 2 && t.s === 'run') { cabPt(v1, -0.7, 3.0, 2.0); cabPt(v2, -0.4, 2.3, 30); } // yolcu: kendi koltuğundan yolu net görür // şoför: boyu kısa, göz tablonun hizasında — gökyüzü ve ağaç tepeleri görünür, yol görünmez
-  else if (fp) { const P = RP[me.id]; v1.set(P[6], P[7] + 0.14 + (pm.get(me.id)?.kalk || 0), P[8]); /* çizilen gövde kalkık olabilir */ const c = Math.cos(ui.egim); v2.set(v1.x + Math.sin(ui.bakis) * c, v1.y + Math.sin(ui.egim), v1.z + Math.cos(ui.bakis) * c); } // birinci şahıs: gözden
+  else if (fp) { // birinci / üçüncü şahıs: göz noktası kalçadan alınıp yumuşatılır (jöle gövdenin sallanması kameraya geçmesin)
+    const P = RP[me.id]; GOZ.hedef.set(P[0], P[1] + 0.72 + (pm.get(me.id)?.kalk || 0), P[2]);
+    if (GOZ.ilk) { GOZ.p.copy(GOZ.hedef); GOZ.ilk = false; } else { GOZ.p.x += (GOZ.hedef.x - GOZ.p.x) * Math.min(1, dt * 9); GOZ.p.z += (GOZ.hedef.z - GOZ.p.z) * Math.min(1, dt * 9); GOZ.p.y += (GOZ.hedef.y - GOZ.p.y) * Math.min(1, dt * 4); }
+    const c = Math.cos(ui.egim), dx = Math.sin(ui.bakis), dz = Math.cos(ui.bakis);
+    if (ui.kamera === 1) { v1.copy(GOZ.p); v2.set(v1.x + dx * c, v1.y + Math.sin(ui.egim), v1.z + dz * c); }
+    else { const u = 2.9; v1.set(GOZ.p.x - dx * u * c, GOZ.p.y + 0.6 - Math.sin(ui.egim) * u, GOZ.p.z - dz * u * c); v2.set(GOZ.p.x + dx * 2, GOZ.p.y + 0.1 + Math.sin(ui.egim) * 2, GOZ.p.z + dz * 2); } }
   else { v1.set(0, 10.2, -12.2); v2.set(0, 1.5, -1.8); } // diğerleri yukarıdan bakar (kasa uzun); yolcunun ileri penceresi var
-  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : fp ? 'b' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
+  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : fp ? (ui.kamera === 1 ? 'b' : 'u') : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b' || m === 'u') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
   // koltuk fırlatma: koltuk yerinden fırlar, takla atar, birkaç saniye sonra yerine düşer
   for (const s of [1, 2]) { const g = koltuk[s], u = g.userData, e = t.ej ? t.ej[s] : 0;
     if (u.son === undefined) u.son = e; if (e !== u.son) { u.son = e; u.t = 0; }
