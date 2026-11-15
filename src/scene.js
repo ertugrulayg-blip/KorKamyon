@@ -2,8 +2,8 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd } from './world.js';
-import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT } from './sim.js';
+import { BOX, BUMP, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd } from './world.js';
+import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT, TAHTA } from './sim.js';
 
 // ---------- görüntü ----------
 export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(ui.kalite === 0 ? 1 : ui.kalite === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
@@ -167,3 +167,13 @@ add(cabIn, BG, M(0x3a3f48), -1.22, 1.33, 2.45, 0.22, 0.06, 0.3); // kolun taban�
 add(yagKolu, CG, M(0x9aa1ab), 0, 0.24, 0, 0.035, 0.48, 0.035); add(yagKolu, SG, M(0xd8232a), 0, 0.5, 0, 0.07); // sap ve kırmızı topuz
 export const telsizM = new THREE.Group(); telsizM.position.set(-0.95, 2.18, 3.12); cabIn.add(telsizM);
 add(telsizM, BG, M(0x2b3a2e), 0, 0, 0, 0.3, 0.12, 0.08); add(telsizM, BG, M(0x9dff8a), -0.05, 0.01, -0.045, 0.12, 0.05, 0.01); add(telsizM, CG, M(0x111111), 0.11, 0.12, 0, 0.012, 0.16, 0.012); // gövde, ekran, anten
+
+// Tahta yığını (kırık kenara çakılacak tahtalar) ve kırık kenar görüntüleri
+export const tahtaRenk = M(0xb98a52);
+{ const g = new THREE.Group(); g.position.set(TAHTA[0], 1.3, TAHTA[2]); truck.add(g);
+  for (let i = 0; i < 4; i++) { const m = add(g, BG, tahtaRenk, (i % 2) * 0.04 - 0.02, 0.04 + i * 0.07, (i % 3) * 0.05 - 0.05, 0.28, 0.06, 1.5); m.rotation.y = (i % 2 ? 0.05 : -0.04); } }
+export const kirikM = KENAR.map((k) => { const g = new THREE.Group(); g.position.set(k.s * 1.45, 1.3, k.z); g.visible = false; truck.add(g);
+  const boy = k.z1 - k.z0, kirik = M(0x6b4a2a); // iki uçta kalan kırık parçalar, ortası boş
+  for (const u of [-1, 1]) { const m = add(g, BG, kirik, 0, 0.22, u * (boy / 2 - 0.18), 0.1, 0.36, 0.36); m.rotation.x = u * 0.35; }
+  g.userData.isaret = add(g, CG, new THREE.MeshBasicMaterial({ color: 0xff8a3d, transparent: true, depthWrite: false }), -k.s * 0.35, 0.03, 0, 0.6, 0.03, boy * 0.8);
+  return g; });

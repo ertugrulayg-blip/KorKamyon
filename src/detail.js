@@ -2,7 +2,7 @@
 // Küçük parçalar malzemeye göre tek ağda birleştirilir (Batch) ki çizim çağrısı sayısı artmasın.
 import * as THREE from 'three';
 import { mergeGeometries } from '../lib/BufferGeometryUtils.js';
-import { BOX, HZ, WHEEL } from './world.js';
+import { ARKA, BOX, HZ, WHEEL } from './world.js';
 import { cabIn, tanker, truck, wheels } from './scene.js';
 
 const KUTU = new THREE.BoxGeometry(1, 1, 1), SIL = new THREE.CylinderGeometry(1, 1, 1, 16), KURE = new THREE.SphereGeometry(1, 14, 10);
@@ -53,7 +53,7 @@ function doku(w, h, ciz) {
   }
   const d = new Batch(truck);
   // şasi kirişleri, aks, destek ayakları
-  for (const x of [-0.75, 0.75]) d.box(koyu, x, 0.38, -2.6, 0.22, 0.24, 7.2);
+  for (const x of [-0.75, 0.75]) d.box(koyu, x, 0.38, (1 + ARKA) / 2 + 0.3, 0.22, 0.24, 1.6 - ARKA);
   d.cyl(koyu, 0, WHEEL[2][1], WHEEL[2][2], 0.09, 3.6, 'x');
   for (const x of [-0.95, 0.95]) d.box(celik, x, 0.26, 0.25, 0.12, 0.5, 0.12).box(celik, x, 0.03, 0.25, 0.3, 0.05, 0.3);
   for (const s of [-1, 1]) {
@@ -62,17 +62,17 @@ function doku(w, h, ciz) {
     d.box(koyu, x, 1.17, z, 0.5, 0.07, 1.3).box(koyu, x, 1.06, z + 0.74, 0.5, 0.07, 0.34, 0, 0).box(koyu, x, 1.06, z - 0.74, 0.5, 0.07, 0.34);
     d.box(lastik, x, 0.52, z - 0.9, 0.46, 0.62, 0.04);
     // korkuluk dikmeleri ve yan reflektörler
-    for (let k = -5.5; k <= 0.6; k += 1) d.box(celik, s * 1.535, 1.3, k, 0.07, 1.04, 0.1);
-    for (let k = -5.75, i = 0; k <= 0.8; k += 0.5, i++) d.box(i % 2 ? beyaz : kirmizi, s * 1.506, 0.7, k, 0.02, 0.11, 0.4);
-    d.box(krom, s * 1.46, 0.42, -1.4, 0.05, 0.05, 3.4); // yan koruma demiri
+    for (let k = ARKA + 0.5; k <= 0.6; k += 1) d.box(celik, s * 1.535, 1.3, k, 0.07, 1.04, 0.1);
+    for (let k = ARKA + 0.25, i = 0; k <= 0.8; k += 0.5, i++) d.box(i % 2 ? beyaz : kirmizi, s * 1.506, 0.7, k, 0.02, 0.11, 0.4);
+    d.box(krom, s * 1.46, 0.42, -1.6, 0.05, 0.05, 3.6); // yan koruma demiri
     // arka lambalar
-    d.box(stop, s * 1.18, 0.74, -6.03, 0.36, 0.17, 0.05).box(sinyal, s * 0.82, 0.74, -6.03, 0.2, 0.17, 0.05);
+    d.box(stop, s * 1.18, 0.74, ARKA - 0.03, 0.36, 0.17, 0.05).box(sinyal, s * 0.82, 0.74, ARKA - 0.03, 0.2, 0.17, 0.05);
   }
-  d.box(koyu, 0, 0.42, -6.13, 2.95, 0.16, 0.14); // arka tampon
+  d.box(koyu, 0, 0.42, ARKA - 0.13, 2.95, 0.16, 0.14); // arka tampon
   d.done();
   // plaka
   const plaka = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.24), B(0xffffff, { map: doku(256, 80, (g, w, h) => { g.fillStyle = '#f4f4f0'; g.fillRect(0, 0, w, h); g.fillStyle = '#1b3f9c'; g.fillRect(0, 0, 30, h); g.strokeStyle = '#111'; g.lineWidth = 5; g.strokeRect(2, 2, w - 4, h - 4); g.fillStyle = '#111'; g.font = '900 50px system-ui,Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('RH 2026', w / 2 + 14, h / 2 + 3); }) }));
-  plaka.position.set(0, 0.74, -6.035); plaka.rotation.y = Math.PI; truck.add(plaka);
+  plaka.position.set(0, 0.74, ARKA - 0.035); plaka.rotation.y = Math.PI; truck.add(plaka);
 }
 
 // ---------- çekici (kabin) ----------
