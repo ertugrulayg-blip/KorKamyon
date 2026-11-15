@@ -74,8 +74,11 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 
 ## 5. İçerik
 - ⬜ Yeni haritalar / rastgele üretilen yollar, farklı ortamlar
+- 💭 Şoför için zor yollar (15.11 sahibinin fikri, birlikte düşünülecek): bölüm bölüm yollar — polisli bölüm, dağ yolları, engebeli toprak yollar; her ortamın kendine özgü sorunları olacak (ör. toprakta çamura saplanma, dağda uçurum kenarı ve kaya düşmesi, sallantıdan sandık kayması)
+- 💭 Arıza dışında yapılacak işler: hasar alınca tahta bulup kasa kenarlarına çakmak gibi bakım işleri
 - ⬜ İlerleme: açılan kamyonlar, kostümler, zorluk seviyeleri
-- ⬜ Puan ve rekorlar
+- ✅ Puan ve rekorlar (aşama puanı, sonsuz yolda mesafe rekoru)
+- ⬜ Lobide şapka/maske seçimi (yeni karakter modelleriyle)
 - ⬜ Yalnız ve iki kişiyle oynanabilirlik (ölçeklenen zorluk ya da botlar)
 
 ## 6. Demo ve çıkış
