@@ -2,9 +2,9 @@
 import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
-import { $, ASAMA, BUMP, BUMP_V, COL, GATE, HZ, KENAR, LEN, POLZ, WHEEL, cx } from './world.js';
+import { $, ASAMA, BUMP, BUMP_V, COL, DTAS, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
 import { OILB, RAD, SPOT, TAHTA, asamaSec } from './sim.js';
-import { kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
+import { dagG, dagKur, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
@@ -64,7 +64,7 @@ function asamaPanel(t, V) {
     h += `<button data-kr="${c}" class="${ben ? 'secili' : ''}" ${sahip && !ben ? 'disabled' : ''} style="border-color:${renk}${ben ? ';background:' + renk + '55' : ''}"><b style="color:${renk}">●</b><span>${sahip ? sahip.n + (ben ? ' ✓' : '') : L('bos')}</span></button>`;
   }
   h += `</div><div class="baslik">${L(net.isHost ? 'asamaSec' : 'sadeceSahip')}</div><div class="kutular">`;
-  ASAMA.forEach((a, i) => { const kilit = i > t.ac && !a.sonsuz; /* sonsuz yol hep açık */ h += `<button data-lv="${i}" class="${i === t.lv ? 'secili' : ''}${kilit ? ' kilitli' : ''}${a.sonsuz ? ' sonsuz' : ''}" ${!net.isHost || kilit ? 'disabled' : ''}><b>${a.sonsuz ? '∞' : i || '🎓'}</b><span>${kilit ? '🔒' : a.sonsuz ? L('sonsuzKisa') + (t.rk ? '<br><small>' + L('rekor', t.rk) + '</small>' : '') : i ? a.m + ' m' : L('egitimKisa')}</span></button>`; });
+  ASAMA.forEach((a, i) => { const kilit = i > t.ac && !a.sonsuz && !a.dag; /* sonsuz ve dağ yolu hep açık */ h += `<button data-lv="${i}" class="${i === t.lv ? 'secili' : ''}${kilit ? ' kilitli' : ''}${a.sonsuz || a.dag ? ' sonsuz' : ''}" ${!net.isHost || kilit ? 'disabled' : ''}><b>${a.sonsuz ? '∞' : a.dag ? '⛰' : i || '🎓'}</b><span>${kilit ? '🔒' : a.dag ? L('dagKisa') : a.sonsuz ? L('sonsuzKisa') + (t.rk ? '<br><small>' + L('rekor', t.rk) + '</small>' : '') : i ? a.m + ' m' : L('egitimKisa')}</span></button>`; });
   h += '</div>' + (t.ac <= 1 ? `<div class="ipucu">${L('ilkKez')}</div>` : '') + (net.isHost ? `<button class="basla">${L('basla')}</button>` : '');
   el.innerHTML = h;
   for (const b of el.querySelectorAll('button[data-lv]')) b.onclick = () => asamaSec(+b.dataset.lv);
@@ -132,9 +132,16 @@ const SARS = ['bariyer', 'kapaliSerit', 'engel', 'tumsekPat', 'lastikPat', 'poli
 const fx = { m: '', shake: 0, acc: 0, i: 0, eg: 0, j: 0 }, dust = Array.from({ length: 28 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xb9b2a6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; }); // darbe sarsıntısı, teker tozu
 export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 10.2, -12.2), camL = new THREE.Vector3(0, 1.5, -1.8); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
+// Harita değişimi: dağ yolunda düz yolun nesneleri gizlenir, dağ sahnesi (ilk seferde kurulur) görünür.
+let gosterilen = -1; // şu an çizilen harita (oda sahibinde benzetim haritayı önceden değiştirir)
+function haritaGoster(h) {
+  haritaSec(h); gosterilen = h; if (h) dagKur();
+  for (const c of world.children) { if (c === dagG) c.visible = !!h; else if (c !== bitis && !oilM.includes(c)) c.visible = !h; }
+}
 export function draw(V, dt) {
+  if ((V.T.hr | 0) !== gosterilen) haritaGoster(V.T.hr | 0);
   const t = V.T, [qs, qx, qz, qhp, qsl, qu, qo, qd = 0] = V.q, ch = t.s === 'run' && (qs === 1 || qs === 2); sfx(V, dt);
-  { const hd = t.hd || LEN; bitis.visible = !t.sn; bitis.position.set(cx(hd), 0, hd); bitis.rotation.y = Math.atan2(cx(hd + 1) - cx(hd - 1), 2); } // sonsuz yolda bitiş yok
+  { const hd = t.hd || LEN; bitis.visible = !t.sn; bitis.position.set(cx(hd), yH(hd), hd); bitis.rotation.y = Math.atan2(cx(hd + 1) - cx(hd - 1), 2); } // sonsuz yolda bitiş yok
   cabG.rotation.y = t.ph; cpD = Math.cos(t.ph); spD = Math.sin(t.ph);
   pol.visible = qs > 0 && t.s !== 'lobby'; pol.position.set(qx, 0, qz); pol.rotation.y = qsl ? pol.rotation.y + dt * 7 : qs === 3 ? 0.6 : 0;
   polDarbe(qs, qd, qhp, dt); { const f = Math.sin(performance.now() / 90) > 0; polL[0].visible = f; polL[1].visible = !f; }
@@ -147,7 +154,7 @@ export function draw(V, dt) {
   rainP.visible = rainK > 0.1; if (rainP.visible) { const a = rainP.geometry.attributes.position; for (let i = 1; i < a.array.length; i += 3) { a.array[i] -= dt * 26; if (a.array[i] < 0) a.array[i] += 16; } a.needsUpdate = true; }
   polPark.forEach((g, i) => (g.visible = !qu[i])); oilM.forEach((m, i) => { const o = V.ol[i]; m.visible = !!o; if (o) m.position.set(o[0], 0.03, o[1]); });
   if (net.isHost) { cT.X = t.X; cT.Z = t.Z; cT.th = t.th; } else { cT.th += (t.th - cT.th) * 0.25; cT.X += Math.sin(cT.th) * t.v * dt; cT.Z += Math.cos(cT.th) * t.v * dt; cT.X += (t.X - cT.X) * 0.15; cT.Z += (t.Z - cT.Z) * 0.15; if (Math.abs(t.Z - cT.Z) > 30) { cT.X = t.X; cT.Z = t.Z; } }
-  pivot.rotation.y = -cT.th; world.position.set(-cT.X, 0, -cT.Z);
+  pivot.rotation.y = -cT.th; world.position.set(-cT.X, -yH(cT.Z), -cT.Z); pivot.rotation.x = HARITA ? -Math.atan(egim(cT.Z)) : 0; // dağ: dünya yükselir, yokuşta burun yukarı
   wheels.forEach((w, i) => { w.rotation.x += t.v * dt / 0.55; w.scale.x = w.scale.z = t.fl[i] ? 0.42 : 0.55; w.position.y = t.fl[i] ? 0.42 : 0.55; w.material.color.setHex(t.fl[i] ? 0x8a2a1e : 0x222222); });
   marks.forEach((m, i) => { m.visible = !!t.fl[i] && t.s === 'run'; m.material.opacity = 0.55 + 0.4 * Math.sin(performance.now() / 150); });
   if (V.a) { airTip.position.set(V.a[0], V.a[1], V.a[2]); v2.copy(airTip.position); limbV(airHose, airA, v2, 0.035); }
@@ -157,7 +164,7 @@ export function draw(V, dt) {
   hpTag.forEach((g, i) => { const on = !!t.fl[i] && t.s === 'run'; g.sp.visible = on; if (!on) return; const p = Math.floor(t.rp[i] * 100); g.sp.material.opacity = 0.65 + 0.35 * Math.sin(performance.now() / 120);
     if (p !== g.v) { g.v = p; const x = g.c.getContext('2d'); x.clearRect(0, 0, 128, 64); x.font = '900 44px system-ui,Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 8; x.strokeStyle = '#000'; x.strokeText(L('yuzde', p), 64, 34); x.fillStyle = p < 35 ? '#ff5a5f' : p < 70 ? '#ffd23f' : '#7bd389'; x.fillText(L('yuzde', p), 64, 34); g.tx.needsUpdate = true; } });
   swheel.rotation.z = -t.st * 2.2; pedG.position.z = 3.1 + t.g * 0.06; pedB.position.z = 3.1 + t.b * 0.06; needle.rotation.z = (t.f / 100 - 0.5) * -2.4;
-  obsMesh.forEach((m, i) => (m.visible = !t.oh.includes(i)));
+  obsMesh.forEach((m, i) => (m.visible = !t.hr && !t.oh.includes(i))); // dağ yolunda düz yolun engelleri yok
   const [ks, kx, kz, kv] = V.k; tanker.visible = ks > 0; tanker.position.set(kx, 0, kz); valve.rotation.z += kv ? dt * 4 : 0;
   nozzle.visible = ks > 0; nozzle.position.set(V.n[0], V.n[1], V.n[2]);
   if (hose) { scene.remove(hose); hose.geometry.dispose(); hose = null; }
@@ -244,20 +251,20 @@ export function draw(V, dt) {
   asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / 0.6) * Math.PI) * 0.9; telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
-  { const nb = BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
-    el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = L('tumsek', Math.max(0, Math.round(d)), hz, Math.round(BUMP_V * 3.6)); } }
+  { const nb = (t.hr ? DTAS : BUMP).find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
+    el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = L(t.hr ? 'taslar' : 'tumsek', Math.max(0, Math.round(d)), hz, Math.round(BUMP_V * 3.6)); } }
   { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = L('isaret')[sg || 0]; }
   const rol = t.s === 'lobby' ? L('rolBar') : seat === 1 ? L('rolSofor') : seat === 2 ? L('rolYolcu') : L('rolKasa');
   let af = '';
-  if (t.s === 'lobby') af += `<div class="uyari">${ASAMA[t.lv].sonsuz ? L('sonsuzAd') : L('asamaAd', t.lv, ASAMA[t.lv].m)}</div><div>${L('odaKodu')}: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 ${L('kisi')}</div><div style="font-size:18px">${net.isHost ? L('baslatHost') : L('baslatBekle')}</div><div style="font-size:16px">${L('lobiIpucu')}</div>`;
+  if (t.s === 'lobby') af += `<div class="uyari">${ASAMA[t.lv].dag ? L('dagAd') : ASAMA[t.lv].sonsuz ? L('sonsuzAd') : L('asamaAd', t.lv, ASAMA[t.lv].m)}</div><div>${L('odaKodu')}: <span class="uyari">${net.odaKodu}</span> · ${V.p.length}/4 ${L('kisi')}</div><div style="font-size:18px">${net.isHost ? L('baslatHost') : L('baslatBekle')}</div><div style="font-size:16px">${L('lobiIpucu')}</div>`;
   if (t.s === 'run' && t.cd) af += `<div class="buyuk">${t.cd}</div><div>${L('geriSayim')}</div>`;
   if (t.s === 'over' || t.s === 'win') af += sonEkran(t, V);
   if (t.m) af += `<div>${mesaj(t.m)}</div>`;
   let gv = ''; // görev listesi: sağda, kısa satırlar
   if (t.s === 'run' && !t.cd) { const hy = V.p.some((p) => p.bt);
     if (ch) gv += `<div class="k">${L('g_polis', qhp)}</div>`;
-    else if (seat !== 1) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) gv += `<div class="k">${L('g_radar', Math.max(0, Math.round(d)))}</div>`; }
-    if (seat === 2 && !ch) { const g = GATE.find((g) => g.z > t.Z + 4 && g.z < t.Z + 230); if (g) gv += `<div>${L('g_ayrim', Math.round(g.z - t.Z), g.open > 0)}</div>`; }
+    else if (seat !== 1 && !t.hr) { const i = POLZ.findIndex((z, i) => !qu[i] && z > t.Z - 5), d = i < 0 ? 1e9 : POLZ[i] - t.Z; if (d < 170) gv += `<div class="k">${L('g_radar', Math.max(0, Math.round(d)))}</div>`; }
+    if (seat === 2 && !ch && !t.hr) { const g = GATE.find((g) => g.z > t.Z + 4 && g.z < t.Z + 230); if (g) gv += `<div>${L('g_ayrim', Math.round(g.z - t.Z), g.open > 0)}</div>`; }
     if (t.sl) gv += `<div class="k">${L('g_motor')}</div>`; else if (t.ht >= 70) gv += `<div>${L('g_hararet', t.ht)}</div>`;
     if (V.fr) gv += `<div class="k">${L('g_yangin')}</div>`;
     if (hy) gv += `<div class="k">${L('g_haydut')}</div>`;

@@ -74,6 +74,7 @@ Durum işaretleri: ✅ bitti · 🔨 sürüyor · ⬜ sırada · 🙋 proje sahi
 
 ## 5. İçerik
 - ⬜ Yeni haritalar / rastgele üretilen yollar, farklı ortamlar
+- ✅ Dağ yolu denemesi (⛰, 650 m): uçurum, kaya duvarı, yokuş, taşlar — oynanınca geliştirilecek
 - 💭 Şoför için zor yollar (15.11 sahibinin fikri, birlikte düşünülecek): bölüm bölüm yollar — polisli bölüm, dağ yolları, engebeli toprak yollar; her ortamın kendine özgü sorunları olacak (ör. toprakta çamura saplanma, dağda uçurum kenarı ve kaya düşmesi, sallantıdan sandık kayması)
 - 💭 Arıza dışında yapılacak işler: hasar alınca tahta bulup kasa kenarlarına çakmak gibi bakım işleri
 - ⬜ İlerleme: açılan kamyonlar, kostümler, zorluk seviyeleri
