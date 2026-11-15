@@ -105,6 +105,9 @@
   .kay .kip{display:flex;gap:6px;flex-wrap:wrap}.kay .kip button{border:2px solid #39445a;background:none;color:#9aa4b5;border-radius:8px;padding:4px 9px;font-weight:800;cursor:pointer}.kay .kip button.secili{background:#d8432f;border-color:#d8432f;color:#fff}
   #eylem{position:fixed;left:50%;bottom:22%;transform:translateX(-50%);display:none;background:rgba(15,20,30,.78);border:2px solid #ffd23f;color:#ffe14d;border-radius:12px;padding:7px 14px;font-weight:900;font-size:18px;white-space:nowrap;text-shadow:none;pointer-events:none}
   #eylem kbd{display:inline-block;background:#ffd23f;color:#141a26;border-radius:6px;padding:0 7px;margin-right:6px;font:900 15px system-ui,Arial}
+  /* basılı tut: F'nin çevresinde dolan halka */
+  #eylem kbd.halka{position:relative;border-radius:50%;width:30px;height:30px;padding:0;line-height:30px;text-align:center;vertical-align:middle;background:conic-gradient(#7bd389 var(--p,0%),#5a6170 0)}
+  #eylem kbd.halka::before{content:'';position:absolute;inset:4px;border-radius:50%;background:#ffd23f;z-index:-1}#eylem kbd.halka{isolation:isolate}
   /* aşama seçimi */
   #asama{position:fixed;left:50%;bottom:calc(3% + 128px);transform:translateX(-50%);display:none;z-index:5;background:rgba(15,20,30,.82);border:2px solid #39445a;border-radius:16px;padding:10px 12px;text-align:center;width:min(94vw,640px);text-shadow:none}
   #asama .baslik{font-weight:900;font-size:14px;color:#ffd23f;margin-bottom:6px;letter-spacing:.5px}
@@ -240,6 +243,6 @@
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=52"></script>
+<script type="module" src="src/main.js?v=53"></script>
 </body>
 </html>

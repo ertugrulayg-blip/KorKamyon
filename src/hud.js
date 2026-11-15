@@ -10,7 +10,7 @@ import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
 import { drawBar, limbV, playerMesh, pm, qY } from './bar.js';
 import { sfx, sm } from './audio.js';
-import { TOUCH, cnt, hostStart, joy, tb } from './input.js';
+import { TOUCH, cnt, hostStart, joy, key, tb } from './input.js';
 
 export let rainK = 0; export let hose = null;
 const RK = new THREE.Vector3(); // iskeletin çizilen kalça noktası
@@ -35,7 +35,23 @@ function polDarbe(qs, qd, hp, dt) {
 // eylem yerleri: yanıp sönen işaretler (radyatör, yağ varili, tanker vanası)
 const isaretMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, depthWrite: false });
 const radIsaret = add(cabIn, CG, isaretMat(0x3fa7ff), RAD[0], 1.33, RAD[2], 0.55, 0.03, 0.55), yagIsaret = add(truck, CG, isaretMat(0xffd23f), OILB[0] - 0.05, 1.32, OILB[2] + 0.5, 0.5, 0.03, 0.5), vanaIsaret = add(tanker, CG, isaretMat(0xff5a5f), 0, 2.03, -2, 0.6, 0.03, 0.6);
-const EV = new THREE.Vector3();
+const EV = new THREE.Vector3(), EY = { tut: 0 };
+// Yangın tüpü: tutan kişi yangının yanındayken tüpün ağzından yangına doğru köpük fışkırır
+const KOPUK = Array.from({ length: 48 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xf2f6ff, transparent: true, depthWrite: false }), 0, -9, 0, 0.06); m.visible = false; m.userData = { t: 1, v: new THREE.Vector3() }; return m; });
+let kopukSira = 0, kopukBirikim = 0;
+function tupKopuk(V, dt) {
+  const fr = V.fr, x = V.x, sikiyor = fr && x[3] && Math.hypot(x[0] - fr[0], x[2] - fr[1]) < 1.8;
+  if (sikiyor) {
+    kopukBirikim += dt * 70; // saniyede ~70 parça
+    while (kopukBirikim >= 1) { kopukBirikim -= 1;
+      const m = KOPUK[kopukSira++ % KOPUK.length], u = m.userData; u.t = 0;
+      m.position.set(x[0], x[1] + 0.25, x[2]); // tüpün ağzı
+      u.v.set(fr[0] - x[0], 0.9 - x[1] - 0.25 + 1.3, fr[1] - x[2]).normalize().multiplyScalar(4.2).add(new THREE.Vector3((Math.random() - 0.5) * 1.4, (Math.random() - 0.3) * 1.2, (Math.random() - 0.5) * 1.4));
+      m.visible = true; }
+  }
+  for (const m of KOPUK) { const u = m.userData; if (!m.visible) continue; u.t += dt / 0.45; if (u.t >= 1) { m.visible = false; continue; }
+    m.position.addScaledVector(u.v, dt); u.v.y -= dt * 3; m.scale.setScalar(0.07 + u.t * 0.3); m.material.opacity = 0.9 * (1 - u.t); }
+}
 // ---------- aşama seçimi, eğitim, puan, final ----------
 function asamaPanel(t, V) {
   const el = $('asama'), goster = t.s === 'lobby';
@@ -124,6 +140,7 @@ export function draw(V, dt) {
   polDarbe(qs, qd, qhp, dt); { const f = Math.sin(performance.now() / 90) > 0; polL[0].visible = f; polL[1].visible = !f; }
   crM.forEach((g, i) => { const c = V.cr[i]; g.visible = !!c; if (c) g.position.set(c[0], c[2] || 0, c[1]); });
   exM.position.set(V.x[0], V.x[1], V.x[2]); exM.rotation.x = V.x[3] ? 1.2 : 0;
+  tupKopuk(V, dt);
   fireG.visible = !!V.fr; if (V.fr) { fireG.position.set(V.fr[0], 0, V.fr[1]); const k = 0.45 + V.fr[2] / 180; flames.forEach((f, i) => { const s = k * (0.75 + 0.35 * Math.sin(performance.now() / (70 + i * 23) + i * 2)); f.scale.set(s, s * (1.1 + 0.3 * Math.sin(performance.now() / 50 + i)), s); f.position.y = 1.3 + 0.45 * f.scale.y; }); }
   steam.forEach((m, i) => { const on = t.ht > 70 && t.s === 'run'; m.visible = on; if (on) { const u = (performance.now() / 1400 + i / 6) % 1; m.position.set(Math.sin(i * 2.3) * 0.5, 2.2 + u * 2.6, 4.5 - u * 1.2); m.scale.setScalar(0.2 + u * 0.55); m.material.opacity = 0.55 * (1 - u) * Math.min(1, (t.ht - 70) / 15); } });
   rainK += ((t.rn && t.s === 'run' ? 1 : 0) - rainK) * 0.04; scene.fog.color.copy(SKY).lerp(GRAY, rainK); scene.background.copy(scene.fog.color); scene.fog.near = 70 - 45 * rainK; scene.fog.far = 230 - 140 * rainK;
@@ -206,14 +223,17 @@ export function draw(V, dt) {
     KENAR.forEach((k, i) => { const kr = (t.kk || '')[i] === '1'; if (k.b.mesh) k.b.mesh.visible = !kr; kirikM[i].visible = kr; kirikM[i].userData.isaret.material.opacity = nabiz; });
     const suGerek = run && (t.ht >= 60 || t.sl), yagGerek = run && qs === 2, vanaGerek = run && ks === 2 && V.n[3] && !kv;
     radIsaret.visible = suGerek; yagIsaret.visible = yagGerek; vanaIsaret.visible = vanaGerek; for (const m of [radIsaret, yagIsaret, vanaIsaret]) m.material.opacity = nabiz;
-    let ey = '';
+    let ey = '', dol = -1; // dol: F basılı tutulan işin ilerlemesi (0..1), -1 halka yok
+    const basili = !!(key.KeyF || tb.u); EY.tut = basili ? EY.tut + dt : 0;
     if (mp) { const yak = (x, z, r) => Math.hypot(mp[3] - x, mp[5] - z) < r;
-      if (suGerek && (cabPt(EV, RAD[0], 0, RAD[2]), yak(EV.x, EV.z, 1.7))) ey = L('ey_su');
-      else if (yagGerek && yak(OILB[0], OILB[2], 1.7)) ey = L('ey_yag') + (qo ? L('ey_bekle', qo) : '');
-      else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) ey = L('ey_vana');
+      if (suGerek && (cabPt(EV, RAD[0], 0, RAD[2]), yak(EV.x, EV.z, 1.7))) { ey = L('ey_su'); dol = basili ? 1 - t.ht / 100 : 0; }
+      else if (yagGerek && yak(OILB[0], OILB[2], 1.7)) { ey = L('ey_yag') + (qo ? L('ey_bekle', qo) : ''); dol = qo ? 0 : Math.min(1, EY.tut / 0.5); }
+      else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) { ey = L('ey_vana'); dol = V.k[4] || 0; }
       else if (kirikVar && !me.th && yak(TAHTA[0], TAHTA[2], 1.2)) ey = L('ey_tahta');
-      else if (me.th) { const i = KENAR.findIndex((k, i) => t.kk[i] === '1' && Math.sign(mp[3]) === k.s && Math.abs(mp[3]) > 0.7 && mp[5] > k.z0 - 0.5 && mp[5] < k.z1 + 0.5); ey = i >= 0 ? L('ey_cak', Math.round((me.ck || 0) * 100)) : ''; } }
-    const el = $('eylem'), metin = ey ? `<kbd>${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; } }
+      else if (me.th) { const i = KENAR.findIndex((k, i) => t.kk[i] === '1' && Math.sign(mp[3]) === k.s && Math.abs(mp[3]) > 0.7 && mp[5] > k.z0 - 0.5 && mp[5] < k.z1 + 0.5); ey = i >= 0 ? L('ey_cak', Math.round((me.ck || 0) * 100)) : ''; dol = i >= 0 ? me.ck || 0 : -1; } }
+    // F tuşunun çevresinde dolan halka: basılı tutulan işin ilerlemesi
+    const el = $('eylem'), metin = ey ? `<kbd class="${dol >= 0 ? 'halka' : ''}">${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; }
+    if (ey && dol >= 0) el.firstChild.style.setProperty('--p', Math.round(Math.min(1, dol) * 100) + '%'); }
   asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / 0.6) * Math.PI) * 0.9; telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
