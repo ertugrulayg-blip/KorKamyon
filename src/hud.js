@@ -153,7 +153,7 @@ export function draw(V, dt) {
     const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
     o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3])); o.s[2].rotation.y = o.s[3].rotation.y = p.y;
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
-    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; /* koltuktan bakan kendini görmez */ if (!p.d) {
+    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; /* koltuktan bakan kendini görmez */ if (!p.d) {
         // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
         // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.
         const ayak = Math.min(P[16], P[19]), dik = v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]).normalize().y;
@@ -167,11 +167,15 @@ export function draw(V, dt) {
   }
   for (const [id, o] of pm) if (!seen.has(id)) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(id); delete RP[id]; }
   const seat = ui.camMode >= 0 ? ui.camMode : me ? me.s : 0;
+  const fp = ui.birinci && !ch && seat === 0 && t.s === 'run' && me && !me.d && RP[me.id]; ui.fpAktif = !!fp; // kasada birinci şahıs
+  if (fp && ui.bakisIlk) { ui.bakisIlk = false; ui.bakis = me.y || 0; }
+  if (!fp && document.pointerLockElement) document.exitPointerLock();
   if (ch) { v1.set(0, 14, -25); v2.set(0, 1, -5.5); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
-  else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.62, 1.95); cabPt(v2, 0.7, 3.05, 14); }
+  else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.95, 2.0); cabPt(v2, 0.55, 2.4, 30); } // şoför: kendi koltuğundan yolu görür
   else if (seat === 2 && t.s === 'run') { cabPt(v1, -0.7, 3.0, 2.0); cabPt(v2, -0.4, 2.3, 30); } // yolcu: kendi koltuğundan yolu net görür // şoför: boyu kısa, göz tablonun hizasında — gökyüzü ve ağaç tepeleri görünür, yol görünmez
+  else if (fp) { const P = RP[me.id]; v1.set(P[6], P[7] + 0.14 + (pm.get(me.id)?.kalk || 0), P[8]); /* çizilen gövde kalkık olabilir */ const c = Math.cos(ui.egim); v2.set(v1.x + Math.sin(ui.bakis) * c, v1.y + Math.sin(ui.egim), v1.z + Math.cos(ui.bakis) * c); } // birinci şahıs: gözden
   else { v1.set(0, 9.5, -10.5); v2.set(0, 1.5, -1); } // diğerleri yukarıdan bakar; yolcunun ileri penceresi var
-  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
+  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : fp ? 'b' : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
   // koltuk fırlatma: koltuk yerinden fırlar, takla atar, birkaç saniye sonra yerine düşer
   for (const s of [1, 2]) { const g = koltuk[s], u = g.userData, e = t.ej ? t.ej[s] : 0;
     if (u.son === undefined) u.son = e; if (e !== u.son) { u.son = e; u.t = 0; }

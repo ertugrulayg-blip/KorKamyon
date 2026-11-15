@@ -11,14 +11,14 @@ const yuzde = (n) => (DIL === 'tr' ? '%' + n : n + '%');
 const S = {
   tr: {
     // menü ve sabit metinler
-    menuAciklama: 'Şoför önünü göremez, yolcu tarif eder, kasadakiler yakıt, lastik, yangın ve polisle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.',
+    menuAciklama: 'Şoför sürer, yolcu tarif eder ve yardım eder, kasadakiler yakıt, lastik, yangın ve polisle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.',
     haydutAd: 'HAYDUT', adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
     tuslar: '⌨ Tuşlar', ayarlar: '⚙ Ayarlar', kapat: 'Kapat (Esc)', ses: 'SES', oyuncular: 'OYUNCULAR', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 İLERİSİ',
     // aşamalar, eğitim, puan
     asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', telsizBaslik: 'Tanker frekansını tuşla', telsizAlt: '1–4 tuşları · T kapat', telsizTamam: '📡 Çağrı gitti!', b_kol: '🛢 YAĞ KOLU', mikrofon: 'Mikrofon', varsayilan: 'Varsayılan', grafik: 'Grafik', kalite0: 'Düşük', kalite1: 'Orta', kalite2: 'Yüksek', grafikNot: 'Gölge ve çözünürlük hemen değişir; yol kenarındaki ağaç ve süs yoğunluğu oyunu yeniden açınca.', yakitYazi: (n) => '⛽ Yakıt %' + n, canYazi: (n) => '🔧 Kamyon %' + n, karakterSec: 'Karakterin (alınmış olanı seçemezsin)', bos: 'Boş', sonsuzKisa: 'Sonsuz', sonsuzBitti: (m) => '🛣 ' + m + ' m gittiniz!', rekor: (m) => '🏆 Rekor: ' + m + ' m', yeniRekor: '🏆 YENİ REKOR!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
     sonsuzAd: '∞ Sonsuz yol · gidebildiğiniz kadar', asamaAd: (n, m) => (n ? 'Aşama ' + n : '🎓 Eğitim') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Eğitim ' + i + '/' + n,
     eg: [
-      'Herkes yerine! Şoför sol koltuğa, yolcu sağ koltuğa otursun (yanına git, E). Şoför yolu göremez: yolcu A/D ile yön, S ile yavaşla, W ile hızlan gösterir. Kamyon şimdilik kendi gidiyor.',
+      'Herkes yerine! Şoför sol koltuğa, yolcu sağ koltuğa otursun (yanına git, E). Yolcu şoföre yardım eder: A/D ile yön, S ile yavaşla, W ile hızlan işareti verir. Kamyon şimdilik kendi gidiyor.',
       '🛞 Lastik patladı! Kasanın arkasındaki mavi kompresörden hortumu TUT (J), sarı işaretli lastiğin yanına götür ve bekle.',
       '🔧 Kasa hasar aldı! Sarı kutudan matkabı TUT, turuncu işaretin yanına götür.',
       '🌡 Motor ısındı! Kabinde iki koltuğun arasındaki mavi işaretin yanına git, F\'ye basılı tut.',
@@ -44,9 +44,9 @@ const S = {
     baglantiHata: (a) => 'Bağlantı hatası: ' + a, odaDolu: 'Oda dolu (4 kişi)', sahipAyrildi: 'Oda sahibi ayrıldı', kodYaz: '4 harfli oda kodunu yaz', davet: '👥 Arkadaş davet et', steamNot: 'Steam: odayı kur, sonra üstteki «Arkadaş davet et» düğmesiyle çağır. Arkadaşların Steam arkadaş listesinden «Oyuna katıl» da diyebilir.', steamHata: 'Steam odası kurulamadı ya da odaya girilemedi. Steam açık mı?', atildin: 'Oda sahibi seni odadan çıkardı.',
     // roller ve ekran
     rolBar: '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…',
-    rolSofor: '<b>🚚 ŞOFÖRSÜN</b><br>Boyun kısa: tablonun üstünden yolu göremezsin, yolcuyu dinle!<br>A/D direksiyon · W gaz · S fren · E kalk',
-    rolYolcu: '<b>👀 YOLCUSUN</b><br>Yolu yalnız sen görürsün: şoföre tarif et!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · T telsiz (tanker) · F yağ kolu (polise) · E kalk',
-    rolKasa: '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su)',
+    rolSofor: '<b>🚚 ŞOFÖRSÜN</b><br>Kamyonu durdurma! Yolcu tarif eder, işaret verir.<br>A/D direksiyon · W gaz · S fren · E kalk',
+    rolYolcu: '<b>👀 YOLCUSUN</b><br>Şoförün yardımcısısın: tarif et, işaret ver!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · T telsiz (tanker) · F yağ kolu (polise) · E kalk',
+    rolKasa: '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su) · C kamera',
     odaKodu: 'Oda kodu', kisi: 'oyuncu', baslatHost: 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat', baslatBekle: 'Oda sahibinin başlatması bekleniyor',
     lobiIpucu: 'Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!',
     geriSayim: 'Yerlerinizi alın, kamyon kalkıyor!', basardiniz: '🏁 BAŞARDINIZ!', oyunBitti: '💥 OYUN BİTTİ', enterYeniden: 'ENTER: yeniden',
@@ -77,13 +77,13 @@ const S = {
     },
   },
   en: {
-    menuAciklama: "The driver can't see the road, the passenger gives directions, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
+    menuAciklama: "The driver drives, the passenger navigates and helps out, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
     haydutAd: 'BANDIT', adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
     tuslar: '⌨ Controls', ayarlar: '⚙ Settings', kapat: 'Close (Esc)', ses: 'SOUND', oyuncular: 'PLAYERS', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 AHEAD',
     asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', telsizBaslik: 'Dial the tanker frequency', telsizAlt: 'Keys 1–4 · T to close', telsizTamam: '📡 Call sent!', b_kol: '🛢 OIL LEVER', mikrofon: 'Microphone', varsayilan: 'Default', grafik: 'Graphics', kalite0: 'Low', kalite1: 'Medium', kalite2: 'High', grafikNot: 'Shadows and resolution change right away; roadside trees and details change after restarting the game.', yakitYazi: (n) => '⛽ Fuel ' + n + '%', canYazi: (n) => '🔧 Truck ' + n + '%', karakterSec: 'Your character (taken ones are locked)', bos: 'Free', sonsuzKisa: 'Endless', sonsuzBitti: (m) => '🛣 You made it ' + m + ' m!', rekor: (m) => '🏆 Record: ' + m + ' m', yeniRekor: '🏆 NEW RECORD!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
     sonsuzAd: '∞ Endless road · go as far as you can', asamaAd: (n, m) => (n ? 'Stage ' + n : '🎓 Tutorial') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Tutorial ' + i + '/' + n,
     eg: [
-      "Take your places! The driver sits on the left, the passenger on the right (walk up, press E). The driver can't see the road: the passenger signals with A/D, S to slow down, W to speed up. For now the truck drives itself.",
+      "Take your places! The driver sits on the left, the passenger on the right (walk up, press E). The passenger helps the driver: A/D for direction, S to slow down, W to speed up. For now the truck drives itself.",
       '🛞 Flat tyre! GRAB (J) the air hose from the blue compressor at the back, take it to the tyre with the yellow marker and hold it there.',
       '🔧 The truck is damaged! GRAB the drill from the yellow box and take it to the orange marker.',
       '🌡 The engine is overheating! In the cab, stand by the blue marker between the seats and hold F.',
@@ -107,9 +107,9 @@ const S = {
     mikIzin: 'Asking for microphone access…', baglaniyor: 'Connecting…', baglanamadi: 'Could not connect. Try mobile data instead of Wi-Fi (or the other way round).',
     baglantiHata: (a) => 'Connection error: ' + a, odaDolu: 'Room is full (4 players)', sahipAyrildi: 'The host left', kodYaz: 'Type the 4-letter room code', davet: '👥 Invite friends', steamNot: 'Steam: create a room, then use the «Invite friends» button at the top. Friends can also click «Join Game» in their Steam friends list.', steamHata: 'Could not create or join the Steam room. Is Steam running?', atildin: 'The host kicked you from the room.',
     rolBar: '<b>🍺 TRUCKERS\' BAR</b><br>The crew is gathering…',
-    rolSofor: "<b>🚚 YOU'RE DRIVING</b><br>You're too short to see over the dashboard. Listen to your passenger!<br>A/D steer · W gas · S brake · E stand up",
-    rolYolcu: "<b>👀 YOU'RE THE PASSENGER</b><br>Only you can see the road: guide the driver!<br>A/D left/right sign · S slow down · W speed up · T radio (tanker) · F oil lever (police) · E stand up",
-    rolKasa: "<b>📦 YOU'RE IN THE BACK</b><br>WASD walk · Space jump / climb while holding<br>J or left click GRAB · K or right click SLAP<br>E sit down · F use (valve, oil, water)",
+    rolSofor: "<b>🚚 YOU'RE DRIVING</b><br>Don't let the truck stop! Your passenger guides and signals.<br>A/D steer · W gas · S brake · E stand up",
+    rolYolcu: "<b>👀 YOU'RE THE PASSENGER</b><br>You're the co-driver: guide and signal!<br>A/D left/right sign · S slow down · W speed up · T radio (tanker) · F oil lever (police) · E stand up",
+    rolKasa: "<b>📦 YOU'RE IN THE BACK</b><br>WASD walk · Space jump / climb while holding<br>J or left click GRAB · K or right click SLAP<br>E sit down · F use (valve, oil, water) · C camera",
     odaKodu: 'Room code', kisi: 'players', baslatHost: "Press ENTER (or double-tap the screen) when everyone's ready", baslatBekle: 'Waiting for the host to start',
     lobiIpucu: "On the road: driver's seat on the left, passenger on the right. Slap the driver on the head to take a taken driver's seat!",
     geriSayim: 'Take your places, the truck is leaving!', basardiniz: '🏁 YOU MADE IT!', oyunBitti: '💥 GAME OVER', enterYeniden: 'ENTER: play again',
