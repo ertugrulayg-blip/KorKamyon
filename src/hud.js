@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
-import { $, ASAMA, BUMP, BUMP_V, COL, DTAS, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
+import { $, ASAMA, BUMP, BUMP_V, COL, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
 import { OILB, RAD, SPOT, TAHTA, asamaSec } from './sim.js';
 import { dagG, dagKur, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
@@ -35,7 +35,7 @@ function polDarbe(qs, qd, hp, dt) {
 // eylem yerleri: yanıp sönen işaretler (radyatör, yağ varili, tanker vanası)
 const isaretMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, depthWrite: false });
 const radIsaret = add(cabIn, CG, isaretMat(0x3fa7ff), RAD[0], 1.33, RAD[2], 0.55, 0.03, 0.55), yagIsaret = add(truck, CG, isaretMat(0xffd23f), OILB[0] - 0.05, 1.32, OILB[2] + 0.5, 0.5, 0.03, 0.5), vanaIsaret = add(tanker, CG, isaretMat(0xff5a5f), 0, 2.03, -2, 0.6, 0.03, 0.6);
-const EV = new THREE.Vector3(), EY = { tut: 0 }, GOZ = { p: new THREE.Vector3(), hedef: new THREE.Vector3(), ilk: true };
+const DUS = { z: 0, p: new THREE.Vector3() }, EV = new THREE.Vector3(), EY = { tut: 0 }, GOZ = { p: new THREE.Vector3(), hedef: new THREE.Vector3(), ilk: true };
 // Yangın tüpü: tutan kişi yangının yanındayken tüpün ağzından yangına doğru köpük fışkırır
 const KOPUK = Array.from({ length: 48 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xf2f6ff, transparent: true, depthWrite: false }), 0, -9, 0, 0.06); m.visible = false; m.userData = { t: 1, v: new THREE.Vector3() }; return m; });
 let kopukSira = 0, kopukBirikim = 0;
@@ -154,7 +154,8 @@ export function draw(V, dt) {
   rainP.visible = rainK > 0.1; if (rainP.visible) { const a = rainP.geometry.attributes.position; for (let i = 1; i < a.array.length; i += 3) { a.array[i] -= dt * 26; if (a.array[i] < 0) a.array[i] += 16; } a.needsUpdate = true; }
   polPark.forEach((g, i) => (g.visible = !qu[i])); oilM.forEach((m, i) => { const o = V.ol[i]; m.visible = !!o; if (o) m.position.set(o[0], 0.03, o[1]); });
   if (net.isHost) { cT.X = t.X; cT.Z = t.Z; cT.th = t.th; } else { cT.th += (t.th - cT.th) * 0.25; cT.X += Math.sin(cT.th) * t.v * dt; cT.Z += Math.cos(cT.th) * t.v * dt; cT.X += (t.X - cT.X) * 0.15; cT.Z += (t.Z - cT.Z) * 0.15; if (Math.abs(t.Z - cT.Z) > 30) { cT.X = t.X; cT.Z = t.Z; } }
-  pivot.rotation.y = -cT.th; world.position.set(-cT.X, -yH(cT.Z), -cT.Z); pivot.rotation.x = HARITA ? -Math.atan(egim(cT.Z)) : 0; // dağ: dünya yükselir, yokuşta burun yukarı
+  pivot.rotation.y = -cT.th; world.position.set(-cT.X, -yH(cT.Z), -cT.Z); pivot.rotation.x = HARITA ? -Math.atan(egim(cT.Z)) : 0;
+  pivot.rotation.order = 'ZXY'; pivot.rotation.z = t.du ? -t.du[1] : 0; if (t.du) world.position.y += t.du[0]; // uçurumdan düşüş: kamyon devrilir ve dünyanın dikeyinde düşer (dünya ters yönde yükselir) // dağ: dünya yükselir, yokuşta burun yukarı
   wheels.forEach((w, i) => { w.rotation.x += t.v * dt / 0.55; w.scale.x = w.scale.z = t.fl[i] ? 0.42 : 0.55; w.position.y = t.fl[i] ? 0.42 : 0.55; w.material.color.setHex(t.fl[i] ? 0x8a2a1e : 0x222222); });
   marks.forEach((m, i) => { m.visible = !!t.fl[i] && t.s === 'run'; m.material.opacity = 0.55 + 0.4 * Math.sin(performance.now() / 150); });
   if (V.a) { airTip.position.set(V.a[0], V.a[1], V.a[2]); v2.copy(airTip.position); limbV(airHose, airA, v2, 0.035); }
@@ -196,8 +197,13 @@ export function draw(V, dt) {
   const fp = ui.kamera > 0 && !ch && seat === 0 && t.s === 'run' && me && !me.d && RP[me.id]; ui.fpAktif = !!fp; // kasada birinci / üçüncü şahıs
   if (fp && ui.bakisIlk) { ui.bakisIlk = false; ui.bakis = me.y || 0; }
   if (!fp) GOZ.ilk = true;
+  if (!t.du) DUS.z = 0;
   if (!fp && document.pointerLockElement) document.exitPointerLock();
-  if (ch) { v1.set(0, 14, -26.5); v2.set(0, 1, -7); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
+  if (t.du) { // uçurumdan düşüş: kamera yol kenarında sabit kalır, düşen kamyonu izler
+    if (!DUS.z) { DUS.z = cT.Z; DUS.p.set(cx(cT.Z) - 15, yH(cT.Z) - 3, cT.Z - 12); } // vadinin üstünde, boşlukta: yamaç ve düşen kamyon birlikte görünür
+    pivot.updateMatrixWorld(true); v1.copy(DUS.p); world.localToWorld(v1); v2.set(0, 0.5, -1.5);
+  }
+  else if (ch) { v1.set(0, 14, -26.5); v2.set(0, 1, -7); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
   else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.95, 2.0); cabPt(v2, 0.55, 2.4, 30); } // şoför: kendi koltuğundan yolu görür
   else if (seat === 2 && t.s === 'run') { cabPt(v1, -0.7, 3.0, 2.0); cabPt(v2, -0.4, 2.3, 30); } // yolcu: kendi koltuğundan yolu net görür // şoför: boyu kısa, göz tablonun hizasında — gökyüzü ve ağaç tepeleri görünür, yol görünmez
   else if (fp) { // birinci / üçüncü şahıs: göz noktası kalçadan alınıp yumuşatılır (jöle gövdenin sallanması kameraya geçmesin)
@@ -207,7 +213,7 @@ export function draw(V, dt) {
     if (ui.kamera === 1) { v1.copy(GOZ.p); v2.set(v1.x + dx * c, v1.y + Math.sin(ui.egim), v1.z + dz * c); }
     else { const u = 2.9; v1.set(GOZ.p.x - dx * u * c, GOZ.p.y + 0.6 - Math.sin(ui.egim) * u, GOZ.p.z - dz * u * c); v2.set(GOZ.p.x + dx * 2, GOZ.p.y + 0.1 + Math.sin(ui.egim) * 2, GOZ.p.z + dz * 2); } }
   else { v1.set(0, 10.2, -12.2); v2.set(0, 1.5, -1.8); } // diğerleri yukarıdan bakar (kasa uzun); yolcunun ileri penceresi var
-  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : fp ? (ui.kamera === 1 ? 'b' : 'u') : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b' || m === 'u') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); cam.position.copy(camP); cam.lookAt(camL); }
+  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : t.du ? 'd' : fp ? (ui.kamera === 1 ? 'b' : 'u') : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b' || m === 'u' || m === 'd') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); if (t.du) cam.up.set(0, 1, 0).applyQuaternion(pivot.quaternion); else cam.up.set(0, 1, 0); /* düşerken ufuk dünyaya göre düz kalsın */ cam.position.copy(camP); cam.lookAt(camL); }
   // koltuk fırlatma: koltuk yerinden fırlar, takla atar, birkaç saniye sonra yerine düşer
   for (const s of [1, 2]) { const g = koltuk[s], u = g.userData, e = t.ej ? t.ej[s] : 0;
     if (u.son === undefined) u.son = e; if (e !== u.son) { u.son = e; u.t = 0; }
@@ -251,7 +257,7 @@ export function draw(V, dt) {
   asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / 0.6) * Math.PI) * 0.9; telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
-  { const nb = (t.hr ? DTAS : BUMP).find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
+  { const nb = t.hr ? (DTBOLGE.find((b) => b.z1 > t.Z - 1) || {}).z0 : BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
     el.style.display = on ? 'block' : 'none'; if (on) { const hz = t.v > BUMP_V; el.className = hz ? 'hizli' : ''; el.textContent = L(t.hr ? 'taslar' : 'tumsek', Math.max(0, Math.round(d)), hz, Math.round(BUMP_V * 3.6)); } }
   { const el = $('isaret'), sg = t.s === 'run' ? t.sg : 0; el.style.display = sg ? 'block' : 'none'; el.className = seat === 1 ? 'sofor' : ''; el.textContent = L('isaret')[sg || 0]; }
   const rol = t.s === 'lobby' ? L('rolBar') : seat === 1 ? L('rolSofor') : seat === 2 ? L('rolYolcu') : L('rolKasa');

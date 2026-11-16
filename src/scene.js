@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, DAG, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd, yH } from './world.js';
+import { BOX, BUMP, DAG, DKAYA, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd, yH } from './world.js';
 import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT, TAHTA } from './sim.js';
 
 // ---------- görüntü ----------
@@ -198,16 +198,19 @@ export function dagKur() {
   };
   serit((z) => { const c = cx(z), h = yH(z); return [[c + Y, h + 0.02], [c, h + 0.05], [c - Y, h + 0.02]]; }, 0x9b7a52, 0.06); // toprak yol
   serit((z) => { const c = cx(z), h = yH(z); return [[c + Y, h], [c + Y + 1.2, h + 2.6], [c + Y + 3.2, h + 7.5], [c + Y + 8, h + 14], [c + Y + 20, h + 23], [c + Y + 45, h + 30]]; }, 0x8c8478, 0.12); // kaya duvarı
-  serit((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.7, h - 1.2], [c - Y - 2.5, (h + VADI) / 2], [c - Y - 6, VADI + 1], [c - Y - 14, VADI]]; }, 0x7d7464, 0.12); // uçurum
+  serit((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.5, h - 1], [c - Y - 1.3, h - (h - VADI) * 0.45], [c - Y - 2.4, VADI + 1.5], [c - Y - 9, VADI]]; }, 0x7d7464, 0.12); // uçurum (dik)
   const vadi = add(dagG, new THREE.PlaneGeometry(900, son + 700), M(0x5f8f4a), -200, VADI - 0.05, son / 2); vadi.rotation.x = -Math.PI / 2; // vadi tabanı
   // uçurum kenarında beyaz işaret taşları
   const tas = new Dilimli(BG, M(0xe8e4da)), o = new THREE.Object3D();
   for (let z = 10; z < son; z += 7) { o.position.set(cx(z) - Y + 0.25, yH(z) + 0.15, z); o.rotation.set(0, z, 0); o.scale.set(0.35, 0.3, 0.35); tas.ekle(o); }
   tas.bitir(dagG);
-  // yoldaki taş sıraları (DTAS): hızlı geçilirse lastik patlar
-  const yt = new Dilimli(new THREE.DodecahedronGeometry(0.5, 0), M(0x6e665b));
-  for (const z of DTAS) for (let x = -Y + 0.8; x < Y - 0.5; x += 0.9) { o.position.set(cx(z) + x, yH(z) + 0.05, z + Math.sin(x * 7) * 0.3); o.rotation.set(x, x * 2, 0); o.scale.set(0.32, 0.18, 0.3); yt.ekle(o); }
+  // yola dağılmış taşlar (DTAS): tekerlek üstünden geçince sarsar, hızlıysa lastik patlar
+  const yt = new Dilimli(new THREE.DodecahedronGeometry(1, 0), M(0x7a7266));
+  for (const t of DTAS) { o.position.set(cx(t.z) + t.x, yH(t.z) + t.r * 0.35, t.z); o.rotation.set(t.z * 3.1, t.x * 5.3, t.z * 1.7); o.scale.set(t.r * 1.2, t.r * 0.7, t.r); yt.ekle(o); }
   yt.bitir(dagG);
+  // büyük kayalar (DKAYA): yolun bir yarısını kapatır, çevresinden dolanılır
+  for (const k of DKAYA) { const m = add(dagG, new THREE.DodecahedronGeometry(1, 1), M(0x6f685e, { flatShading: true }), cx(k.z) + k.x, yH(k.z) + k.r * 0.55, k.z); m.scale.set(k.r * 1.05, k.r * 0.9, k.r * 1.15); m.rotation.set(k.z, k.z * 0.7, 0); m.castShadow = true;
+    const m2 = add(dagG, new THREE.DodecahedronGeometry(1, 0), M(0x7d756a, { flatShading: true }), cx(k.z) + k.x + Math.sign(k.x) * 0.9, yH(k.z) + 0.45, k.z + 1.1); m2.scale.setScalar(0.6); }
   // vadide ve dağın üstünde ağaçlar
   if (ui.kalite > 0) { let t = 4242; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
     const vadiA = [], dagA = [];
