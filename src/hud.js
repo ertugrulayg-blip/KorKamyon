@@ -156,7 +156,7 @@ export function draw(V, dt) {
   rainP.visible = rainK > 0.1; if (rainP.visible) { const a = rainP.geometry.attributes.position; for (let i = 1; i < a.array.length; i += 3) { a.array[i] -= dt * 26; if (a.array[i] < 0) a.array[i] += 16; } a.needsUpdate = true; }
   polPark.forEach((g, i) => (g.visible = !qu[i])); oilM.forEach((m, i) => { const o = V.ol[i]; m.visible = !!o; if (o) m.position.set(o[0], 0.03, o[1]); });
   if (net.isHost) { cT.X = t.X; cT.Z = t.Z; cT.th = t.th; } else { cT.th += (t.th - cT.th) * 0.25; cT.X += Math.sin(cT.th) * t.v * dt; cT.Z += Math.cos(cT.th) * t.v * dt; cT.X += (t.X - cT.X) * 0.15; cT.Z += (t.Z - cT.Z) * 0.15; if (Math.abs(t.Z - cT.Z) > 30) { cT.X = t.X; cT.Z = t.Z; } }
-  pivot.rotation.y = -cT.th; world.position.set(-cT.X, -yH(cT.Z) - yanY(), -cT.Z); pivot.rotation.x = HARITA ? -Math.atan(egim(cT.Z)) : 0;
+  pivot.rotation.y = -cT.th; world.position.set(-cT.X, -yH(cT.Z) - yanY(), -cT.Z); pivot.rotation.x = HARITA ? Math.atan((yH(cT.Z + 4.5) - yH(cT.Z - 6.5)) / 11) : 0; /* yokuş: dünya kamyona göre düzleşir (kamyon ön ve arka tekerleriyle yola basar) */
   pivot.rotation.order = 'ZXY'; pivot.rotation.z = t.du ? -t.du[1] : 0; if (t.du) world.position.y += t.du[0]; // uçurumdan düşüş: kamyon devrilir ve dünyanın dikeyinde düşer (dünya ters yönde yükselir) // dağ: dünya yükselir, yokuşta burun yukarı
   wheels.forEach((w, i) => { w.rotation.x += t.v * dt / 0.55; w.scale.x = w.scale.z = t.fl[i] ? 0.42 : 0.55; w.position.y = t.fl[i] ? 0.42 : 0.55; w.material.color.setHex(t.fl[i] ? 0x8a2a1e : 0x222222); });
   marks.forEach((m, i) => { m.visible = !!t.fl[i] && t.s === 'run'; m.material.opacity = 0.55 + 0.4 * Math.sin(performance.now() / 150); });
