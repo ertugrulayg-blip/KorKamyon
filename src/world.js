@@ -18,6 +18,9 @@ const hDag = (z) => { const u = clamp(z, -100, 900); return Math.max(0, u - 20) 
 const KES = [[-1e9, 'o'], [90, 'u'], [230, 'y'], [360, 'u'], [450, 'o'], [540, 'y'], [1e9, '']];
 const yumusak = (z, a) => { const t = clamp((z - a + 12) / 24, 0, 1); return t * t * (3 - 2 * t); };
 export function kesit(z) { const w = { u: 0, y: 0, o: 0 }; for (let i = 0; i < KES.length - 1; i++) w[KES[i][1]] += yumusak(z, KES[i][0]) * (1 - yumusak(z, KES[i + 1][0])); return w; }
+// yerleşim yerleri (orman düzlüklerinde): yol asfalt, kenarda evler
+export const DKOY = [[15, 80], [460, 532]];
+export const koyK = (z) => DKOY.reduce((a, [z0, z1]) => Math.max(a, yumusak(z, z0) * (1 - yumusak(z, z1))), 0); // 0 toprak, 1 asfalt
 export const sagBanket = (z) => { const w = kesit(z); return w.y * 9 + w.o * 3.5; }; // yolun sağında sürülebilir alan (m)
 export const solBanket = (z) => kesit(z).o * 3.5;
 const ara = (T, d) => { for (let i = 1; i < T.length; i++) if (d <= T[i][0]) { const [x0, y0] = T[i - 1], [x1, y1] = T[i]; return y0 + ((y1 - y0) * (d - x0)) / (x1 - x0); } return T[T.length - 1][1]; };

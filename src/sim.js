@@ -1,5 +1,5 @@
 // Oyun benzetimi: yalnız oda sahibinde çalışır. Kamyon, oyuncular, tanker, polis, yük, yangın, haydut.
-import { kesit, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
+import { kesit, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
 
 export let cpc = 1, cps = 0, tX = 0, tZ = 0; // cpc/cps: kabin açısının cos/sin'i
 export const toCab = (x, z) => { tX = x * cpc - (z - HZ) * cps; tZ = HZ + x * cps + (z - HZ) * cpc; }, fromCab = (x, z) => { tX = x * cpc + (z - HZ) * cps; tZ = HZ - x * cps + (z - HZ) * cpc; };
@@ -386,7 +386,7 @@ export function stepTruck(dt) {
       T.X = c + sd * lim; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
       if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; carpti(); jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say('bariyer', w); if (Math.random() < 0.5) kenarKir(sd, rnd(ARKA, 0)); if (T.ol.lastik && Math.random() < 0.35) { const yan = [0, 1, 2, 3].filter((k) => !T.flat[k] && Math.sign(WHEEL[k][0]) === sd); if (yan.length) { const k = yan[(Math.random() * yan.length) | 0]; T.flat[k] = 1; say('lastikPat', k); } } /* bariyere sürtünen yandaki lastik patlayabilir */ for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }
   T.pax = -T.v * omt * 0.75 + (off ? Math.sin(T.t * 23) * 3 : 0); T.paz = -((T.v - ov) / dt) * 0.6;
-  if (HARITA) { T.pax += Math.sin(T.t * 13.7) * Math.sin(T.t * 4.1) * T.v * 0.14; T.paz -= 9.8 * yokus * 0.45; } // dağ: toprak yol sarsar, yokuş kasadakileri geriye iter
+  if (HARITA) { T.pax += Math.sin(T.t * 13.7) * Math.sin(T.t * 4.1) * T.v * 0.14 * (1 - koyK(T.Z)); /* asfaltta sarsmaz */ T.paz -= 9.8 * yokus * 0.45; } // dağ: toprak yol sarsar, yokuş kasadakileri geriye iter
   if (!run) return;
   { const once = T.fuel; T.fuel = Math.max(0, T.fuel - dt * (0.45 + gas * 0.75 + Math.max(0, HARITA ? egim(T.Z) : 0) * gas * 4)); for (const e of [40, 25, 10]) if (once > e && T.fuel <= e && TKS.st === 0) say('yakitAz', e); } // azaldıkça uyarı
   if (!HARITA) for (const o of OBS) if (!o.hit && o.z - T.Z > ARKA && o.z - T.Z < 5.6 && Math.abs(o.x - T.X) < (o.w || 1.5) + 1) { o.hit = true; jolt(0, 2.2); carpti(); if (Math.random() < 0.5) kenarKir(o.x > T.X ? 1 : -1, rnd(ARKA, 0)); if (o.gate) { T.v *= 0.3; T.dmg[o.x > T.X ? 0 : 1] += 18; say('kapaliSerit'); } else { T.v *= 0.4; say('engel'); } for (const p of players.values()) if (!p.seat) for (let i = 2; i < 21; i += 3) p.Q[i] -= 0.1; }
