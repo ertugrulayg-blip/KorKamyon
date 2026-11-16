@@ -15,7 +15,7 @@ const S = {
     haydutAd: 'HAYDUT', adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
     tuslar: '⌨ Tuşlar', ayarlar: '⚙ Ayarlar', kapat: 'Kapat (Esc)', ses: 'SES', oyuncular: 'OYUNCULAR', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 İLERİSİ',
     // aşamalar, eğitim, puan
-    asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', telsizBaslik: 'Tanker frekansını tuşla', telsizAlt: '1–4 tuşları · T kapat', telsizTamam: '📡 Çağrı gitti!', b_kol: '🛢 YAĞ KOLU', mikrofon: 'Mikrofon', varsayilan: 'Varsayılan', grafik: 'Grafik', kalite0: 'Düşük', kalite1: 'Orta', kalite2: 'Yüksek', grafikNot: 'Gölge ve çözünürlük hemen değişir; yol kenarındaki ağaç ve süs yoğunluğu oyunu yeniden açınca.', yakitYazi: (n) => '⛽ Yakıt %' + n, canYazi: (n) => '🔧 Kamyon %' + n, karakterSec: 'Karakterin (alınmış olanı seçemezsin)', bos: 'Boş', sonsuzKisa: 'Sonsuz', sonsuzBitti: (m) => '🛣 ' + m + ' m gittiniz!', rekor: (m) => '🏆 Rekor: ' + m + ' m', yeniRekor: '🏆 YENİ REKOR!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
+    asamaSec: 'Aşama seç', sadeceSahip: 'Aşamayı oda sahibi seçer', egitimKisa: 'Eğitim', dagKisa: 'Dağ yolu', dagAd: '⛰ Dağ yolu · uçurum kenarından tırman', telsizBaslik: 'Tanker frekansını tuşla', telsizAlt: '1–4 tuşları · T kapat', telsizTamam: '📡 Çağrı gitti!', b_kol: '🛢 YAĞ KOLU', mikrofon: 'Mikrofon', varsayilan: 'Varsayılan', grafik: 'Grafik', kalite0: 'Düşük', kalite1: 'Orta', kalite2: 'Yüksek', grafikNot: 'Gölge ve çözünürlük hemen değişir; yol kenarındaki ağaç ve süs yoğunluğu oyunu yeniden açınca.', yakitYazi: (n) => '⛽ Yakıt %' + n, canYazi: (n) => '🔧 Kamyon %' + n, karakterSec: 'Karakterin (alınmış olanı seçemezsin)', bos: 'Boş', sonsuzKisa: 'Sonsuz', sonsuzBitti: (m) => '🛣 ' + m + ' m gittiniz!', rekor: (m) => '🏆 Rekor: ' + m + ' m', yeniRekor: '🏆 YENİ REKOR!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'İlk kez mi? Eğitimle başlayın — her işi tek tek gösterir.', basla: '▶ Başla',
     sonsuzAd: '∞ Sonsuz yol · gidebildiğiniz kadar', asamaAd: (n, m) => (n ? 'Aşama ' + n : '🎓 Eğitim') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Eğitim ' + i + '/' + n,
     eg: [
       'Herkes yerine! Şoför sol koltuğa, yolcu sağ koltuğa otursun (yanına git, E). Yolcu şoföre yardım eder: A/D ile yön, S ile yavaşla, W ile hızlan işareti verir. Kamyon şimdilik kendi gidiyor.',
@@ -50,6 +50,7 @@ const S = {
     odaKodu: 'Oda kodu', kisi: 'oyuncu', baslatHost: 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat', baslatBekle: 'Oda sahibinin başlatması bekleniyor',
     lobiIpucu: 'Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!',
     geriSayim: 'Yerlerinizi alın, kamyon kalkıyor!', basardiniz: '🏁 BAŞARDINIZ!', oyunBitti: '💥 OYUN BİTTİ', enterYeniden: 'ENTER: yeniden',
+    taslar: (d, hizli, sinir) => '🪨 TAŞLAR ' + d + ' m' + (hizli ? ' — YAVAŞLA! (' + sinir + ' km/s altı)' : ' — hız uygun'),
     tumsek: (d, hizli, sinir) => '⚠ TÜMSEK ' + d + ' m' + (hizli ? ' — YAVAŞLA! (' + sinir + ' km/s altı)' : ' — hız uygun'),
     isaret: ['', '⬅ SOLA', 'SAĞA ➡', '🐢 YAVAŞ', '⏩ HIZLAN'],
     g_polis: (n) => '🚓 Polis ' + yuzde(n), g_radar: (d) => '🚓 Polis ' + d + ' m', g_ayrim: (d, sol) => '🚧 ' + d + ' m ' + (sol ? '⬅ SOL' : 'SAĞ ➡'),
@@ -73,14 +74,14 @@ const S = {
       tumsekPat: (i) => 'PAT! Tümseğe hızlı girdiniz: ' + teker.tr[i] + ' lastik patladı', tumsekYavas: 'Tümsek yavaş geçildi 👍', lastikPat: (i) => 'PAT! Lastik patladı: ' + teker.tr[i],
       sandikYandi: '🔥 Bir sandık yandı!', sandikDustu: '📦 Bir sandık yola düştü! Sandıkları TUT', sandikAtti: '🥷 Haydut bir sandığı aşağı attı!',
       // oyun sonu sebepleri
-      yukDokuldu: 'Bütün yük yola döküldü!', hurda: 'Kamyon hurdaya döndü!', hedef: (n) => 'Hedefe ulaştınız! 🏁 Teslim edilen yük: ' + n + '/4', yakitBitti: 'Yakıt bitti, kamyon durdu!', durdu: 'Kamyon durdu!',
+      ucurum: 'Kamyon uçurumdan yuvarlandı! 🪨', yukDokuldu: 'Bütün yük yola döküldü!', hurda: 'Kamyon hurdaya döndü!', hedef: (n) => 'Hedefe ulaştınız! 🏁 Teslim edilen yük: ' + n + '/4', yakitBitti: 'Yakıt bitti, kamyon durdu!', durdu: 'Kamyon durdu!',
     },
   },
   en: {
     menuAciklama: "The driver drives, the passenger navigates and helps out, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
     haydutAd: 'BANDIT', adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
     tuslar: '⌨ Controls', ayarlar: '⚙ Settings', kapat: 'Close (Esc)', ses: 'SOUND', oyuncular: 'PLAYERS', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 AHEAD',
-    asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', telsizBaslik: 'Dial the tanker frequency', telsizAlt: 'Keys 1–4 · T to close', telsizTamam: '📡 Call sent!', b_kol: '🛢 OIL LEVER', mikrofon: 'Microphone', varsayilan: 'Default', grafik: 'Graphics', kalite0: 'Low', kalite1: 'Medium', kalite2: 'High', grafikNot: 'Shadows and resolution change right away; roadside trees and details change after restarting the game.', yakitYazi: (n) => '⛽ Fuel ' + n + '%', canYazi: (n) => '🔧 Truck ' + n + '%', karakterSec: 'Your character (taken ones are locked)', bos: 'Free', sonsuzKisa: 'Endless', sonsuzBitti: (m) => '🛣 You made it ' + m + ' m!', rekor: (m) => '🏆 Record: ' + m + ' m', yeniRekor: '🏆 NEW RECORD!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
+    asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', dagKisa: 'Mountain', dagAd: '⛰ Mountain road · climb along the cliff', telsizBaslik: 'Dial the tanker frequency', telsizAlt: 'Keys 1–4 · T to close', telsizTamam: '📡 Call sent!', b_kol: '🛢 OIL LEVER', mikrofon: 'Microphone', varsayilan: 'Default', grafik: 'Graphics', kalite0: 'Low', kalite1: 'Medium', kalite2: 'High', grafikNot: 'Shadows and resolution change right away; roadside trees and details change after restarting the game.', yakitYazi: (n) => '⛽ Fuel ' + n + '%', canYazi: (n) => '🔧 Truck ' + n + '%', karakterSec: 'Your character (taken ones are locked)', bos: 'Free', sonsuzKisa: 'Endless', sonsuzBitti: (m) => '🛣 You made it ' + m + ' m!', rekor: (m) => '🏆 Record: ' + m + ' m', yeniRekor: '🏆 NEW RECORD!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
     sonsuzAd: '∞ Endless road · go as far as you can', asamaAd: (n, m) => (n ? 'Stage ' + n : '🎓 Tutorial') + ' · ' + m + ' m', egBaslik: (i, n) => '🎓 Tutorial ' + i + '/' + n,
     eg: [
       "Take your places! The driver sits on the left, the passenger on the right (walk up, press E). The passenger helps the driver: A/D for direction, S to slow down, W to speed up. For now the truck drives itself.",
@@ -113,6 +114,7 @@ const S = {
     odaKodu: 'Room code', kisi: 'players', baslatHost: "Press ENTER (or double-tap the screen) when everyone's ready", baslatBekle: 'Waiting for the host to start',
     lobiIpucu: "On the road: driver's seat on the left, passenger on the right. Slap the driver on the head to take a taken driver's seat!",
     geriSayim: 'Take your places, the truck is leaving!', basardiniz: '🏁 YOU MADE IT!', oyunBitti: '💥 GAME OVER', enterYeniden: 'ENTER: play again',
+    taslar: (d, hizli, sinir) => '🪨 ROCKS ' + d + ' m' + (hizli ? ' — SLOW DOWN! (under ' + sinir + ' km/h)' : ' — speed OK'),
     tumsek: (d, hizli, sinir) => '⚠ SPEED BUMP ' + d + ' m' + (hizli ? ' — SLOW DOWN! (under ' + sinir + ' km/h)' : ' — speed OK'),
     isaret: ['', '⬅ LEFT', 'RIGHT ➡', '🐢 SLOW', '⏩ FASTER'],
     g_polis: (n) => '🚓 Police ' + yuzde(n), g_radar: (d) => '🚓 Police ' + d + ' m', g_ayrim: (d, sol) => '🚧 ' + d + ' m ' + (sol ? '⬅ LEFT' : 'RIGHT ➡'),
@@ -134,7 +136,7 @@ const S = {
       bariyer: (i) => 'BANG! You hit the barrier: ' + yan.en[i] + ' side damaged', kapaliSerit: 'BANG! You drove into the closed lane', engel: 'BANG! You hit an obstacle',
       tumsekPat: (i) => 'POP! Too fast over the bump: ' + teker.en[i] + ' tyre burst', tumsekYavas: 'Speed bump taken slowly 👍', lastikPat: (i) => 'POP! Flat tyre: ' + teker.en[i],
       sandikYandi: '🔥 A crate burned up!', sandikDustu: '📦 A crate fell off! GRAB the crates', sandikAtti: '🥷 The bandit threw a crate off!',
-      yukDokuldu: 'All the cargo fell off!', hurda: 'The truck is wrecked!', hedef: (n) => 'You reached the destination! 🏁 Cargo delivered: ' + n + '/4', yakitBitti: 'Out of fuel, the truck stopped!', durdu: 'The truck stopped!',
+      ucurum: 'The truck rolled off the cliff! 🪨', yukDokuldu: 'All the cargo fell off!', hurda: 'The truck is wrecked!', hedef: (n) => 'You reached the destination! 🏁 Cargo delivered: ' + n + '/4', yakitBitti: 'Out of fuel, the truck stopped!', durdu: 'The truck stopped!',
     },
   },
 };

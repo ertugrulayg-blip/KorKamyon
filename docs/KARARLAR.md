@@ -2,6 +2,13 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-15 — Dağ yolu (deneme), lastik kuralı, kamera kipleri
+- Aşama seçiminde "⛰ Dağ yolu" (650 m, hep açık): ayrı harita (`HARITA` = 1, world.js). Dar toprak yol (yarı genişlik 4,4 m), solda kaya duvarı (çarpınca hasar), sağda korkuluksuz uçurum (düşen kamyon = oyun biter, `ucurum`). Yol ~45 m tırmanır: yokuşta kamyon zorlanır, motor ısınır, yakıt çabuk biter, kasadakiler ve sandıklar geriye kayar; toprak sürekli sarsar; taş sıraları (`DTAS`) hızlı geçilince lastik patlatır. Polis, haydut, yangın yok (deneme).
+- Çizim: dünya grubu yol yüksekliği kadar indirilir, yokuşta eğilir (`pivot.rotation.x`); dağ sahnesi ilk seçilişte kurulur, düz yolun nesneleri gizlenir.
+- Lastik kendiliğinden patlamaz: yalnız bariyer/kaya duvarı sürtünmesinde (%35) ve tümsek/taşa hızlı girişte.
+- Kamera: C ile üstten → birinci şahıs → üçüncü şahıs. Göz kalçadan alınıp yumuşatılır; birinci şahısta eldivenler önde görünür.
+Neden: sahibinin 15.11 akşam notları (kamera baş döndürüyor, lastik çok sık, dağ yolu denemesi, sandıklar kolay düşüyor).
+
 ## 2026-11-15 — Şoför yolu görür, birinci şahıs kamera, yolcunun işleri, uzun kasa, yeni gövde
 - Şoförün yolu görememesi kaldırıldı; şoför ön camdan bakar. Zor yollar (polisli bölüm, dağ, engebeli toprak) ileride şoförü zorlayacak.
 - Kasadakiler C ile birinci şahıs kameraya geçebilir (fareyle bakış, W baktığın yöne). Deneme amaçlı; yukarıdan bakış varsayılan.

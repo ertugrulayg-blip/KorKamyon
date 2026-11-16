@@ -6,7 +6,17 @@ export const LEN = 2500, COL = [0xff5a5f, 0x3fa7ff, 0xffd23f, 0x7bd389], ODA = '
 // Yol 280 m'den sonra 2000 m'de bir kendini tekrarlar (dalga boyları 1000 ve 400 m). Sonsuz yolda kamyon 2300 m'yi
 // geçince 2000 m geri alınır; yol, engeller, tümsekler, polis ve süsler aynı olduğu için sıçrama görünmez.
 export const Z0 = 280, PER = 2000, DONGU = Z0 + PER + 20;
-export const cx = (z) => { const s = clamp((z - 80) / 200, 0, 1); return s * (26 * Math.sin((z * Math.PI) / 500) + 10 * Math.sin((z * Math.PI) / 200 + 1)); };
+const cxDuz = (z) => { const s = clamp((z - 80) / 200, 0, 1); return s * (26 * Math.sin((z * Math.PI) / 500) + 10 * Math.sin((z * Math.PI) / 200 + 1)); };
+// ---------- harita: 0 düz yol, 1 dağ yolu ----------
+// Dağ yolu: dar toprak yol, sol (+x) yanda kaya duvarı, sağ (-x) yanda korkuluksuz uçurum; sürekli tırmanır.
+export let HARITA = 0; export const haritaSec = (h) => { HARITA = h; };
+export const DAG = { yol: 4.4, len: 650 }; // yarı genişlik (m), uzunluk
+const cxDag = (z) => { const s = clamp((z - 30) / 90, 0, 1); return s * (13 * Math.sin(z / 58) + 5 * Math.sin(z / 23 + 2)); };
+const hDag = (z) => { const u = clamp(z, -100, 900); return Math.max(0, u - 20) * 0.075 + 1.6 * Math.sin(u / 37) * clamp((u - 20) / 60, 0, 1); }; // ~45 m tırmanış
+export const cx = (z) => (HARITA ? cxDag(z) : cxDuz(z));
+export const yH = (z) => (HARITA ? hDag(z) : 0); // yolun yüksekliği
+export const egim = (z) => (yH(z + 1) - yH(z - 1)) / 2; // yokuş (tan)
+export const DTAS = []; { let t = 77; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; }; for (let z = 70; z < DAG.len - 20; z += 28 + r() * 30) DTAS.push(z); } // dağ yolundaki taşlar (tümsek gibi)
 // Döngü: [Z0, Z0+PER) içindeki bir şeyin z+PER'deki kopyası (görüş mesafesi kadar ileriye: sis 230 m)
 export const kopyaZ = (z) => z >= Z0 && z + PER < LEN + 160;
 export let tohum = 12345; export const srnd = () => { tohum = (tohum * 1664525 + 1013904223) >>> 0; return tohum / 4294967296; };
@@ -48,9 +58,11 @@ export const ASAMA = [
   { m: 500, olay: { lastik: 1, isi: 0.7, yangin: 1, polis: 1 } },
   { m: 1000, olay: { lastik: 1, isi: 0.8, yangin: 1, polis: 1, haydut: 1 } },
   { m: 1500, olay: { lastik: 1, isi: 0.85, yangin: 1, polis: 1, haydut: 1 } },
-  { m: 2000, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
-  { m: 2500, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } },
+  { m: 2000, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1, kenar: 1 } },
+  { m: 2500, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1, kenar: 1 } },
+  { m: DAG.len, dag: true, olay: { lastik: 1, isi: 1 } }, // dağ yolu (deneme, hep açık)
   { m: 1e9, sonsuz: true, olay: { lastik: 1, isi: 1, yangin: 1, polis: 1, haydut: 1 } }, // sonsuz yol: gidebildiğin kadar (hep açık)
 ];
+export const NORMAL = ASAMA.filter((a) => !a.dag && !a.sonsuz).length; // sırayla açılan aşamalar (eğitim dahil)
 export const SONSUZ = ASAMA.length - 1;
 export const BUMP_V = 8; // m/s (~29 km/s) üstünde tümseğe girilirse lastik patlar

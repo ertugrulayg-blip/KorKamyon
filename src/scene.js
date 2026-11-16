@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd } from './world.js';
+import { BOX, BUMP, DAG, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd, yH } from './world.js';
 import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT, TAHTA } from './sim.js';
 
 // ---------- görüntü ----------
@@ -177,3 +177,42 @@ export const kirikM = KENAR.map((k) => { const g = new THREE.Group(); g.position
   for (const u of [-1, 1]) { const m = add(g, BG, kirik, 0, 0.22, u * (boy / 2 - 0.18), 0.1, 0.36, 0.36); m.rotation.x = u * 0.35; }
   g.userData.isaret = add(g, CG, new THREE.MeshBasicMaterial({ color: 0xff8a3d, transparent: true, depthWrite: false }), -k.s * 0.35, 0.03, 0, 0.6, 0.03, boy * 0.8);
   return g; });
+
+// ---------- dağ yolu (harita 1): yalnız seçilince kurulur ----------
+// Dar toprak yol, solda (+x) yükselen kaya duvarı, sağda (-x) uçurum ve aşağıda vadi. Yükseklik yH(z) (world.js).
+export const dagG = new THREE.Group(); dagG.visible = false; world.add(dagG);
+let dagKuruldu = false;
+export function dagKur() {
+  if (dagKuruldu) return; dagKuruldu = true;
+  const VADI = -22, Y = DAG.yol, adim = 3, son = DAG.len + 150;
+  // şerit: her z için verilen (x, y) noktalarından bir yüzey örer; renk biraz rastgele (toprak, kaya)
+  const serit = (noktalar, renk, oynat) => {
+    const pos = [], col = [], idx = [], c = new THREE.Color(); let sat = 0, n = 0;
+    for (let z = -60; z <= son; z += adim, sat++) {
+      const p = noktalar(z); n = p.length;
+      p.forEach(([x, y], i) => { pos.push(x, y, z); c.setHex(renk); c.offsetHSL(0, 0, (Math.sin(z * 1.7 + i * 3.1) * 0.5 + Math.sin(z * 0.37 + i) * 0.5) * oynat); col.push(c.r, c.g, c.b); });
+      if (sat) for (let i = 0; i < n - 1; i++) { const a = (sat - 1) * n + i, b = sat * n + i; idx.push(a, b, a + 1, a + 1, b, b + 1); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, flatShading: true })); m.receiveShadow = true; dagG.add(m); return m;
+  };
+  serit((z) => { const c = cx(z), h = yH(z); return [[c + Y, h + 0.02], [c, h + 0.05], [c - Y, h + 0.02]]; }, 0x9b7a52, 0.06); // toprak yol
+  serit((z) => { const c = cx(z), h = yH(z); return [[c + Y, h], [c + Y + 1.2, h + 2.6], [c + Y + 3.2, h + 7.5], [c + Y + 8, h + 14], [c + Y + 20, h + 23], [c + Y + 45, h + 30]]; }, 0x8c8478, 0.12); // kaya duvarı
+  serit((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.7, h - 1.2], [c - Y - 2.5, (h + VADI) / 2], [c - Y - 6, VADI + 1], [c - Y - 14, VADI]]; }, 0x7d7464, 0.12); // uçurum
+  const vadi = add(dagG, new THREE.PlaneGeometry(900, son + 700), M(0x5f8f4a), -200, VADI - 0.05, son / 2); vadi.rotation.x = -Math.PI / 2; // vadi tabanı
+  // uçurum kenarında beyaz işaret taşları
+  const tas = new Dilimli(BG, M(0xe8e4da)), o = new THREE.Object3D();
+  for (let z = 10; z < son; z += 7) { o.position.set(cx(z) - Y + 0.25, yH(z) + 0.15, z); o.rotation.set(0, z, 0); o.scale.set(0.35, 0.3, 0.35); tas.ekle(o); }
+  tas.bitir(dagG);
+  // yoldaki taş sıraları (DTAS): hızlı geçilirse lastik patlar
+  const yt = new Dilimli(new THREE.DodecahedronGeometry(0.5, 0), M(0x6e665b));
+  for (const z of DTAS) for (let x = -Y + 0.8; x < Y - 0.5; x += 0.9) { o.position.set(cx(z) + x, yH(z) + 0.05, z + Math.sin(x * 7) * 0.3); o.rotation.set(x, x * 2, 0); o.scale.set(0.32, 0.18, 0.3); yt.ekle(o); }
+  yt.bitir(dagG);
+  // vadide ve dağın üstünde ağaçlar
+  if (ui.kalite > 0) { let t = 4242; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
+    const vadiA = [], dagA = [];
+    for (let z = -40; z < son; z += 5) { const c = cx(z), h = yH(z);
+      if (r() < 0.8) vadiA.push([c - Y - 16 - r() * 70, VADI, z + r() * 4, 3 + r() * 3, r() * 6]);
+      if (r() < 0.35) dagA.push([c + Y + 9 + r() * 10, h + 14 + r() * 6, z, 2.5 + r() * 2, r() * 6]); }
+    scatter(KENNEY + 'nature/tree_pineTallA.glb', dagG, vadiA, { golge: false }); scatter(KENNEY + 'nature/tree_pineRoundA.glb', dagG, dagA, { golge: false }); }
+}
