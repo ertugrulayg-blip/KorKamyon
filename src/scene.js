@@ -186,55 +186,66 @@ export function dagKur() {
   if (dagKuruldu) return; dagKuruldu = true;
   const hs = (x) => { const s = Math.sin(x * 127.1) * 43758.5453; return s - Math.floor(s); }; // sabit sözde rastgele
   const VADI = -22, Y = DAG.yol, adim = 3, son = DAG.len + 150;
-  // renk paletleri: kaya (dik yüz turuncu-kiremit, düz yüz yeşil, arada gri taş), toprak yol (tekerlek izleri koyu)
-  const TURUNCU = [0xc9774a, 0xdc9a63, 0xa9603d, 0xb86d45, 0xe0a878, 0x8f4f35, 0xd08a58, 0xbf7f52], YESIL = [0x7f8f4f, 0x6c8146, 0x8f9a57, 0x5e7440, 0x9aa564, 0x738a4a], GRI = [0x8a8178, 0x9b9187, 0x766e66];
-  function kayaRengi(i, duz, r, y) { if (r < 0.07) return GRI[(r * 40) % 3 | 0]; const L = duz ? YESIL : TURUNCU; return L[Math.min(L.length - 1, (r * L.length + (y > 20 ? 1 : 0)) | 0)]; }
-  // Kayalar: köşeli low-poly yüzeyler; dik yüzler turuncu-kiremit, düz yüzler zeytin yeşili (referans görseldeki gibi)
-  const kaya = (noktalar, sallan, boya = kayaRengi) => {
-    const satirlar = []; for (let z = -60; z <= son; z += adim) satirlar.push(noktalar(z).map(([x, y], i) => { const k = i && sallan ? sallan * (hs(z * 0.37 + i * 7.1) - 0.5) : 0, k2 = i && sallan ? sallan * (hs(z * 0.91 + i * 3.3) - 0.5) : 0; return new THREE.Vector3(x + k, y + k2, z + (i && sallan ? (hs(z + i) - 0.5) * adim * 0.6 : 0)); })); // sallan 0: düz yüzey (yol)
-    const pos = [], col = [], c = new THREE.Color(), e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), nrm = new THREE.Vector3();
-    const ucgen = (a, b, d, t, i) => { e1.subVectors(b, a); e2.subVectors(d, a); nrm.crossVectors(e1, e2).normalize(); const duz = Math.abs(nrm.y) > 0.62;
-      c.setHex(boya(i, duz, hs(t), (a.y + b.y + d.y) / 3)); c.offsetHSL((hs(t * 1.3) - 0.5) * 0.02, (hs(t * 2.1) - 0.5) * 0.08, (hs(t * 3.7) - 0.5) * 0.09); // her yüz biraz farklı ton
-      for (const v of [a, b, d]) { pos.push(v.x, v.y, v.z); col.push(c.r, c.g, c.b); } };
-    for (let s = 1; s < satirlar.length; s++) for (let i = 0; i < satirlar[s].length - 1; i++) { const A = satirlar[s - 1][i], B = satirlar[s][i], C = satirlar[s - 1][i + 1], D = satirlar[s][i + 1]; ucgen(A, B, C, s * 13.1 + i, i); ucgen(C, B, D, s * 7.7 + i * 2.9, i); }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, flatShading: true })); m.receiveShadow = true; dagG.add(m); return m;
+  // Pürüzsüz yüzeyler: her z için bir sıra nokta; komşu sıralar ortak köşelerle örülür (yumuşak gölge, üçgen görünmez).
+  // Renk köşe başına: eğim (dik yer kaya, yatık yer yeşil), yükseklik ve geniş dalgalı bir ton farkı — yumuşak geçişli.
+  const dalga = (x, z) => Math.sin(x * 0.11 + z * 0.023) * 0.5 + Math.sin(x * 0.037 - z * 0.051 + 1.7) * 0.5; // -1..1, geniş lekeler
+  const KAYA_A = new THREE.Color(0xc87a48), KAYA_B = new THREE.Color(0xa35a36), CIM_A = new THREE.Color(0x7fa04f), CIM_B = new THREE.Color(0x5e8040), TAS = new THREE.Color(0x8b8076), cc = new THREE.Color();
+  const yuzey = (noktalar, boya, cift = true) => {
+    const satirlar = []; for (let z = -60; z <= son; z += adim) satirlar.push(noktalar(z));
+    const n = satirlar[0].length, pos = [], col = [], idx = [];
+    satirlar.forEach((S, si) => { const z = -60 + si * adim; S.forEach(([x, y], i) => {
+      const yan = S[Math.min(n - 1, i + 1)], once = S[Math.max(0, i - 1)], dx = Math.hypot(yan[0] - once[0], 0.0001), dy = Math.abs(yan[1] - once[1]), dik = dy / (dx + dy); // 0 yatık, 1 dik
+      boya(cc, x, y, z, dik, i); pos.push(x, y, z); col.push(cc.r, cc.g, cc.b);
+      if (si && i < n - 1) { const a = (si - 1) * n + i, b = si * n + i; idx.push(a, b, a + 1, a + 1, b, b + 1); } }); });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, side: cift ? THREE.DoubleSide : THREE.FrontSide })); m.receiveShadow = true; dagG.add(m); return m;
   };
-  { const TOPRAK = [0x9b7a52, 0xa88660, 0x8e6e48, 0xb39470, 0x957452], IZ = [0x7a5e40, 0x6f5639, 0x846645], KENAR = [0xb89a74, 0xc2a57e, 0xa98c64];
-    const S = [Y, Y - 0.9, 2.15, 1.45, 0.5, -0.5, -1.45, -2.15, -Y + 0.9, -Y]; // sütunlar: kenar, yol, iz (±1,8), orta
-    kaya((z) => { const c = cx(z), h = yH(z); return S.map((x, i) => [c + x, h + (i === 0 || i === S.length - 1 ? 0.02 : 0.05)]); }, 0,
-      (i, duz, r) => (i === 2 || i === 6 ? IZ : i === 0 || i === 8 ? KENAR : TOPRAK)[(r * 5) % (i === 2 || i === 6 ? 3 : i === 0 || i === 8 ? 3 : 5) | 0]); } // toprak yol
-  kaya((z) => { const c = cx(z), h = yH(z), u = 1 + 0.5 * Math.sin(z / 41); return [[c + Y, h], [c + Y + 1.2, h + 2.8], [c + Y + 3, h + 8 * u], [c + Y + 6, h + 15 * u], [c + Y + 14, h + 26 * u], [c + Y + 26, h + 40 * u], [c + Y + 50, h + 52]]; }, 2.2); // kaya duvarı
-  kaya((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.5, h - 1], [c - Y - 1.4, h - (h - VADI) * 0.4], [c - Y - 2.6, VADI + 3], [c - Y - 9, VADI]]; }, 1.2); // uçurum (dik)
-  // uzak dağlar: katman katman, sisle kaybolur
+  const dagRengi = (c, x, y, z, dik) => { const d = dalga(x, z), kaya = THREE.MathUtils.smoothstep(dik, 0.45, 0.75);
+    c.copy(CIM_A).lerp(CIM_B, 0.5 + d * 0.5); cc2.copy(KAYA_A).lerp(KAYA_B, 0.5 - d * 0.5 + Math.min(0.3, Math.max(-0.2, (y - 20) * -0.006))); c.lerp(cc2, kaya);
+    if (d > 0.75) c.lerp(TAS, (d - 0.75) * 2); }; // arada gri kaya lekeleri
+  const cc2 = new THREE.Color();
+  // toprak yol: ortası ve tekerlek izleri biraz koyu, kenarlar açık; boyuna geniş ton dalgası
+  { const T1 = new THREE.Color(0xc9a87c), T2 = new THREE.Color(0xb6936a), IZ = new THREE.Color(0x957354), KN = new THREE.Color(0xd9bd94), S = [Y, Y - 0.7, 2.6, 1.8, 1.0, 0, -1.0, -1.8, -2.6, -Y + 0.7, -Y];
+    yuzey((z) => { const c = cx(z), h = yH(z); return S.map((x, i) => [c + x, h + (i === 0 || i === S.length - 1 ? 0.02 : 0.05)]); },
+      (c, x, y, z, dik, i) => { c.copy(T1).lerp(T2, 0.5 + dalga(x * 3, z * 2) * 0.5); if (i === 3 || i === 7) c.lerp(IZ, 0.7); if (i <= 1 || i >= S.length - 2) c.lerp(KN, 0.6); }); } // toprak yol
+  // kaya duvarının yol kenarından d metre içerideki yüksekliği (ağaçları yamaca oturtmak için; aşağıdaki profille aynı)
+  const DUVAR = [[0, 0], [0.8, 2.5], [1.8, 7], [3.5, 13], [7, 18], [13, 23], [22, 33], [34, 46], [55, 60]];
+  const duvarY = (z, d) => { const u = 1 + 0.45 * Math.sin(z / 41) + 0.25 * Math.sin(z / 13 + 1); for (let i = 1; i < DUVAR.length; i++) if (d <= DUVAR[i][0]) { const [x0, y0] = DUVAR[i - 1], [x1, y1] = DUVAR[i], k = (d - x0) / (x1 - x0); return (i === 1 ? y0 + (y1 - y0) * k : (y0 + (y1 - y0) * k) * u) * (i === 1 ? 1 : 1); } return 60 * u; };
+  // kaya duvarı: yoldan dik yükselir, yukarıda ormanlık yamaç ve tepeler (yükseklik z'ye göre dalgalanır)
+  yuzey((z) => { const c = cx(z), h = yH(z), u = 1 + 0.45 * Math.sin(z / 41) + 0.25 * Math.sin(z / 13 + 1); return [[c + Y, h], [c + Y + 0.8, h + 2.5], [c + Y + 1.8, h + 7 * u], [c + Y + 3.5, h + 13 * u], [c + Y + 7, h + 18 * u], [c + Y + 13, h + 23 * u], [c + Y + 22, h + 33 * u], [c + Y + 34, h + 46 * u], [c + Y + 55, h + 60 * u]]; }, dagRengi); // kaya duvarı
+  // uçurum: yoldan vadiye dik iner
+  yuzey((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.4, h - 0.8], [c - Y - 1.2, h - (h - VADI) * 0.35], [c - Y - 2.2, h - (h - VADI) * 0.75], [c - Y - 3.4, VADI + 2.5], [c - Y - 9, VADI]]; }, dagRengi); // uçurum
+  // uzak dağlar: pürüzsüz tepeler; eteği yeşil, yamacı kaya rengi, sisle katman katman kaybolur
   { let t = 9001; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
     for (let z = -150; z < son + 400; z += 55) for (const sd of [1, -1]) { if (r() < 0.25) continue;
-      const uzak = 70 + r() * 150, yuk = 50 + r() * 80, gen = 30 + r() * 35, gd = new THREE.ConeGeometry(gen, yuk, 5 + ((r() * 3) | 0), 2).toNonIndexed();
-      const p = gd.getAttribute('position'), cl = []; for (let i = 0; i < p.count; i += 3) { const yesil = p.getY(i) + p.getY(i + 1) + p.getY(i + 2) < -yuk * 0.6 && r() < 0.7, hx = yesil ? [0x6c8146, 0x7f8f4f][(r() * 2) | 0] : [0xc9774a, 0xb86d45, 0xdc9a63, 0x9c5a3c][(r() * 4) | 0], cc = new THREE.Color(hx); for (let k = 0; k < 3; k++) cl.push(cc.r, cc.g, cc.b); }
-      gd.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3));
-      const m = new THREE.Mesh(gd, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })); m.position.set(cx(z) + sd * (Y + uzak), (sd > 0 ? yH(z) : VADI) + yuk / 2 - 4, z); m.rotation.y = r() * 6; dagG.add(m); } }
-  { const g = new THREE.PlaneGeometry(900, son + 700, 45, 60).toNonIndexed(), p = g.getAttribute('position'), cl = [], cc = new THREE.Color(), V = [0x5f8f4a, 0x6b9a52, 0x557f43, 0x7aa35a, 0x4f7a3f, 0x86a861];
-    for (let i = 0; i < p.count; i++) p.setZ(i, hs(p.getX(i) * 0.13 + p.getY(i) * 0.07) * 1.6); // hafif engebe
-    for (let i = 0; i < p.count; i += 3) { cc.setHex(V[(hs(i * 0.71) * V.length) | 0]); for (let k = 0; k < 3; k++) cl.push(cc.r, cc.g, cc.b); }
+      const uzak = 70 + r() * 150, yuk = 50 + r() * 80, gen = 30 + r() * 35, gd = new THREE.ConeGeometry(gen, yuk, 24, 6);
+      const p = gd.getAttribute('position'), cl = [];
+      for (let i = 0; i < p.count; i++) { const u = (p.getY(i) + yuk / 2) / yuk, a = Math.atan2(p.getZ(i), p.getX(i)); p.setX(i, p.getX(i) * (1 + 0.12 * Math.sin(a * 3 + z))); p.setZ(i, p.getZ(i) * (1 + 0.12 * Math.cos(a * 2 - z)));
+        cc.copy(CIM_B).lerp(KAYA_A, THREE.MathUtils.smoothstep(u, 0.25, 0.6)).lerp(KAYA_B, Math.max(0, Math.sin(a * 4 + z) * 0.3)); cl.push(cc.r, cc.g, cc.b); }
+      gd.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3)); gd.computeVertexNormals();
+      const m = new THREE.Mesh(gd, new THREE.MeshLambertMaterial({ vertexColors: true })); m.position.set(cx(z) + sd * (Y + uzak), (sd > 0 ? yH(z) : VADI) + yuk / 2 - 4, z); m.rotation.y = r() * 6; dagG.add(m); } }
+  // vadi tabanı: yumuşak engebe, geniş yeşil lekeler
+  { const g = new THREE.PlaneGeometry(900, son + 700, 60, 80), p = g.getAttribute('position'), cl = [];
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); p.setZ(i, (Math.sin(x * 0.05) + Math.sin(y * 0.04 + 1)) * 0.8); const d = dalga(x, y); cc.copy(CIM_A).lerp(CIM_B, 0.5 + d * 0.5); cl.push(cc.r, cc.g, cc.b); }
     g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3)); g.computeVertexNormals();
-    const vadi = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })); vadi.position.set(-200, VADI - 0.6, son / 2); vadi.rotation.x = -Math.PI / 2; vadi.receiveShadow = true; dagG.add(vadi); } // vadi tabanı: yamalı yeşiller
+    const vadi = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); vadi.position.set(-200, VADI - 0.8, son / 2); vadi.rotation.x = -Math.PI / 2; vadi.receiveShadow = true; dagG.add(vadi); }
   // uçurum kenarında beyaz işaret taşları
   const tas = new Dilimli(BG, M(0xe8e4da)), o = new THREE.Object3D();
   for (let z = 10; z < son; z += 7) { o.position.set(cx(z) - Y + 0.25, yH(z) + 0.15, z); o.rotation.set(0, z, 0); o.scale.set(0.35, 0.3, 0.35); tas.ekle(o); }
   tas.bitir(dagG);
   // yola dağılmış taşlar (DTAS): tekerlek üstünden geçince sarsar, hızlıysa lastik patlar
-  const yt = new Dilimli(new THREE.DodecahedronGeometry(1, 0), M(0x8f7462));
+  const yt = new Dilimli(new THREE.IcosahedronGeometry(1, 2), M(0x8f7462));
   for (const t of DTAS) { o.position.set(cx(t.z) + t.x, yH(t.z) + t.r * 0.35, t.z); o.rotation.set(t.z * 3.1, t.x * 5.3, t.z * 1.7); o.scale.set(t.r * 1.2, t.r * 0.7, t.r); yt.ekle(o); }
   yt.bitir(dagG);
   // büyük kayalar (DKAYA): yolun bir yarısını kapatır, çevresinden dolanılır
-  for (const k of DKAYA) { const m = add(dagG, new THREE.DodecahedronGeometry(1, 1), M(0x9a6a4c, { flatShading: true }), cx(k.z) + k.x, yH(k.z) + k.r * 0.55, k.z); m.scale.set(k.r * 1.05, k.r * 0.9, k.r * 1.15); m.rotation.set(k.z, k.z * 0.7, 0); m.castShadow = true;
-    const m2 = add(dagG, new THREE.DodecahedronGeometry(1, 0), M(0xa9785a, { flatShading: true }), cx(k.z) + k.x + Math.sign(k.x) * 0.9, yH(k.z) + 0.45, k.z + 1.1); m2.scale.setScalar(0.6); }
+  for (const k of DKAYA) { const m = add(dagG, new THREE.IcosahedronGeometry(1, 3), M(0x9a6a4c), cx(k.z) + k.x, yH(k.z) + k.r * 0.55, k.z); m.scale.set(k.r * 1.05, k.r * 0.9, k.r * 1.15); m.rotation.set(k.z, k.z * 0.7, 0); m.castShadow = true;
+    const m2 = add(dagG, new THREE.IcosahedronGeometry(1, 2), M(0xa9785a), cx(k.z) + k.x + Math.sign(k.x) * 0.9, yH(k.z) + 0.45, k.z + 1.1); m2.scale.setScalar(0.6); }
   // vadide ve dağın üstünde ağaçlar
   if (ui.kalite > 0) { let t = 4242; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
     const vadiA = [], dagA = [];
     for (let z = -40; z < son; z += 5) { const c = cx(z), h = yH(z);
       if (r() < 0.8) vadiA.push([c - Y - 16 - r() * 70, VADI, z + r() * 4, 3 + r() * 3, r() * 6]);
-      if (r() < 0.55) { const d = 4 + r() * 12, u = 1 + 0.5 * Math.sin(z / 41); dagA.push([c + Y + d, h + (d < 6 ? 8 * u * (d - 3) / 3 : 8 * u + (d - 6) * 0.9 * u) - 0.5, z, 2 + r() * 2.2, r() * 6]); } }
+      for (let k = 0; k < 2; k++) if (r() < 0.7) { const d = 7 + r() * 40; dagA.push([c + Y + d, h + duvarY(z, d) - 0.6, z + r() * 4, 2 + r() * 2.4, r() * 6]); } } // yatık yamaçlarda orman
     scatter(KENNEY + 'nature/tree_pineTallA.glb', dagG, vadiA, { golge: false }); scatter(KENNEY + 'nature/tree_pineRoundA.glb', dagG, dagA, { golge: false }); }
 }
 
