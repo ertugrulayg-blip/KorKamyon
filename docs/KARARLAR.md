@@ -2,6 +2,11 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-16 — Tesisler yan yolda (cep)
+- Tesis artık ana yolun üstünde değil: sağa ayrılan 120 m'lik yan yol (cep, `cepGen`, genişlik `CEP` = 10 m; ±25 m'de tam, ±60 m'de sıfır). Düz yolda sağ bariyer cebin dışından dolanır, dağda yerleşimlerde sağ banket genişler. Satıcı yalnız kamyon cebin içinde durunca yanaşır; ana yolda durmak sayılmaz.
+- Düz yol tesisleri 520 / 1320 / 2020 m (polis noktaları ve yol ayrımlarıyla çakışmasın diye).
+- Kapılar alçaldı (2,7 → 2,3): yan camlar aşağı doğru geniş.
+
 ## 2026-11-16 — Erzak, durma payı, koltuk kuralları, kamera döndürme
 - Kamyon durunca oyun hemen bitmez: 20 sn pay (`DUR_SURE`, `T.durT`); sayaç ekranda. Hız 1,5 m/sn'yi geçince sıfırlanır.
 - Erzak (1000 m ve sonrası, sonsuz, dağ): ortak tokluk (`T.tok`, 0,4/sn azalır; bitince ekip %55 hızla yürür). Depo (eski yağ varilinin yeri): F ile meyve yenir (muz +10, portakal +15). Et çiğ yenmez: barbeküde F basılı 3 sn → +45. Başlangıç: 4 muz, 3 portakal, 2 et. Haydut 9 sn'de bir 2 erzak çalar.

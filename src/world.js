@@ -21,11 +21,15 @@ export function kesit(z) { const w = { u: 0, y: 0, o: 0 }; for (let i = 0; i < K
 // yerleşim yerleri (orman düzlüklerinde): yol asfalt, kenarda evler
 export const DKOY = [[15, 80], [460, 532]];
 // dinlenme tesisleri (erzak): düz yolda yol kenarında, dağda yerleşimlerde. Kamyon burada durunca satıcı yanaşır.
-export const TESIS = [[450, 1150, 1750], [48, 496]]; // harita başına z'ler
+export const TESIS = [[520, 1320, 2020], [48, 496]]; // harita başına z'ler
 export const tesisYakin = (h, z) => TESIS[h].find((t) => Math.abs(t - z) < 28);
+// Tesis cebi: ana yoldan sağa ayrılan yan yol. Genişliği (m) tesisin ±25 m'sinde tam (CEP), ±60 m'de sıfıra iner.
+// Düz yolda döngü kopyası da sayılır (z ve z − 2000).
+export const CEP = 10;
+export const cepGen = (h, z) => { let en = 0; for (const t of TESIS[h]) for (const zz of h ? [z] : [z, z - 2000]) { const k = clamp((60 - Math.abs(zz - t)) / 35, 0, 1); en = Math.max(en, k * k * (3 - 2 * k)); } return en * CEP; };
 export const koyK = (z) => DKOY.reduce((a, [z0, z1]) => Math.max(a, yumusak(z, z0) * (1 - yumusak(z, z1))), 0); // 0 toprak, 1 asfalt
 export const karK = (z) => { const t = clamp((z / DAG.len - 0.55) / 0.35, 0, 1); return t * t * (3 - 2 * t); }; // 0 karsız, 1 tam karlı (yolun sonuna doğru)
-export const sagBanket = (z) => { const w = kesit(z); return w.y * 9 + w.o * 3.5; }; // yolun sağında sürülebilir alan (m)
+export const sagBanket = (z) => { const w = kesit(z); return w.y * 9 + w.o * 3.5 + cepGen(1, z); }; // tesis cebi de sayılır // yolun sağında sürülebilir alan (m)
 export const solBanket = (z) => kesit(z).o * 3.5;
 const ara = (T, d) => { for (let i = 1; i < T.length; i++) if (d <= T[i][0]) { const [x0, y0] = T[i - 1], [x1, y1] = T[i]; return y0 + ((y1 - y0) * (d - x0)) / (x1 - x0); } return T[T.length - 1][1]; };
 const DUVAR = [[0, 0], [0.8, 2.5], [1.8, 7], [3.5, 13], [7, 18], [13, 23], [22, 33], [34, 46], [55, 60], [80, 66]];
@@ -70,7 +74,7 @@ box(-1.5, 1.5, 0.5, 1.3, ARKA, 1, 'floor', 0xb9853f); box(-1.5, 1.5, 0.5, 1.3, 1
 export const KENAR = [];
 for (const s of [1, -1]) for (let i = 0; i < 5; i++) { const z0 = ARKA + (i * (1 - ARKA)) / 5, z1 = ARKA + ((i + 1) * (1 - ARKA)) / 5; KENAR.push({ s, z0, z1, z: (z0 + z1) / 2, kirik: false, b: box(s > 0 ? 1.4 : -1.5, s > 0 ? 1.5 : -1.4, 1.3, 1.8, z0, z1, 'rail', 0x8a8f98) }); }
 box(-1.5, 1.5, 1.3, 1.8, ARKA - 0.1, ARKA, 'rail', 0x8a8f98);
-box(1.4, 1.5, 1.3, 2.7, 1, 3.2, 'door', 0xd8432f); box(-1.5, -1.4, 1.3, 2.7, 1, 3.2, 'door', 0xd8432f);
+box(1.4, 1.5, 1.3, 2.3, 1, 3.2, 'door', 0xd8432f); box(-1.5, -1.4, 1.3, 2.3, 1, 3.2, 'door', 0xd8432f); // kapılar alçak: yan camlar aşağı doğru geniş
 box(-1.5, 1.5, 1.3, 2.4, 3.2, 3.5, 'dash', 0x2b2f38); // torpido alçak: ön cam aşağı doğru geniş
 box(-1.5, 1.5, 0.5, 2.1, 3.5, 5.3, 'hood', 0xd8432f);
 box(0.3, 1.1, 1.3, 1.6, 1.5, 2.3, 'seat', 0x30415d); box(-1.1, -0.3, 1.3, 1.6, 1.5, 2.3, 'seat', 0x30415d);

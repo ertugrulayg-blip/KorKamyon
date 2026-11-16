@@ -1,5 +1,5 @@
 // Oyun benzetimi: yalnız oda sahibinde çalışır. Kamyon, oyuncular, tanker, polis, yük, yangın, haydut.
-import { DOK, tesisYakin, kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
+import { CEP, cepGen, DOK, tesisYakin, kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
 
 export let cpc = 1, cps = 0, tX = 0, tZ = 0; // cpc/cps: kabin açısının cos/sin'i
 export const toCab = (x, z) => { tX = x * cpc - (z - HZ) * cps; tZ = HZ + x * cps + (z - HZ) * cpc; }, fromCab = (x, z) => { tX = x * cpc + (z - HZ) * cps; tZ = HZ - x * cps + (z - HZ) * cpc; };
@@ -399,7 +399,7 @@ export function stepTruck(dt) {
   let bias = 0, vmax = 20; for (let w = 0; w < 4; w++) if (T.flat[w]) { vmax -= 6; bias += Math.sign(WHEEL[w][0]) * 0.2 + Math.sin(T.t * 7) * 0.05; }
   if (run) { T.heat = clamp(T.heat + dt * (0.5 + gas * 1.1 + (HARITA ? Math.max(0, egim(T.Z)) * gas * 6 : 0)) * (1 + 0.6 * ilerleme()) * (T.ol.isi || 0), 0, 100); if (T.heat >= 70) T.isiUyari = true; if (T.isiUyari && T.heat < 40) { T.isiUyari = false; puan(T.sogutan, 30, 'su'); } if (T.heat >= 100 && !T.stall) { T.stall = true; say('motorStop'); } if (T.stall && T.heat < 55) { T.stall = false; say('motorCalisti'); } if (T.stall) gas = 0; }
   if (T.fuel <= 0) gas = 0; T.gas = gas; T.br = br;
-  const off = Math.abs(T.X - cx(T.Z)) > (HARITA ? DAG.yol : 7);
+  const off = HARITA ? Math.abs(T.X - cx(T.Z)) > DAG.yol && !(T.X < cx(T.Z) && cepGen(1, T.Z) > 1) : T.X - cx(T.Z) > 7 || T.X - cx(T.Z) < -(7 + cepGen(0, T.Z)); // tesis cebi asfalt: yavaşlatmaz
   const slow = T.v < 8.4; // ~30 km/s altı: kendi kendine neredeyse hiç yavaşlamaz, fren yumuşak
   let a = gas * 3.2 - br * (slow ? 2.5 : 7) - (slow ? 0.06 : 0.5 + T.v * 0.02) - (off ? (slow ? 1 : 5) : 0) - (T.v > vmax ? 4 : 0); if (!run) a = -6;
   const yokus = HARITA ? egim(T.Z) : 0; if (run) a -= 9.8 * yokus * 0.55; // dağ yolu: yokuşta kamyon zorlanır
@@ -411,7 +411,7 @@ export function stepTruck(dt) {
   const oz = T.Z; T.X += (Math.sin(thc) * T.v - omt * Math.cos(T.th) * HZ) * dt; T.Z += (Math.cos(thc) * T.v + omt * Math.sin(T.th) * HZ) * dt; T.th += omt * dt; T.phi = clamp(T.phi + (om - omt) * dt, -0.7, 0.7);
   { const c = cx(T.Z), e = T.X - c; T.hitCd -= dt; // yol kenarı bariyerleri: kamyon dışarı çıkamaz, çarptıkça hasar alır
     // dağda: solda kaya duvarı (ormanda ağaçlar); sağda kesite göre uçurum (düşer), yamaç ya da orman (ağaçlara kadar sürülebilir)
-    const ucurum = HARITA && kesit(T.Z).u > 0.5, lim = HARITA ? (e > 0 ? DAG.yol - 1.55 + solBanket(T.Z) : ucurum ? 1e9 : DAG.yol - 1.55 + sagBanket(T.Z)) : BLIM;
+    const ucurum = HARITA && kesit(T.Z).u > 0.5, lim = HARITA ? (e > 0 ? DAG.yol - 1.55 + solBanket(T.Z) : ucurum ? 1e9 : DAG.yol - 1.55 + sagBanket(T.Z)) : e > 0 ? BLIM : BLIM + cepGen(0, T.Z); // düz yolda sağda tesis cebine girilir
     if (ucurum && run && e < -(DAG.yol + 0.3 + sagBanket(T.Z))) { dususBasla(); return; } // uçurumdan yuvarlanır (birkaç saniye düşer)
     if (Math.abs(e) > lim) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
       T.X = c + sd * lim; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
@@ -434,7 +434,7 @@ export function stepTruck(dt) {
   else if (T.t > 6 && T.v < 0.4) { T.durT += dt; if (T.durT >= DUR_SURE) { T.state = 'over'; T.why = T.fuel <= 0 ? 'yakitBitti' : 'durdu'; } } // durunca 20 sn pay: tamir, erzak
   if (T.v > 1.5) T.durT = 0;
   // tesis: kamyon tesisin önünde durunca satıcı arabası yanaşır (korkuluğun o yanı açılır); kalkınca gider
-  { const t = T.ol.erzak && T.state === 'run' && T.v < 0.4 && T.t > 6 ? tesisYakin(HARITA, T.Z) : undefined;
+  { const t = T.ol.erzak && T.state === 'run' && T.v < 0.4 && T.t > 6 && T.X - cx(T.Z) < -(HARITA ? DAG.yol + 2.5 : 10.5) ? tesisYakin(HARITA, T.Z) : undefined; // kamyon cebin içinde durmuş olmalı
     if (t !== undefined && !DOK.on) { DOK.on = true; if (T.tesisSon !== t + (T.tur || 0) * 1e4) { T.tesisSon = t + (T.tur || 0) * 1e4; T.tesisKasa = 3; } say('saticiGeldi'); }
     else if (t === undefined && DOK.on) DOK.on = false;
     for (const k of KENAR) if (k.s < 0 && k.z1 > DOK.a[2] && k.z0 < DOK.b[2]) k.b.on = !k.kirik && !DOK.on; }

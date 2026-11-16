@@ -92,7 +92,7 @@ function doku(w, h, ciz) {
     // kaput yan havalandırması
     for (let i = 0; i < 4; i++) k.box(koyu, s * 1.506, 1.55, 3.95 + i * 0.3, 0.02, 0.34, 0.12);
     // kapı: cam görünümü, beyaz şerit, kol
-    k.box(koyuCam, s * 1.506, 2.33, 2.1, 0.02, 0.5, 1.7).box(beyaz, s * 1.506, 1.62, 2.1, 0.02, 0.1, 2.2).box(krom, s * 1.515, 1.95, 1.35, 0.03, 0.05, 0.22);
+    k.box(koyuCam, s * 1.506, 2.02, 2.1, 0.02, 0.38, 1.7).box(beyaz, s * 1.506, 1.62, 2.1, 0.02, 0.1, 2.2).box(krom, s * 1.515, 1.95, 1.35, 0.03, 0.05, 0.22);
     // ön cam direği, ayna
     k.box(koyu, s * 1.44, 2.86, 3.42, 0.09, 0.92, 0.09).box(krom, s * 1.88, 2.6, 3.3, 0.8, 0.04, 0.04).box(krom, s * 1.88, 3.1, 3.3, 0.8, 0.04, 0.04); // ayna kolları (aynanın kendisi scene.js'te, gerçek görüntülü)
     // egzoz bacası

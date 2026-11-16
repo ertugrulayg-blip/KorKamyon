@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
+import { BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
 import { AIR, BARBEKU, BARR, CR, DEPO, DRL, EXT, KOL, KOL_BOY, POMPA, RAD, SPOT, TAHTA, TEZGAH } from './sim.js';
 
 // ---------- görüntü ----------
@@ -137,6 +137,7 @@ if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 
   const TUR = [['grass_large', 16, 3.2, 0], ['grass', 10, 3.2, 0], ['plant_bush', 7, 4, 0], ['plant_bushLarge', 5, 4.5, 0], ['plant_bushDetailed', 4, 4, 0], ['flower_redA', 4, 3.4, 0], ['flower_yellowA', 4, 3.4, 0], ['flower_purpleA', 4, 3.4, 0], ['rock_smallA', 3, 3, 0], ['rock_smallB', 3, 3, 0], ['rock_smallC', 2, 3, 0], ['rock_largeA', 2, 3.2, 1], ['rock_largeB', 2, 3.2, 1], ['stump_round', 2, 3.5, 0], ['log_stack', 1.5, 3.5, 1], ['mushroom_redGroup', 1.5, 3, 0], ['tree_oak', 2.5, 5.2, 1], ['tree_default', 2.5, 4.6, 1], ['tree_detailed', 2, 4.8, 1], ['tree_fat', 2, 5, 1], ['tree_pineRoundA', 2.5, 5.2, 1], ['tree_pineTallA', 2, 5.2, 1]];
   const top = TUR.reduce((a, t) => a + t[1], 0) / (ui.kalite > 1 ? 0.62 : 0.34); // geri kalan olasılık: boş
   for (let z = -60; z < Z0 + PER; z += 2.6) for (const sd of [-1, 1]) { let u = r() * top; const d = 10.7 + r() * 3.6, ry = r() * 6.28, bs = 0.8 + r() * 0.45;
+    if (sd < 0 && cepGen(0, z) > 0.2) { r(); r(); r(); r(); continue; } // tesis cebinde süs yok
     if (sd < 0 && POLZ.some((p) => Math.abs(p - z) < 9)) continue; // radar polisinin önünü kapatma
     for (const t of TUR) { if ((u -= t[1]) < 0) { (yer[t[0]] = yer[t[0]] || []).push([cx(z) + sd * (t[3] ? Math.max(d, 11.6) : d), 0, z, t[2] * bs, ry]); break; } } }
   for (const k in yer) for (const y of yer[k].slice()) if (kopyaZ(y[2])) yer[k].push([y[0], y[1], y[2] + PER, y[3], y[4]]); // döngü kopyası
@@ -145,7 +146,7 @@ if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 
 { const R = KENNEY + 'racing/', C = KENNEY + 'city/', KARO = [R + 'decoration-forest.glb', R + 'decoration-forest.glb', R + 'decoration-forest.glb', R + 'decoration-empty.glb', R + 'decoration-tents.glb'], BINA = ['building-small-a', 'building-small-b', 'building-small-c', 'building-small-d', 'building-garage'];
   const koy = []; // [model, x, y, z, ölçek, dönüş] — önce toplanır, döngü kopyası eklenip sonra yerleştirilir
   for (let z = -70; z < Z0 + PER; z += 16.5) for (const sd of [-1, 1]) { const ry = Math.atan2(cx(z + 1) - cx(z), 1), koyMu = ((z / 16.5) | 0) % 19 === (sd > 0 ? 6 : 14);
-    for (let sira = 0; sira < (ui.kalite > 1 ? 2 : 1); sira++) { if (ui.kalite < 1 && ((z / 16.5) | 0) % 2) { srnd(); continue; } const x = cx(z) + sd * (22.5 + sira * 16.2), r = srnd();
+    for (let sira = 0; sira < (ui.kalite > 1 ? 2 : 1); sira++) { if (ui.kalite < 1 && ((z / 16.5) | 0) % 2) { srnd(); continue; } const x = cx(z) + sd * (22.5 + sira * 16.2), r = srnd(); if (sd < 0 && sira === 0 && cepGen(0, z) > CEP * 0.5) continue; /* tesisin yeri */
       if (koyMu && sira === 0) for (let b = 0; b < 2; b++) koy.push([C + BINA[(r * 5 + b * 2) % 5 | 0] + '.glb', x - sd * 3 + (b ? sd * 7 : 0), 0, z + (b ? 4 : -3.5), 7.5, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2)]);
       else if (sira === 0 || r < 0.6) koy.push([KARO[(r * 97) % KARO.length | 0], x, 0.01, z, 1.62, ry + ((r * 4) | 0) * Math.PI / 2]); } }
   for (const k of koy.slice()) if (kopyaZ(k[3])) koy.push([k[0], k[1], k[2], k[3] + PER, k[4], k[5]]);
@@ -154,7 +155,7 @@ if (ui.kalite > 0) { let t2 = 987654321; const r = () => { t2 = (t2 * 1664525 + 
 { // yol kenarı bariyerleri: ray ve direkler
   const ray = new Dilimli(BG, M(0xc9ced6), { golge: true }), direk = new Dilimli(BG, M(0x7d828c), { golge: true }), o = new THREE.Object3D();
   for (let z = -80; z < LEN + 120; z += 4) for (const sd of [1, -1]) {
-    const x0 = cx(z), x1 = cx(z + 4), off = sd * BARR;
+    const cg = sd < 0 ? cepGen(0, z) : 0, x0 = cx(z) - cg, x1 = cx(z + 4) - (sd < 0 ? cepGen(0, z + 4) : 0), off = sd * BARR; // sağ bariyer tesis cebinin dışından dolanır
     o.rotation.set(0, Math.atan2(x1 - x0, 4), 0);
     o.position.set((x0 + x1) / 2 + off, 0.68, z + 2); o.scale.set(0.1, 0.34, Math.hypot(4, x1 - x0) + 0.05); ray.ekle(o);
     o.position.set(x0 + off + sd * 0.1, 0.42, z); o.scale.set(0.14, 0.84, 0.14); direk.ekle(o);
@@ -267,9 +268,13 @@ export function dagKur() {
       for (let z = z0 + 6; z < z1 - 6; z += 2) { const ry = Math.atan2(cx(z + 1) - cx(z - 1), 2);
         if (z % 8 < 4) { oo.position.set(cx(z), yH(z) + 0.07, z); oo.rotation.set(0, ry, 0); oo.scale.set(0.2, 0.02, 2); cizgi.ekle(oo); }
         for (const sd of [-1, 1]) { oo.position.set(cx(z) + sd * (Y - 0.45), yH(z) + 0.07, z); oo.rotation.set(0, ry, 0); oo.scale.set(0.14, 0.02, 2.05); cizgi.ekle(oo); } }
-      for (let z = z0 + 9; z < z1 - 7; z += 11, n++) for (const sd of [-1, 1]) { if ((n + (sd > 0 ? 0 : 1)) % 4 === 3) continue; const d = 8.5 + ((n * 7) % 4), ry = Math.atan2(cx(z + 1) - cx(z - 1), 2);
+      for (let z = z0 + 9; z < z1 - 7; z += 11, n++) for (const sd of [-1, 1]) { if ((n + (sd > 0 ? 0 : 1)) % 4 === 3) continue; if (sd < 0 && cepGen(1, z) > 0.2) continue; /* tesis cebi */ const d = 8.5 + ((n * 7) % 4), ry = Math.atan2(cx(z + 1) - cx(z - 1), 2);
         kulube(cx(z) + sd * (Y + d), yH(z) + (sd > 0 ? dagSol(z, d) : dagSag(z, d)), z, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2), karK(z), n + (sd > 0 ? 0 : 5)); } }
-    for (const z of TESIS[1]) tesisKur(dagG, cx(z) - Y - 8.5, yH(z) + dagSag(z, 8.5), z + 6, Math.atan2(cx(z + 1) - cx(z - 1), 2) + Math.PI / 2); // yerleşimdeki tesis
+    { const pos = [], idx = []; let n = 0; // tesis cebinin asfaltı (dağ): yolun sağ kenarından dışa
+      for (const t of TESIS[1]) { let ilk = true; for (let z = t - 62; z <= t + 62; z += 2) { const g = cepGen(1, z), c = cx(z), h = yH(z); pos.push(c - Y + 0.1, h + 0.06, z, c - Y - g, h + dagSag(z, g) + 0.07, z); if (!ilk) { const a = n * 2; idx.push(a - 2, a, a - 1, a - 1, a, a + 1); } ilk = false; n++; } }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x565a63, side: THREE.DoubleSide })); m.receiveShadow = true; dagG.add(m); }
+    for (const z of TESIS[1]) tesisKur(dagG, cx(z) - Y - CEP - 7, yH(z) + dagSag(z, CEP + 7), z, Math.atan2(cx(z + 1) - cx(z - 1), 2) + Math.PI / 2); // yerleşimdeki tesis
     cizgi.bitir(dagG); }
   // yol kenarları (world.js: dagSol / dagSag): solda kaya duvarı ya da orman düzlüğü; sağda uçurum, hafif yamaç ya da orman
   const SOLD = [0, 0.8, 1.8, 3.5, 7, 13, 22, 34, 55, 80], SAGD = [0, 0.4, 1.2, 2.2, 3.4, 6, 9, 13, 20, 30, 45, 70, 100];
@@ -364,4 +369,11 @@ export function tesisKur(parent, x, y, z, ry) {
   add(g, CG, M(0x8a8f98), 3.6, 2.2, 3.4, 0.08, 4.4, 0.08);
   const lv = add(g, new THREE.PlaneGeometry(2.0, 2.0), new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, map: tex(128, 128, (c) => { c.fillStyle = '#1f6fd0'; c.fillRect(4, 4, 120, 120); c.strokeStyle = '#fff'; c.lineWidth = 8; c.strokeRect(8, 8, 112, 112); c.font = '72px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🏪', 64, 70); }) }), 3.6, 4.6, 3.45); lv.rotation.y = -Math.PI / 2;
 }
-for (const z of TESIS[0]) for (const zz of kopyaZ(z) ? [z, z + PER] : [z]) tesisKur(world, cx(zz) - BARR - 5.5, 0, zz, Math.atan2(cx(zz + 1) - cx(zz), 1) + Math.PI / 2);
+for (const z of TESIS[0]) for (const zz of kopyaZ(z) ? [z, z + PER] : [z]) tesisKur(world, cx(zz) - BARR - CEP - 5.5, 0, zz, Math.atan2(cx(zz + 1) - cx(zz), 1) + Math.PI / 2);
+// tesis cebinin asfaltı: ana yolun sağ kenarından dış bariyere kadar, park çizgileriyle
+{ const pos = [], idx = []; let n = 0; const cz = new Dilimli(BG, new THREE.MeshBasicMaterial({ color: 0xf2f2ea })), o = new THREE.Object3D();
+  for (const t of TESIS[0]) for (const tt of kopyaZ(t) ? [t, t + PER] : [t]) { let ilk = true;
+    for (let z = tt - 62; z <= tt + 62; z += 2) { const g = cepGen(0, z), c = cx(z); pos.push(c - 6.4, 0.012, z, c - 8.3 - g, 0.012, z); if (!ilk) { const a = n * 2; idx.push(a - 2, a, a - 1, a - 1, a, a + 1); } ilk = false; n++; }
+    for (let z = tt - 22; z <= tt + 22; z += 3) { o.position.set(cx(z) - 9.6, 0.025, z); o.rotation.set(0, Math.atan2(cx(z + 1) - cx(z), 1), 0); o.scale.set(0.16, 0.02, 1.6); cz.ekle(o); } } // ana yolla cep arasında kesik çizgi
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x565a63, side: THREE.DoubleSide })); m.receiveShadow = true; world.add(m); cz.bitir(world); }
