@@ -11,7 +11,7 @@ const cxDuz = (z) => { const s = clamp((z - 80) / 200, 0, 1); return s * (26 * M
 // Dağ yolu: dar toprak yol, sol (+x) yanda kaya duvarı, sağ (-x) yanda korkuluksuz uçurum; sürekli tırmanır.
 export let HARITA = 0; export const haritaSec = (h) => { HARITA = h; };
 export const DAG = { yol: 4.4, len: 650 }; // yarı genişlik (m), uzunluk
-const cxDag = (z) => { const s = clamp((z - 30) / 90, 0, 1); return s * (13 * Math.sin(z / 58) + 5 * Math.sin(z / 23 + 2)); };
+const cxDag = (z) => { const s = clamp((z - 30) / 90, 0, 1); return s * (17 * Math.sin(z / 46) + 5 * Math.sin(z / 21 + 2)); }; // keskin S virajlar
 const hDag = (z) => { const u = clamp(z, -100, 900); return Math.max(0, u - 20) * 0.075 + 1.6 * Math.sin(u / 37) * clamp((u - 20) / 60, 0, 1); }; // ~45 m tırmanış
 export const cx = (z) => (HARITA ? cxDag(z) : cxDuz(z));
 export const yH = (z) => (HARITA ? hDag(z) : 0); // yolun yüksekliği

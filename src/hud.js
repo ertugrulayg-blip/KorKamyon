@@ -4,7 +4,7 @@ import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
 import { $, ASAMA, BUMP, BUMP_V, COL, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
 import { OILB, RAD, SPOT, TAHTA, asamaSec } from './sim.js';
-import { dagG, dagKur, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
+import { SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
@@ -135,7 +135,7 @@ export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x *
 // Harita değişimi: dağ yolunda düz yolun nesneleri gizlenir, dağ sahnesi (ilk seferde kurulur) görünür.
 let gosterilen = -1; // şu an çizilen harita (oda sahibinde benzetim haritayı önceden değiştirir)
 function haritaGoster(h) {
-  haritaSec(h); gosterilen = h; if (h) dagKur();
+  haritaSec(h); gosterilen = h; if (h) dagKur(); haritaIsik(h);
   for (const c of world.children) { if (c === dagG) c.visible = !!h; else if (c !== bitis && !oilM.includes(c)) c.visible = !h; }
 }
 export function draw(V, dt) {
@@ -150,7 +150,7 @@ export function draw(V, dt) {
   tupKopuk(V, dt);
   fireG.visible = !!V.fr; if (V.fr) { fireG.position.set(V.fr[0], 0, V.fr[1]); const k = 0.45 + V.fr[2] / 180; flames.forEach((f, i) => { const s = k * (0.75 + 0.35 * Math.sin(performance.now() / (70 + i * 23) + i * 2)); f.scale.set(s, s * (1.1 + 0.3 * Math.sin(performance.now() / 50 + i)), s); f.position.y = 1.3 + 0.45 * f.scale.y; }); }
   steam.forEach((m, i) => { const on = t.ht > 70 && t.s === 'run'; m.visible = on; if (on) { const u = (performance.now() / 1400 + i / 6) % 1; m.position.set(Math.sin(i * 2.3) * 0.5, 2.2 + u * 2.6, 4.5 - u * 1.2); m.scale.setScalar(0.2 + u * 0.55); m.material.opacity = 0.55 * (1 - u) * Math.min(1, (t.ht - 70) / 15); } });
-  rainK += ((t.rn && t.s === 'run' ? 1 : 0) - rainK) * 0.04; scene.fog.color.copy(SKY).lerp(GRAY, rainK); scene.background.copy(scene.fog.color); scene.fog.near = 70 - 45 * rainK; scene.fog.far = 230 - 140 * rainK;
+  rainK += ((t.rn && t.s === 'run' ? 1 : 0) - rainK) * 0.04; scene.fog.color.copy(SIS.renk).lerp(GRAY, rainK); scene.background.copy(SIS.gok).lerp(GRAY, rainK); scene.fog.near = SIS.near - 45 * rainK; scene.fog.far = SIS.far - 140 * rainK; // haritanın sisi (dağda gün batımı pusu)
   rainP.visible = rainK > 0.1; if (rainP.visible) { const a = rainP.geometry.attributes.position; for (let i = 1; i < a.array.length; i += 3) { a.array[i] -= dt * 26; if (a.array[i] < 0) a.array[i] += 16; } a.needsUpdate = true; }
   polPark.forEach((g, i) => (g.visible = !qu[i])); oilM.forEach((m, i) => { const o = V.ol[i]; m.visible = !!o; if (o) m.position.set(o[0], 0.03, o[1]); });
   if (net.isHost) { cT.X = t.X; cT.Z = t.Z; cT.th = t.th; } else { cT.th += (t.th - cT.th) * 0.25; cT.X += Math.sin(cT.th) * t.v * dt; cT.Z += Math.cos(cT.th) * t.v * dt; cT.X += (t.X - cT.X) * 0.15; cT.Z += (t.Z - cT.Z) * 0.15; if (Math.abs(t.Z - cT.Z) > 30) { cT.X = t.X; cT.Z = t.Z; } }

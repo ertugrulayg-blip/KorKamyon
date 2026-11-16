@@ -184,6 +184,7 @@ export const dagG = new THREE.Group(); dagG.visible = false; world.add(dagG);
 let dagKuruldu = false;
 export function dagKur() {
   if (dagKuruldu) return; dagKuruldu = true;
+  const hs = (x) => { const s = Math.sin(x * 127.1) * 43758.5453; return s - Math.floor(s); }; // sabit sözde rastgele
   const VADI = -22, Y = DAG.yol, adim = 3, son = DAG.len + 150;
   // şerit: her z için verilen (x, y) noktalarından bir yüzey örer; renk biraz rastgele (toprak, kaya)
   const serit = (noktalar, renk, oynat) => {
@@ -197,8 +198,26 @@ export function dagKur() {
     const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, flatShading: true })); m.receiveShadow = true; dagG.add(m); return m;
   };
   serit((z) => { const c = cx(z), h = yH(z); return [[c + Y, h + 0.02], [c, h + 0.05], [c - Y, h + 0.02]]; }, 0x9b7a52, 0.06); // toprak yol
-  serit((z) => { const c = cx(z), h = yH(z); return [[c + Y, h], [c + Y + 1.2, h + 2.6], [c + Y + 3.2, h + 7.5], [c + Y + 8, h + 14], [c + Y + 20, h + 23], [c + Y + 45, h + 30]]; }, 0x8c8478, 0.12); // kaya duvarı
-  serit((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.5, h - 1], [c - Y - 1.3, h - (h - VADI) * 0.45], [c - Y - 2.4, VADI + 1.5], [c - Y - 9, VADI]]; }, 0x7d7464, 0.12); // uçurum (dik)
+  // Kayalar: köşeli low-poly yüzeyler; dik yüzler turuncu-kiremit, düz yüzler zeytin yeşili (referans görseldeki gibi)
+  const kaya = (noktalar, sallan) => {
+    const satirlar = []; for (let z = -60; z <= son; z += adim) satirlar.push(noktalar(z).map(([x, y], i) => { const k = i && sallan ? sallan * (hs(z * 0.37 + i * 7.1) - 0.5) : 0, k2 = i && sallan ? sallan * (hs(z * 0.91 + i * 3.3) - 0.5) : 0; return new THREE.Vector3(x + k, y + k2, z + (i ? (hs(z + i) - 0.5) * adim * 0.6 : 0)); }));
+    const pos = [], col = [], c = new THREE.Color(), e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), nrm = new THREE.Vector3();
+    const ucgen = (a, b, d, t) => { e1.subVectors(b, a); e2.subVectors(d, a); nrm.crossVectors(e1, e2).normalize(); const duz = Math.abs(nrm.y) > 0.62, r = hs(t);
+      c.setHex(duz ? [0x7f8f4f, 0x6c8146, 0x8f9a57][(r * 3) | 0] : [0xc9774a, 0xdc9a63, 0xa9603d, 0xb86d45][(r * 4) | 0]);
+      for (const v of [a, b, d]) { pos.push(v.x, v.y, v.z); col.push(c.r, c.g, c.b); } };
+    for (let s = 1; s < satirlar.length; s++) for (let i = 0; i < satirlar[s].length - 1; i++) { const A = satirlar[s - 1][i], B = satirlar[s][i], C = satirlar[s - 1][i + 1], D = satirlar[s][i + 1]; ucgen(A, B, C, s * 13.1 + i); ucgen(C, B, D, s * 7.7 + i * 2.9); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, flatShading: true })); m.receiveShadow = true; dagG.add(m); return m;
+  };
+  kaya((z) => { const c = cx(z), h = yH(z), u = 1 + 0.5 * Math.sin(z / 41); return [[c + Y, h], [c + Y + 1.2, h + 2.8], [c + Y + 3, h + 8 * u], [c + Y + 6, h + 15 * u], [c + Y + 14, h + 26 * u], [c + Y + 26, h + 40 * u], [c + Y + 50, h + 52]]; }, 2.2); // kaya duvarı
+  kaya((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.5, h - 1], [c - Y - 1.4, h - (h - VADI) * 0.4], [c - Y - 2.6, VADI + 3], [c - Y - 9, VADI]]; }, 1.2); // uçurum (dik)
+  // uzak dağlar: katman katman, sisle kaybolur
+  { let t = 9001; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
+    for (let z = -150; z < son + 400; z += 55) for (const sd of [1, -1]) { if (r() < 0.25) continue;
+      const uzak = 70 + r() * 150, yuk = 50 + r() * 80, gen = 30 + r() * 35, gd = new THREE.ConeGeometry(gen, yuk, 5 + ((r() * 3) | 0), 2).toNonIndexed();
+      const p = gd.getAttribute('position'), cl = []; for (let i = 0; i < p.count; i += 3) { const yesil = p.getY(i) + p.getY(i + 1) + p.getY(i + 2) < -yuk * 0.6 && r() < 0.7, hx = yesil ? [0x6c8146, 0x7f8f4f][(r() * 2) | 0] : [0xc9774a, 0xb86d45, 0xdc9a63, 0x9c5a3c][(r() * 4) | 0], cc = new THREE.Color(hx); for (let k = 0; k < 3; k++) cl.push(cc.r, cc.g, cc.b); }
+      gd.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3));
+      const m = new THREE.Mesh(gd, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })); m.position.set(cx(z) + sd * (Y + uzak), (sd > 0 ? yH(z) : VADI) + yuk / 2 - 4, z); m.rotation.y = r() * 6; dagG.add(m); } }
   const vadi = add(dagG, new THREE.PlaneGeometry(900, son + 700), M(0x5f8f4a), -200, VADI - 0.05, son / 2); vadi.rotation.x = -Math.PI / 2; // vadi tabanı
   // uçurum kenarında beyaz işaret taşları
   const tas = new Dilimli(BG, M(0xe8e4da)), o = new THREE.Object3D();
@@ -216,6 +235,13 @@ export function dagKur() {
     const vadiA = [], dagA = [];
     for (let z = -40; z < son; z += 5) { const c = cx(z), h = yH(z);
       if (r() < 0.8) vadiA.push([c - Y - 16 - r() * 70, VADI, z + r() * 4, 3 + r() * 3, r() * 6]);
-      if (r() < 0.35) dagA.push([c + Y + 9 + r() * 10, h + 14 + r() * 6, z, 2.5 + r() * 2, r() * 6]); }
+      if (r() < 0.55) { const d = 4 + r() * 12, u = 1 + 0.5 * Math.sin(z / 41); dagA.push([c + Y + d, h + (d < 6 ? 8 * u * (d - 3) / 3 : 8 * u + (d - 6) * 0.9 * u) - 0.5, z, 2 + r() * 2.2, r() * 6]); } }
     scatter(KENNEY + 'nature/tree_pineTallA.glb', dagG, vadiA, { golge: false }); scatter(KENNEY + 'nature/tree_pineRoundA.glb', dagG, dagA, { golge: false }); }
+}
+
+// Haritaya göre gökyüzü, sis ve güneş: dağda gün batımı (sıcak pus), düz yolda gündüz
+export const SIS = { renk: new THREE.Color(0x9fd4ff), gok: new THREE.Color(0x9fd4ff), near: 70, far: 230 }; // hud.js her karede buna göre (yağmurla karıştırarak) uygular
+export function haritaIsik(h) {
+  if (h) { SIS.gok.setHex(0xf2c9a2); SIS.renk.setHex(0xe7bf9f); SIS.near = 60; SIS.far = 330; sun.color.setHex(0xffc890); }
+  else { SIS.gok.copy(SKY); SIS.renk.copy(SKY); SIS.near = 70; SIS.far = 230; sun.color.setHex(0xfff1d6); }
 }
