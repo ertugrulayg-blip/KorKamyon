@@ -2,6 +2,11 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-16 — Şoför mahalli: baş çevirme ve gerçek görüntülü aynalar
+- Koltuktayken (şoför ve yolcu) fare ya da ekranı kaydırma başı çevirir (±115°, `ui.sBakis/sEgim`); oturunca baş öne döner.
+- İki yan ayna gerçek görüntü verir: kabinin dışında geriye bakan iki kamera render hedefine çizer (256×384, kare başına biri yenilenir; yalnız içeriden bakarken). Görüntü sağ-sol ters çevrilir. Sağ ayna uzak olduğu için büyük.
+- Gösterge paneli (hız, yakıt, hararet), tavan, güneşlik, direkler, sallanan zar. Tavan ve direkler yalnız içeriden bakarken görünür (üstten bakışta koltuktakileri kapatmasın).
+
 ## 2026-11-16 — Dağ yolunun son biçimi (sahibiyle görüntü üzerinden ayarlandı)
 - Kenarlar üç tip kesit (`kesit(z)`, world.js): iki yanı orman düzlüğü, sağda keskin uçurum (yalnız burada düşülür), sağda hafif yamaç (9 m sürülebilir). Yan profiller `dagSol/dagSag`.
 - Güneşli açık gökyüzü. Dağ yol boyunca yeşil → kayalık → karlı (`karK`); karda direksiyon geç tepki verir ve kamyon hafif kayar.

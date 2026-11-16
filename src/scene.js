@@ -285,3 +285,29 @@ export function haritaIsik(h) {
   if (h) { SIS.gok.setHex(0xa9dcff); SIS.renk.setHex(0xcfe9fb); SIS.near = 90; SIS.far = 380; sun.color.setHex(0xfff6e0); } // açık, güneşli hava; uzaklar açık mavi pusa karışır
   else { SIS.gok.copy(SKY); SIS.renk.copy(SKY); SIS.near = 70; SIS.far = 230; sun.color.setHex(0xfff1d6); }
 }
+
+// ---------- şoför mahalli: gerçek görüntü veren yan aynalar, gösterge paneli, tavan ----------
+// Aynalar: her biri kabinin dışında geriye bakan küçük bir kameranın görüntüsünü gösterir (hud.js kare başına birini yeniler).
+export const aynaRT = [0, 1].map(() => new THREE.WebGLRenderTarget(256, 384)), aynaKam = [], aynaM = [];
+for (const [i, s] of [[0, 1], [1, -1]]) { // 0 sol (+x), 1 sağ
+  const kam = new THREE.PerspectiveCamera(46, 256 / 384, 0.3, 320); kam.position.set(s * 2.05, 2.85, 3.1); kam.rotation.y = s * 0.09; cabIn.add(kam); aynaKam.push(kam); // -z'ye (geriye) bakar, hafif içe dönük: kasanın yanı görünür
+  const t = aynaRT[i].texture; t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1; // ayna görüntüsü: sağ-sol ters
+  const g = new THREE.Group(); g.position.set(s * 1.98, 2.85, 3.28); g.rotation.y = s > 0 ? Math.PI + 0.62 : Math.PI - 0.95; if (s < 0) g.scale.setScalar(1.5); /* sağ ayna şoföre uzak: büyük */ cabIn.add(g); // şoföre dönük
+  add(g, BG, M(0x1c1f25), 0, 0, -0.03, 0.62, 0.9, 0.05); // ayna gövdesi
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.83), new THREE.MeshBasicMaterial({ map: t, fog: false })); g.add(m); aynaM.push(m);
+}
+// gösterge paneli: hız, yakıt, hararet kadranları (ibreleri hud.js çevirir)
+const kadran = (x, yazi, renk) => { const p = add(cabIn, new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => {
+  c.fillStyle = '#12151b'; c.beginPath(); c.arc(64, 64, 60, 0, 7); c.fill(); c.strokeStyle = '#cfd6e0'; c.lineWidth = 4; c.stroke();
+  c.strokeStyle = renk; c.lineWidth = 6; for (let k = 0; k <= 8; k++) { const a = Math.PI * (0.75 + (k / 8) * 1.5); c.beginPath(); c.moveTo(64 + Math.cos(a) * 46, 64 + Math.sin(a) * 46); c.lineTo(64 + Math.cos(a) * 56, 64 + Math.sin(a) * 56); c.stroke(); }
+  c.fillStyle = '#fff'; c.font = '900 26px system-ui,Arial'; c.textAlign = 'center'; c.fillText(yazi, 64, 104); }) }), x, 2.45, 3.185); p.rotation.y = Math.PI;
+  const ib = new THREE.Group(); ib.position.set(x, 2.45, 3.17); cabIn.add(ib); add(ib, BG, new THREE.MeshBasicMaterial({ color: 0xff5a3a }), 0, 0.055, 0, 0.014, 0.11, 0.01); return ib; };
+export const ibreHiz = kadran(1.06, 'km/h', '#ffffff'), ibreIsi = kadran(0.34, '🌡', '#ff8a5a'); kadran(0.7, '⛽', '#7bd389').visible = false; // yakıtın ibresi eskisi (needle)
+// yalnız içeriden bakarken görünen parçalar (üstten bakışta koltuktakileri kapatmasın): tavan, güneşlik, arka cam direkleri, sallanan süs
+export const kabinIc = new THREE.Group(); kabinIc.visible = false; cabIn.add(kabinIc);
+add(kabinIc, BG, M(0x2a2420), 0, 3.42, 2.25, 3.0, 0.08, 2.5); // tavan
+add(kabinIc, BG, M(0x3a322c), 0.7, 3.3, 3.25, 0.9, 0.2, 0.05).rotation.x = 0.3; add(kabinIc, BG, M(0x3a322c), -0.7, 3.3, 3.25, 0.9, 0.2, 0.05).rotation.x = 0.3; // güneşlikler
+for (const s of [-1, 1]) { add(kabinIc, BG, M(0x23262d), s * 1.45, 3.05, 1.05, 0.1, 0.72, 0.1); add(kabinIc, BG, M(0x23262d), s * 1.45, 3.36, 2.25, 0.1, 0.08, 2.4); } // arka direkler, kapı üstü
+add(kabinIc, BG, M(0x23262d), 0, 2.74, 3.3, 2.9, 0.08, 0.3); // torpido üstü
+export const kabinSus = new THREE.Group(); kabinSus.position.set(0, 3.36, 3.0); kabinIc.add(kabinSus); // tavandan sarkan zar
+add(kabinSus, CG, M(0x111111), 0, -0.15, 0, 0.006, 0.3, 0.006); add(kabinSus, BG, M(0xf4efe2), 0, -0.34, 0, 0.1, 0.1, 0.1).rotation.set(0.5, 0.6, 0.2);
