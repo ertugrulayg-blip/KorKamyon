@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, DAG, DKAYA, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, kopyaZ, srnd, yH } from './world.js';
+import { BOX, BUMP, DAG, DKAYA, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, kesit, kopyaZ, srnd, yH } from './world.js';
 import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT, TAHTA } from './sim.js';
 
 // ---------- görüntü ----------
@@ -208,13 +208,10 @@ export function dagKur() {
   { const T1 = new THREE.Color(0xc9a87c), T2 = new THREE.Color(0xb6936a), IZ = new THREE.Color(0x957354), KN = new THREE.Color(0xd9bd94), S = [Y, Y - 0.7, 2.6, 1.8, 1.0, 0, -1.0, -1.8, -2.6, -Y + 0.7, -Y];
     yuzey((z) => { const c = cx(z), h = yH(z); return S.map((x, i) => [c + x, h + (i === 0 || i === S.length - 1 ? 0.02 : 0.05)]); },
       (c, x, y, z, dik, i) => { c.copy(T1).lerp(T2, 0.5 + dalga(x * 3, z * 2) * 0.5); if (i === 3 || i === 7) c.lerp(IZ, 0.7); if (i <= 1 || i >= S.length - 2) c.lerp(KN, 0.6); }); } // toprak yol
-  // kaya duvarının yol kenarından d metre içerideki yüksekliği (ağaçları yamaca oturtmak için; aşağıdaki profille aynı)
-  const DUVAR = [[0, 0], [0.8, 2.5], [1.8, 7], [3.5, 13], [7, 18], [13, 23], [22, 33], [34, 46], [55, 60]];
-  const duvarY = (z, d) => { const u = 1 + 0.45 * Math.sin(z / 41) + 0.25 * Math.sin(z / 13 + 1); for (let i = 1; i < DUVAR.length; i++) if (d <= DUVAR[i][0]) { const [x0, y0] = DUVAR[i - 1], [x1, y1] = DUVAR[i], k = (d - x0) / (x1 - x0); return (i === 1 ? y0 + (y1 - y0) * k : (y0 + (y1 - y0) * k) * u) * (i === 1 ? 1 : 1); } return 60 * u; };
-  // kaya duvarı: yoldan dik yükselir, yukarıda ormanlık yamaç ve tepeler (yükseklik z'ye göre dalgalanır)
-  yuzey((z) => { const c = cx(z), h = yH(z), u = 1 + 0.45 * Math.sin(z / 41) + 0.25 * Math.sin(z / 13 + 1); return [[c + Y, h], [c + Y + 0.8, h + 2.5], [c + Y + 1.8, h + 7 * u], [c + Y + 3.5, h + 13 * u], [c + Y + 7, h + 18 * u], [c + Y + 13, h + 23 * u], [c + Y + 22, h + 33 * u], [c + Y + 34, h + 46 * u], [c + Y + 55, h + 60 * u]]; }, dagRengi); // kaya duvarı
-  // uçurum: yoldan vadiye dik iner
-  yuzey((z) => { const c = cx(z), h = yH(z); return [[c - Y, h], [c - Y - 0.4, h - 0.8], [c - Y - 1.2, h - (h - VADI) * 0.35], [c - Y - 2.2, h - (h - VADI) * 0.75], [c - Y - 3.4, VADI + 2.5], [c - Y - 9, VADI]]; }, dagRengi); // uçurum
+  // yol kenarları (world.js: dagSol / dagSag): solda kaya duvarı ya da orman düzlüğü; sağda uçurum, hafif yamaç ya da orman
+  const SOLD = [0, 0.8, 1.8, 3.5, 7, 13, 22, 34, 55, 80], SAGD = [0, 0.4, 1.2, 2.2, 3.4, 6, 9, 13, 20, 30, 45, 70, 100];
+  yuzey((z) => { const c = cx(z), h = yH(z); return SOLD.map((d) => [c + Y + d, h + dagSol(z, d)]); }, dagRengi);
+  yuzey((z) => { const c = cx(z), h = yH(z); return SAGD.map((d) => [c - Y - d, h + dagSag(z, d)]); }, dagRengi);
   // uzak dağlar: pürüzsüz tepeler; eteği yeşil, yamacı kaya rengi, sisle katman katman kaybolur
   { let t = 9001; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
     for (let z = -150; z < son + 400; z += 55) for (const sd of [1, -1]) { if (r() < 0.25) continue;
@@ -231,7 +228,7 @@ export function dagKur() {
     const vadi = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); vadi.position.set(-200, VADI - 0.8, son / 2); vadi.rotation.x = -Math.PI / 2; vadi.receiveShadow = true; dagG.add(vadi); }
   // uçurum kenarında beyaz işaret taşları
   const tas = new Dilimli(BG, M(0xe8e4da)), o = new THREE.Object3D();
-  for (let z = 10; z < son; z += 7) { o.position.set(cx(z) - Y + 0.25, yH(z) + 0.15, z); o.rotation.set(0, z, 0); o.scale.set(0.35, 0.3, 0.35); tas.ekle(o); }
+  for (let z = 10; z < son; z += 7) { if (kesit(z).u < 0.6) continue; /* yalnız uçurum kenarında */ o.position.set(cx(z) - Y + 0.25, yH(z) + 0.15, z); o.rotation.set(0, z, 0); o.scale.set(0.35, 0.3, 0.35); tas.ekle(o); }
   tas.bitir(dagG);
   // yola dağılmış taşlar (DTAS): tekerlek üstünden geçince sarsar, hızlıysa lastik patlar
   const yt = new Dilimli(new THREE.IcosahedronGeometry(1, 2), M(0x8f7462));
@@ -242,11 +239,15 @@ export function dagKur() {
     const m2 = add(dagG, new THREE.IcosahedronGeometry(1, 2), M(0xa9785a), cx(k.z) + k.x + Math.sign(k.x) * 0.9, yH(k.z) + 0.45, k.z + 1.1); m2.scale.setScalar(0.6); }
   // vadide ve dağın üstünde ağaçlar
   if (ui.kalite > 0) { let t = 4242; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
-    const vadiA = [], dagA = [];
-    for (let z = -40; z < son; z += 5) { const c = cx(z), h = yH(z);
-      if (r() < 0.8) vadiA.push([c - Y - 16 - r() * 70, VADI, z + r() * 4, 3 + r() * 3, r() * 6]);
-      for (let k = 0; k < 2; k++) if (r() < 0.7) { const d = 7 + r() * 40; dagA.push([c + Y + d, h + duvarY(z, d) - 0.6, z + r() * 4, 2 + r() * 2.4, r() * 6]); } } // yatık yamaçlarda orman
-    scatter(KENNEY + 'nature/tree_pineTallA.glb', dagG, vadiA, { golge: false }); scatter(KENNEY + 'nature/tree_pineRoundA.glb', dagG, dagA, { golge: false }); }
+    const vadiA = [], dagA = [], mesA = [];
+    for (let z = -40; z < son; z += 4) { const c = cx(z), h = yH(z), w = kesit(z), sb = Y + w.y * 9 + w.o * 3.5, lb = Y + w.o * 3.5;
+      if (w.u > 0.5 && r() < 0.7) vadiA.push([c - Y - 16 - r() * 70, VADI, z + r() * 4, 3 + r() * 3, r() * 6]); // vadi tabanı
+      for (let k = 0; k < 2; k++) if (r() < 0.6 * (1 - w.o)) { const d = 7 + r() * 45; dagA.push([c + Y + d, h + dagSol(z, d) - 0.6, z + r() * 4, 2 + r() * 2.4, r() * 6]); } // kaya duvarının üstündeki yamaç
+      // orman: iki yanda sık ağaç; yamaç: sağda seyrekten sıka
+      const n = Math.round(w.o * 5 + w.y * 2.5);
+      for (let k = 0; k < n; k++) { const d = sb - Y + 1.2 + r() * r() * 45; (r() < 0.5 ? mesA : dagA).push([c - Y - d, h + dagSag(z, d) - 0.3, z + r() * 4, 2.2 + r() * 2.2, r() * 6]); }
+      for (let k = 0; k < Math.round(w.o * 5); k++) { const d = lb - Y + 1.2 + r() * r() * 45; (r() < 0.5 ? mesA : dagA).push([c + Y + d, h + dagSol(z, d) - 0.3, z + r() * 4, 2.2 + r() * 2.2, r() * 6]); } }
+    scatter(KENNEY + 'nature/tree_pineTallA.glb', dagG, vadiA, { golge: false }); scatter(KENNEY + 'nature/tree_pineRoundA.glb', dagG, dagA, { golge: false }); scatter(KENNEY + 'nature/tree_oak.glb', dagG, mesA, { golge: false }); }
 }
 
 // Haritaya göre gökyüzü, sis ve güneş: dağda gün batımı (sıcak pus), düz yolda gündüz

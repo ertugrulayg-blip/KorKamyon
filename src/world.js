@@ -10,9 +10,23 @@ const cxDuz = (z) => { const s = clamp((z - 80) / 200, 0, 1); return s * (26 * M
 // ---------- harita: 0 düz yol, 1 dağ yolu ----------
 // Dağ yolu: dar toprak yol, sol (+x) yanda kaya duvarı, sağ (-x) yanda korkuluksuz uçurum; sürekli tırmanır.
 export let HARITA = 0; export const haritaSec = (h) => { HARITA = h; };
-export const DAG = { yol: 4.4, len: 650 }; // yarı genişlik (m), uzunluk
+export const DAG = { yol: 4.4, len: 650, vadi: -22 }; // yarı genişlik (m), uzunluk
 const cxDag = (z) => { const s = clamp((z - 30) / 90, 0, 1); return s * (17 * Math.sin(z / 46) + 5 * Math.sin(z / 21 + 2)); }; // keskin S virajlar
 const hDag = (z) => { const u = clamp(z, -100, 900); return Math.max(0, u - 20) * 0.075 + 1.6 * Math.sin(u / 37) * clamp((u - 20) / 60, 0, 1); }; // ~45 m tırmanış
+// Dağ yolunun kesitleri: 'o' iki yan orman (düzlük), 'u' sağda keskin uçurum, 'y' sağda hafif eğimli yamaç (yoldan çıkıp dönülebilir).
+// Solda: ormanda düzlük, ötekilerde yüksek kaya duvarı. Geçişler 24 m'de yumuşar.
+const KES = [[-1e9, 'o'], [90, 'u'], [230, 'y'], [360, 'u'], [450, 'o'], [540, 'y'], [1e9, '']];
+const yumusak = (z, a) => { const t = clamp((z - a + 12) / 24, 0, 1); return t * t * (3 - 2 * t); };
+export function kesit(z) { const w = { u: 0, y: 0, o: 0 }; for (let i = 0; i < KES.length - 1; i++) w[KES[i][1]] += yumusak(z, KES[i][0]) * (1 - yumusak(z, KES[i + 1][0])); return w; }
+export const sagBanket = (z) => { const w = kesit(z); return w.y * 9 + w.o * 3.5; }; // yolun sağında sürülebilir alan (m)
+export const solBanket = (z) => kesit(z).o * 3.5;
+const ara = (T, d) => { for (let i = 1; i < T.length; i++) if (d <= T[i][0]) { const [x0, y0] = T[i - 1], [x1, y1] = T[i]; return y0 + ((y1 - y0) * (d - x0)) / (x1 - x0); } return T[T.length - 1][1]; };
+const DUVAR = [[0, 0], [0.8, 2.5], [1.8, 7], [3.5, 13], [7, 18], [13, 23], [22, 33], [34, 46], [55, 60], [80, 66]];
+// yol kenarından d metre dışarıdaki zeminin yola göre yüksekliği (sol: +, sağ: çoğunlukla −)
+export const dagSol = (z, d) => { const w = kesit(z), u = d > 0.8 ? 1 + 0.45 * Math.sin(z / 41) + 0.25 * Math.sin(z / 13 + 1) : 1, orman = d < 22 ? 0.02 * d : 0.44 + (d - 22) * 0.7; return ara(DUVAR, d) * u * (1 - w.o) + orman * w.o; };
+export const dagSag = (z, d) => { const w = kesit(z), H = hDag(z) - DAG.vadi;
+  const fu = -ara([[0, 0], [0.4, 0.8], [1.2, H * 0.35], [2.2, H * 0.75], [3.4, H - 2.5], [9, H]], d), fy = d < 9 ? -0.04 * d : -0.36 - (d - 9) * 0.42, fo = d < 30 ? -0.01 * d : -0.3 - (d - 30) * 0.8;
+  return Math.max(-H, w.u * fu + w.y * fy + w.o * fo); };
 export const cx = (z) => (HARITA ? cxDag(z) : cxDuz(z));
 export const yH = (z) => (HARITA ? hDag(z) : 0); // yolun yüksekliği
 export const egim = (z) => (yH(z + 1) - yH(z - 1)) / 2; // yokuş (tan)
