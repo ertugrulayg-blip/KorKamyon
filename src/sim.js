@@ -1,12 +1,12 @@
 // Oyun benzetimi: yalnız oda sahibinde çalışır. Kamyon, oyuncular, tanker, polis, yük, yangın, haydut.
-import { kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
+import { CEP, cepGen, DOK, tesisYakin, kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
 
 export let cpc = 1, cps = 0, tX = 0, tZ = 0; // cpc/cps: kabin açısının cos/sin'i
 export const toCab = (x, z) => { tX = x * cpc - (z - HZ) * cps; tZ = HZ + x * cps + (z - HZ) * cpc; }, fromCab = (x, z) => { tX = x * cpc + (z - HZ) * cps; tZ = HZ - x * cps + (z - HZ) * cpc; };
 
 // ---------- oyun durumu (yalnız oda sahibinde) ----------
 export const players = new Map();
-export const T = { X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], pax: 0, paz: 0, state: 'lobby', t: 0, nextFlat: 30, lv: 1, hedef: 100, ol: {}, egitim: -1, egT: 0, yildiz: 0, dmg: [0, 0, 0, 0], hitCd: 0, phi: 0, oilCd: 0, autoT: 0, heat: 0, stall: false, rain: 0, wipeT: 0, nFire: 60, nBot: 50, ej: [0, 0, 0], ejT: [0, 0, 0], msg: '', msgT: 0, why: '', gas: 0, br: 0, sig: 0 };
+export const T = { durT: 0, tok: 100, erzak: { muz: 4, portakal: 3, et: 2 }, tesisKasa: 0, X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], pax: 0, paz: 0, state: 'lobby', t: 0, nextFlat: 30, lv: 1, hedef: 100, ol: {}, egitim: -1, egT: 0, yildiz: 0, dmg: [0, 0, 0, 0], hitCd: 0, phi: 0, oilCd: 0, autoT: 0, heat: 0, stall: false, rain: 0, wipeT: 0, nFire: 60, nBot: 50, ej: [0, 0, 0], ejT: [0, 0, 0], msg: '', msgT: 0, why: '', gas: 0, br: 0, sig: 0 };
 export const TKS = { st: 0, x: 3.3, z: -50, valve: 0, vp: 0, t: 0 };
 export const NZ = { p: [0, -5, 0], holder: null, hand: 0, dock: false };
 export const AIR = [0, 1.8, ARKA + 0.45], AH = { p: AIR.slice(), holder: null, hand: 0 }; // basınç hortumu: kasanın arkasındaki kompresörden alınır, patlak lastiğe yaklaştırılır
@@ -14,10 +14,16 @@ export const BARR = 9.5, BLIM = BARR - 2.05; // bariyerin yol eksenine uzaklığ
 export const DRL = [-0.95, 1.8, ARKA + 0.45], DH = { p: DRL.slice(), holder: null, hand: 0 }; // tamir matkabı: kompresörün yanındaki sarı kutudan kabloyla çekilir, hasarlı yere tutulur
 export const SPOT = [[1.48, 1.6, -1.2, 'sol ön yan'], [-1.48, 1.6, -1.2, 'sağ ön yan'], [1.48, 1.6, -2.8, 'sol arka yan'], [-1.48, 1.6, -2.8, 'sağ arka yan']]; // hasar alan yerler
 export const PC = { st: 0, x: 0, z: -45, hp: 100, t: 0, ram: 5, slip: 0, used: [] }; // polis: 0 yok, 1 yaklaşıyor, 2 kovalıyor, 3 saf dışı
-export const KOL = [-1.22, 1.3, 2.7], KOL_BOY = 0.95, KOL_T = 0.9, POMPA = [-0.28, 2.42, 2.98]; // yolcunun yağ kolu (taban, boy, çekme süresi) ve soğutma pompası (torpidoda)
+export const KOL = [-1.22, 1.3, 2.7], KOL_BOY = 0.95, KOL_T = 0.9, POMPA = [-0.28, 2.12, 2.98]; // yolcunun yağ kolu (taban, boy, çekme süresi) ve soğutma pompası (torpidoda)
 export const kolAci = () => Math.sin(Math.min(1, (T.kolT || 0) / KOL_T) * Math.PI) * 0.95; // kolun geriye yatma açısı
 export const TAHTA = [-1.08, 1.3, -4.6]; // tahta yığını (sağ kenar boyunca): kırık kenara çakılacak tahtalar buradan alınır
-export const OILB = [0.95, 1.8, ARKA + 0.45], OIL = []; // yağ varili (kasanın arkası) ve yola dökülen yağlar (dünya koordinatı)
+export const OIL = []; // yola dökülen yağlar (dünya koordinatı); yağ yalnız yolcunun koluyla, kamyonun arkasından dökülür
+// ---------- erzak ----------
+// Ekip acıkır (T.tok: ortak tokluk). Kasanın arkasındaki erzak deposundan meyve yenir, et barbeküde kızartılır.
+// Tesiste kamyon durunca satıcı arabası yanaşır: üstündeki tezgâhtan kasa alınıp depoya taşınır.
+export const DEPO = [0.95, 1.8, ARKA + 0.45], BARBEKU = [1.05, 1.8, ARKA + 2.0], TEZGAH = [-3.6, 1.8, -3.2];
+export const YIYECEK = { muz: 10, portakal: 15, et: 45 }, DUR_SURE = 20; // tokluk katkısı; kamyon durunca tanınan süre (sn)
+const erzakVar = () => T.erzak.muz + T.erzak.portakal + T.erzak.et;
 export const CR = [[0.6, -1.0], [-0.6, -1.0], [0.6, -3.0], [-0.6, -3.0]].map(([x, z]) => ({ x, z, x0: x, z0: z, vx: 0, vz: 0, lost: false, b: box(-0.3, 0.3, 1.3, 1.9, -0.3, 0.3, 'crate', 0xb07a3a) })); // yük sandıkları: sert sürüşte kayar, korkuluğu aşarsa düşer
 export const EXT = [-1.2, 1.75, 0.55], EX = { p: EXT.slice(), holder: null, hand: 0 }; // yangın söndürücü (kasanın sağ ön köşesi)
 export const FIRE = { on: false, x: 0, z: 0, hp: 0, t: 0 }, FSPOT = [[0.5, -2.0], [-0.5, -0.3], [0, -4.0], [-0.6, -3.3], [0.4, -5.6]];
@@ -102,7 +108,7 @@ export function dropNozzle() {
   const h = players.get(NZ.holder); NZ.holder = null;
   if (TKS.st === 2 && Math.hypot(NZ.p[0] - INLET[0], NZ.p[1] - INLET[1], NZ.p[2] - INLET[2]) < 0.9) { NZ.dock = true; say('hortumTak'); puan(h, 30, 'yakit'); }
 }
-export function unseat(q) { const s = SEAT[q.seat]; q.seat = 0; place(q, s[0], 2.1, 0.5); q.seatCd = Math.max(q.seatCd, KOLTUK_BEKLE); } // kalkan 5 sn oturamaz (otur-kalk ile sürüş olmasın)
+export function unseat(q) { const s = SEAT[q.seat]; q.kalkS = q.seat; q.seat = 0; place(q, s[0], 2.1, 0.5); q.seatCd = Math.max(q.seatCd, KOLTUK_BEKLE); } // kalktığı koltuğa 5 sn oturamaz (öbür koltuğa oturabilir)
 const KOLTUK_BEKLE = 5;
 export function eject(q) { const s = q.seat; T.ej[s]++; T.ejT[s] = 3.9; unseat(q); for (let i = 0; i < 21; i += 3) { q.P[i + 1] += 0.5; q.Q[i] = q.P[i]; q.Q[i + 1] = q.P[i + 1] - 0.13; q.Q[i + 2] = q.P[i + 2] + 0.045; } q.stun = 1.2; puan(q, -10, 'firlama'); /* koltuk yerine düşünce (3,9 sn) herkes oturabilir */ say('firladi', q.name); }
 export function pourOil(pl) { T.oilCd = 6; const z = ARKA - 2.5; OIL.push([r2(T.X + z * Math.sin(T.th)), r2(T.Z + z * Math.cos(T.th))]); if (OIL.length > 5) OIL.shift();
@@ -120,7 +126,12 @@ export function stepPlayer(pl, dt) {
   if (I.s !== undefined && I.s !== pl.ls) {
     pl.ls = I.s;
     if (pl.seat) unseat(pl);
-    else if (pl.seatCd <= 0) for (const s of [1, 2]) { fromCab(SEAT[s][0], SEAT[s][2]); if (!(T.ejT[s] > 0) && ![...players.values()].some((q) => q.seat === s) && Math.hypot(P[0] - tX, P[2] - tZ) < 1.4 && P[1] > 1.5) { pl.seat = s; pl.seatT = 0; pl.tahta = 0; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); break; } }
+    else { // en yakın boş koltuğa oturur (yolcu koltuğunun yanındayken şoför koltuğuna atlamaz)
+      let en = 0, enD = 1.25;
+      for (const s of [1, 2]) { fromCab(SEAT[s][0], SEAT[s][2]); const d = Math.hypot(P[0] - tX, P[2] - tZ);
+        if (d < enD && !(T.ejT[s] > 0) && !(pl.seatCd > 0 && pl.kalkS === s) && ![...players.values()].some((q) => q.seat === s) && P[1] > 1.5) { en = s; enD = d; } }
+      if (en) { pl.seat = en; pl.seatT = 0; pl.tahta = 0; pl.kasa = 0; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); }
+    }
   }
   pl.seatCd -= dt;
   // yolcunun yağ kolu: koltukta F'ye basınca (polis peşteyken) yola yağ döker
@@ -141,7 +152,7 @@ export function stepPlayer(pl, dt) {
     P[i] += vx + T.pax * dt * dt; P[i + 1] += vy - 22 * dt * dt; P[i + 2] += vz + T.paz * dt * dt;
   }
   const tutDuvar = (k) => pl.pin[k] && pl.pin[k].b && pl.pin[k].b.tag !== 'crate', hold = stand && (tutDuvar(0) || tutDuvar(1)) ? 0 : 1; // kasaya tutunup ayakta duran yürümez; sandık tutan taşıyarak yürür
-  const g = stand ? 0.25 : pinned ? 0.04 : 0.02, tv = 4.3 * dt * hold;
+  const g = stand ? 0.25 : pinned ? 0.04 : 0.02, tv = 4.3 * dt * hold * (T.ol.erzak && T.tok <= 0 && !pl.bot ? 0.55 : 1) * (pl.kasa ? 0.8 : 1); // aç ekip ve kasa taşıyan yavaş yürür
   for (const i of [0, 3]) { P[i] += (mx * tv - (P[i] - Q[i])) * g; P[i + 2] += (mz * tv - (P[i + 2] - Q[i + 2])) * g; }
   if (stand) {
     const wd = -Math.cos(pl.phase) * 0.14 * ml * hold; // yalpa: gövde basan ayağın üstüne yatar
@@ -221,7 +232,18 @@ export function stepPlayer(pl, dt) {
     if (k) { pl.cakT = (pl.cakT || 0) + dt; if (pl.cakT >= 2.2) { k.kirik = false; k.b.on = true; pl.tahta = 0; pl.cakT = 0; puan(pl, 40, 'tahta'); say('kenarTamir', pl.name); } }
     else pl.cakT = Math.max(0, (pl.cakT || 0) - dt * 2); }
   pl.luT = !!I.u;
-  if (I.u && !st && T.state === 'run' && Math.hypot(P[3] - OILB[0], P[5] - OILB[2]) < 1.7) { pl.oilT += dt; if (pl.oilT > 0.5 && T.oilCd <= 0) { pl.oilT = 0; pourOil(pl); } } else pl.oilT = 0; // yağ varili
+  if (T.ol.erzak && !st && T.state === 'run') { // erzak: depo (ye / kasa bırak), barbekü (et kızart), satıcı tezgâhı (kasa al)
+    const yak = (N, r) => Math.hypot(P[3] - N[0], P[5] - N[2]) < r, bas = I.u && !pl.luE;
+    if (bas && yak(DEPO, 1.3)) {
+      if (pl.kasa) { pl.kasa = 0; T.erzak.muz += 2; T.erzak.portakal += 1; T.erzak.et += 1; puan(pl, 25, 'erzak'); say('erzakGeldi', pl.name); }
+      else if (T.tok < 92) { const m = T.erzak.muz > 0 ? 'muz' : T.erzak.portakal > 0 ? 'portakal' : null; if (m) { T.erzak[m]--; T.tok = Math.min(100, T.tok + YIYECEK[m]); puan(pl, 5); say(m === 'muz' ? 'yediMuz' : 'yediPortakal', pl.name); } else say(T.erzak.et > 0 ? 'etCig' : 'erzakYok'); }
+      else say('tokuz');
+    }
+    if (bas && DOK.on && !pl.kasa && T.tesisKasa > 0 && yak(TEZGAH, 1.4)) { pl.kasa = 1; T.tesisKasa--; say('kasaAldi', pl.name); }
+    if (I.u && yak(BARBEKU, 1.3) && T.erzak.et > 0 && T.tok < 95 && !pl.kasa) { pl.izgT = (pl.izgT || 0) + dt; T.izgara = 0.3; if (pl.izgT >= 3) { pl.izgT = 0; T.erzak.et--; T.tok = Math.min(100, T.tok + YIYECEK.et); puan(pl, 20, 'izgara'); say('etPisti', pl.name); } }
+    else pl.izgT = Math.max(0, (pl.izgT || 0) - dt * 2);
+  }
+  pl.luE = !!I.u;
   if (I.u && !st) { fromCab(RAD[0], RAD[2]); if (Math.hypot(P[3] - tX, P[5] - tZ) < 1.7) { T.heat = Math.max(0, T.heat - dt * 30); T.sogutan = pl; T.coolT = 0.3; } }
   if (I.u && !st) {
     if (TKS.st === 2 && Math.hypot(P[3] - TKS.x, P[4] - 2.3, P[5] - (TKS.z - 2)) < 1.4) { TKS.vp += dt / 1.2; if (TKS.vp >= 1) { TKS.vp = 0; TKS.valve = 25; say('vanaAcildi'); puan(pl, 30, 'yakit'); } }
@@ -229,9 +251,10 @@ export function stepPlayer(pl, dt) {
   pl.offT = P[1] < 0.7 ? pl.offT + dt : 0;
   // kasanın dışına taşmış ama düşmemiş (ayağı korkuluğa takılmış): tutunmuyorsa kısa sürede düşmüş sayılır ve kasaya geri gelir
   const tankerde = TK.on && Math.abs(P[0] - TKS.x) < 1.5 && P[2] > TKS.z - 3.9 && P[2] < TKS.z + 5.4 && P[1] > 1.2; // tankerin üstünde durmak serbest (vana)
-  const disari = (Math.abs(P[0]) > 1.62 || P[2] < ARKA - 0.25 || P[2] > 5.6) && !tankerde, tutunuyor = pl.pin[0] || pl.pin[1];
+  const dokta = DOK.on && P[0] < -1.4 && P[0] > DOK.a[0] - 0.15 && P[2] > DOK.a[2] - 0.15 && P[2] < DOK.b[2] + 0.15 && P[1] > 1.2; // satıcı arabasının üstünde
+  const disari = (Math.abs(P[0]) > 1.62 || P[2] < ARKA - 0.25 || P[2] > 5.6) && !tankerde && !dokta, tutunuyor = pl.pin[0] || pl.pin[1];
   pl.disT = disari && !tutunuyor && !pl.seat && !pl.onPol ? (pl.disT || 0) + dt : 0; if (pl.disT > 1.2) pl.offT = 99;
-  if (pl.offT > 2.5 || P[2] < -16 || P[2] > 14 || Math.abs(P[0]) > 12) { pl.dead = 2; pl.tahta = 0; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); if (T.state === 'run' && !T.dus) { say('dustu', pl.name); puan(pl, -25, 'dusme'); } } // kamyonla birlikte uçurumdan düşen cezalı sayılmaz
+  if (pl.offT > 2.5 || P[2] < -16 || P[2] > 14 || Math.abs(P[0]) > 12) { pl.dead = 2; pl.tahta = 0; pl.kasa = 0; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); if (T.state === 'run' && !T.dus) { say('dustu', pl.name); puan(pl, -25, 'dusme'); } } // kamyonla birlikte uçurumdan düşen cezalı sayılmaz
 }
 export function stepAir(dt) {
   const h = AH.holder && players.get(AH.holder);
@@ -286,10 +309,11 @@ export function stepExtras(dt) {
     const v = [...players.values()].find((q) => q !== B && !q.seat && q.dead <= 0 && Math.hypot(q.P[0] - B.P[0], q.P[2] - B.P[2]) < 1.1);
     if (v && B.pt <= 0.5) { tx = v.P[0]; tz = v.P[2]; near = 0.3; if (B.pt <= 0) { B.pc++; B.pt = 1.6; } }
     const dx = tx - B.P[0], dz = tz - B.P[2], d = Math.hypot(dx, dz) || 1; B.inp = { mx: d > near ? dx / d : dx / d * 0.05, mz: d > near ? dz / d : dz / d * 0.05, p: B.pc };
-    if (c && Math.hypot(c.x - B.P[0], c.z - B.P[2]) < 1.0 && B.stun <= 0) { B.stealT += dt; if (B.stealT > 7) { B.stealT = 0; loseCrate(c, 'sandikAtti'); } } else B.stealT = Math.max(0, B.stealT - dt); }
+    if (c && Math.hypot(c.x - B.P[0], c.z - B.P[2]) < 1.0 && B.stun <= 0) { B.stealT += dt; if (B.stealT > 7) { B.stealT = 0; loseCrate(c, 'sandikAtti'); } } else B.stealT = Math.max(0, B.stealT - dt);
+    if (T.ol.erzak && B.stun <= 0 && erzakVar() > 0) { B.erzT = (B.erzT || 0) + dt; if (B.erzT > 9) { B.erzT = 0; const L = ['et', 'portakal', 'muz'].filter((k) => T.erzak[k] > 0), k = L[(Math.random() * L.length) | 0]; T.erzak[k] = Math.max(0, T.erzak[k] - 2); say('erzakCaldi'); } } } // haydut erzak da çalar
 }
 export function stepPolice(dt) {
-  const S = PC, run = T.state === 'run' && !(T.cd > 0), px = S.x, pz = S.z; T.oilCd -= dt; T.kolT = Math.max(0, (T.kolT || 0) - dt); T.pompaT = Math.max(0, (T.pompaT || 0) - dt); T.ejT[1] -= dt; T.ejT[2] -= dt;
+  const S = PC, run = T.state === 'run' && !(T.cd > 0), px = S.x, pz = S.z; T.oilCd -= dt; T.kolT = Math.max(0, (T.kolT || 0) - dt); T.izgara = Math.max(0, (T.izgara || 0) - dt); T.pompaT = Math.max(0, (T.pompaT || 0) - dt); T.ejT[1] -= dt; T.ejT[2] -= dt;
   if (run && T.ol.polis && S.st === 0) for (let i = 0; i < POLZ.length; i++) if (!S.used[i] && T.Z > POLZ[i] - 8 && T.Z < POLZ[i] + 5) { S.used[i] = 1; /* hız fark etmez; ama her noktada değil: yarı yarıya, iki kovalamaca arası en az 2 dk */ if (!T.polisZorla && (Math.random() > 0.5 || T.t - (T.sonPolis ?? -999) < 120)) break; T.polisZorla = false; T.sonPolis = T.t; Object.assign(S, { st: 1, x: -2.5, z: -45, hp: 100, t: 0, ram: 5, slip: 0, geri: 0, darbe: 0 }); say('polisGeldi'); break; }
   if (S.st === 1) { S.z += dt * 9; S.x -= S.x * Math.min(1, dt); if (S.z >= -9.4) { S.z = -9.4; S.st = 2; say('polisArkada'); } }
   else if (S.st === 2) { S.t += dt; S.geri = Math.max(0, S.geri - dt * 1.2); S.darbe = Math.max(0, S.darbe - dt * 2.2); // darbe: üstüne atlanınca araç çöker, yavaşlayıp geride kalır
@@ -375,7 +399,7 @@ export function stepTruck(dt) {
   let bias = 0, vmax = 20; for (let w = 0; w < 4; w++) if (T.flat[w]) { vmax -= 6; bias += Math.sign(WHEEL[w][0]) * 0.2 + Math.sin(T.t * 7) * 0.05; }
   if (run) { T.heat = clamp(T.heat + dt * (0.5 + gas * 1.1 + (HARITA ? Math.max(0, egim(T.Z)) * gas * 6 : 0)) * (1 + 0.6 * ilerleme()) * (T.ol.isi || 0), 0, 100); if (T.heat >= 70) T.isiUyari = true; if (T.isiUyari && T.heat < 40) { T.isiUyari = false; puan(T.sogutan, 30, 'su'); } if (T.heat >= 100 && !T.stall) { T.stall = true; say('motorStop'); } if (T.stall && T.heat < 55) { T.stall = false; say('motorCalisti'); } if (T.stall) gas = 0; }
   if (T.fuel <= 0) gas = 0; T.gas = gas; T.br = br;
-  const off = Math.abs(T.X - cx(T.Z)) > (HARITA ? DAG.yol : 7);
+  const off = HARITA ? Math.abs(T.X - cx(T.Z)) > DAG.yol && !(T.X < cx(T.Z) && cepGen(1, T.Z) > 1) : T.X - cx(T.Z) > 7 || T.X - cx(T.Z) < -(7 + cepGen(0, T.Z)); // tesis cebi asfalt: yavaşlatmaz
   const slow = T.v < 8.4; // ~30 km/s altı: kendi kendine neredeyse hiç yavaşlamaz, fren yumuşak
   let a = gas * 3.2 - br * (slow ? 2.5 : 7) - (slow ? 0.06 : 0.5 + T.v * 0.02) - (off ? (slow ? 1 : 5) : 0) - (T.v > vmax ? 4 : 0); if (!run) a = -6;
   const yokus = HARITA ? egim(T.Z) : 0; if (run) a -= 9.8 * yokus * 0.55; // dağ yolu: yokuşta kamyon zorlanır
@@ -387,7 +411,7 @@ export function stepTruck(dt) {
   const oz = T.Z; T.X += (Math.sin(thc) * T.v - omt * Math.cos(T.th) * HZ) * dt; T.Z += (Math.cos(thc) * T.v + omt * Math.sin(T.th) * HZ) * dt; T.th += omt * dt; T.phi = clamp(T.phi + (om - omt) * dt, -0.7, 0.7);
   { const c = cx(T.Z), e = T.X - c; T.hitCd -= dt; // yol kenarı bariyerleri: kamyon dışarı çıkamaz, çarptıkça hasar alır
     // dağda: solda kaya duvarı (ormanda ağaçlar); sağda kesite göre uçurum (düşer), yamaç ya da orman (ağaçlara kadar sürülebilir)
-    const ucurum = HARITA && kesit(T.Z).u > 0.5, lim = HARITA ? (e > 0 ? DAG.yol - 1.55 + solBanket(T.Z) : ucurum ? 1e9 : DAG.yol - 1.55 + sagBanket(T.Z)) : BLIM;
+    const ucurum = HARITA && kesit(T.Z).u > 0.5, lim = HARITA ? (e > 0 ? DAG.yol - 1.55 + solBanket(T.Z) : ucurum ? 1e9 : DAG.yol - 1.55 + sagBanket(T.Z)) : e > 0 ? BLIM : BLIM + cepGen(0, T.Z); // düz yolda sağda tesis cebine girilir
     if (ucurum && run && e < -(DAG.yol + 0.3 + sagBanket(T.Z))) { dususBasla(); return; } // uçurumdan yuvarlanır (birkaç saniye düşer)
     if (Math.abs(e) > lim) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
       T.X = c + sd * lim; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
@@ -407,7 +431,15 @@ export function stepTruck(dt) {
   if (T.egitim >= 0) {}
   else if (T.dmg[0] + T.dmg[1] + T.dmg[2] + T.dmg[3] >= 100) { T.state = 'over'; T.why = 'hurda'; }
   else if (T.Z >= T.hedef && T.egitim < 0) bitir();
-  else if (T.t > 6 && T.v < 0.4) { T.state = 'over'; T.why = T.fuel <= 0 ? 'yakitBitti' : 'durdu'; }
+  else if (T.t > 6 && T.v < 0.4) { T.durT += dt; if (T.durT >= DUR_SURE) { T.state = 'over'; T.why = T.fuel <= 0 ? 'yakitBitti' : 'durdu'; } } // durunca 20 sn pay: tamir, erzak
+  if (T.v > 1.5) T.durT = 0;
+  // tesis: kamyon tesisin önünde durunca satıcı arabası yanaşır (korkuluğun o yanı açılır); kalkınca gider
+  { const t = T.ol.erzak && T.state === 'run' && T.v < 0.4 && T.t > 6 && T.X - cx(T.Z) < -(HARITA ? DAG.yol + 2.5 : 10.5) ? tesisYakin(HARITA, T.Z) : undefined; // kamyon cebin içinde durmuş olmalı
+    if (t !== undefined && !DOK.on) { DOK.on = true; if (T.tesisSon !== t + (T.tur || 0) * 1e4) { T.tesisSon = t + (T.tur || 0) * 1e4; T.tesisKasa = 3; } say('saticiGeldi'); }
+    else if (t === undefined && DOK.on) DOK.on = false;
+    for (const k of KENAR) if (k.s < 0 && k.z1 > DOK.a[2] && k.z0 < DOK.b[2]) k.b.on = !k.kirik && !DOK.on; }
+  // tokluk: zamanla azalır; bitince ekip halsizleşir (yavaş yürür)
+  if (T.ol.erzak && T.state === 'run' && !(T.cd > 0)) { const once = T.tok; T.tok = Math.max(0, T.tok - dt * 0.4); for (const e of [50, 25, 0]) if (once > e && T.tok <= e) say(e ? 'acikti' : 'cokAc', e); }
   if (T.state === 'over' && T.sonsuz && !T.rekorBak) { // sonsuz yol bitti: mesafe ve rekor
     T.rekorBak = true; const m = Math.round(toplam()); T.yeniRekor = m > oyun.rekor;
     if (T.yeniRekor) { oyun.rekor = m; try { localStorage.setItem('kk-rekor', m); } catch (e) {} }
@@ -431,12 +463,12 @@ export function bitir() {
   oyun.lv = Math.min(ASAMA.length - 1, T.lv === 0 ? 1 : T.lv + 1);
 }
 export function startGame(lv = oyun.lv) {
-  resetGame(); const a = ASAMA[lv]; haritaSec(a.dag ? 1 : 0); Object.assign(T, { state: 'run', v: 0, cd: 5, lv, hedef: a.m, sonsuz: !!a.sonsuz, tur: 0, sonPolis: -999, dus: null, karUyari: false, rekorBak: false, yeniRekor: false, ol: a.olay, egitim: a.egitim ? 0 : -1, egT: 0, autoT: a.egitim ? 1e9 : 0 });
+  resetGame(); const a = ASAMA[lv]; haritaSec(a.dag ? 1 : 0); Object.assign(T, { state: 'run', v: 0, cd: 5, lv, hedef: a.m, sonsuz: !!a.sonsuz, tur: 0, sonPolis: -999, dus: null, karUyari: false, durT: 0, tok: 100, erzak: { muz: 4, portakal: 3, et: 2 }, tesisKasa: 0, tesisSon: -1, izgara: 0, rekorBak: false, yeniRekor: false, ol: a.olay, egitim: a.egitim ? 0 : -1, egT: 0, autoT: a.egitim ? 1e9 : 0 });
   for (const p of players.values()) Object.assign(p, { puan: 0, ist: {}, sure: { surus: 0, yolcu: 0, temiz: 0, enTemiz: 0 } });
 }
 export function resetGame() {
   Object.assign(T, { X: 0, Z: 0, th: 0, v: 0, steer: 0, fuel: 100, flat: [0, 0, 0, 0], rep: [0, 0, 0, 0], state: 'lobby', t: 0, cd: 0, dmg: [0, 0, 0, 0], hitCd: 0, phi: 0, oilCd: 0, autoT: 0, heat: 0, stall: false, rain: 0, wipeT: 0, nFire: rnd(40, 55), nBot: rnd(50, 65), isiUyari: false, sogutan: null, yildiz: 0, egitim: -1, egT: 0, ol: {}, ej: [0, 0, 0], ejT: [0, 0, 0], nextFlat: rnd(18, 28), msg: '', msgT: 0, why: '', sig: 0 });
-  Object.assign(TKS, { st: 0, z: -50, valve: 0, vp: 0 }); NZ.holder = null; NZ.dock = false; AH.holder = null; AH.p = AIR.slice(); DH.holder = null; DH.p = DRL.slice(); Object.assign(PC, { st: 0, z: -45, hp: 100, slip: 0, used: [], geri: 0, darbe: 0 }); OIL.length = 0; if (BOT) { players.delete(BOT.id); BOT = null; } FIRE.on = false; EX.holder = null; EX.p = EXT.slice(); for (const c of CR) Object.assign(c, { x: c.x0, z: c.z0, vx: 0, vz: 0, lift: 0, lost: false }); for (const p of players.values()) { p.seatT = 0; p.seatCd = 0; p.tahta = 0; p.cakT = 0; } for (const k of KENAR) { k.kirik = false; k.b.on = true; } for (const k of DKAYA) k.vurdu = 0; T.dus = null; for (const o of OBS) o.hit = false;
+  Object.assign(TKS, { st: 0, z: -50, valve: 0, vp: 0 }); NZ.holder = null; NZ.dock = false; AH.holder = null; AH.p = AIR.slice(); DH.holder = null; DH.p = DRL.slice(); Object.assign(PC, { st: 0, z: -45, hp: 100, slip: 0, used: [], geri: 0, darbe: 0 }); OIL.length = 0; if (BOT) { players.delete(BOT.id); BOT = null; } FIRE.on = false; EX.holder = null; EX.p = EXT.slice(); for (const c of CR) Object.assign(c, { x: c.x0, z: c.z0, vx: 0, vz: 0, lift: 0, lost: false }); for (const p of players.values()) { p.seatT = 0; p.seatCd = 0; p.tahta = 0; p.cakT = 0; } for (const k of KENAR) { k.kirik = false; k.b.on = true; } for (const k of DKAYA) k.vurdu = 0; T.dus = null; DOK.on = false; T.durT = 0; T.tok = 100; T.erzak = { muz: 4, portakal: 3, et: 2 }; for (const p of players.values()) { p.kasa = 0; p.izgT = 0; p.kalkS = 0; } for (const o of OBS) o.hit = false;
 }
 export function simStep(dt) { stepAir(dt);
   cpc = Math.cos(T.phi); cps = Math.sin(T.phi);
@@ -447,4 +479,4 @@ export function simStep(dt) { stepAir(dt);
   for (let a = 0; a < L.length; a++) for (let b = a + 1; b < L.length; b++) { const p = L[a], q = L[b]; if (p.seat || q.seat || p.dead > 0 || q.dead > 0) continue; for (const k of [0, 1]) { const i = k * 3, dx = q.P[i] - p.P[i], dy = q.P[i + 1] - p.P[i + 1], dz = q.P[i + 2] - p.P[i + 2], d = Math.hypot(dx, dy, dz) || 1e-6; if (d < 0.56) { const s = ((0.56 - d) / d) * 0.5; p.P[i] -= dx * s; p.P[i + 2] -= dz * s; q.P[i] += dx * s; q.P[i + 2] += dz * s; } } }
 }
 export const r2 = (v) => Math.round(v * 100) / 100;
-export const snap = () => ({ t: 's', T: { lv: T.state === 'lobby' ? oyun.lv : T.lv, ac: oyun.acik, hd: T.hedef, pm: T.pompaT > 0 ? 1 : 0, hr: HARITA, du: T.dus ? [r2(T.dus.y), r2(T.dus.r)] : 0, kl: r2(T.kolT || 0), kk: KENAR.map((k) => (k.kirik ? 1 : 0)).join(''), sn: T.sonsuz ? 1 : 0, tp: Math.round(toplam()), rk: oyun.rekor, yr: T.yeniRekor ? 1 : 0, yz: T.yildiz, eg: T.egitim, X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, dm: T.dmg.map(Math.ceil), ph: Math.round(T.phi * 1000) / 1000, ht: Math.round(T.heat), sl: T.stall ? 1 : 0, rn: T.rain, wp: T.wipeT > 0 ? 1 : 0, ej: T.ej, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], d: [r2(DH.p[0]), r2(DH.p[1]), r2(DH.p[2]), DH.holder ? 1 : 0], q: [PC.st, r2(PC.x), r2(PC.z), Math.max(0, Math.ceil(PC.hp)), PC.slip > 0 ? 1 : 0, PC.used.slice(), T.oilCd > 0 ? Math.ceil(T.oilCd) : 0, r2(PC.darbe || 0)], ol: OIL, cr: CR.map((c) => (c.lost ? 0 : [r2(c.x), r2(c.z), r2(c.lift || 0)])), fr: FIRE.on ? [FIRE.x, FIRE.z, Math.ceil(FIRE.hp)] : 0, x: [r2(EX.p[0]), r2(EX.p[1]), r2(EX.p[2]), EX.holder ? 1 : 0], p: [...players.values()].map((p) => ({ pu: Math.round(p.puan || 0), ...(T.state === 'over' || T.state === 'win' ? { ist: { ...p.ist, surus: Math.round(p.sure.surus), yolcu: Math.round(p.sure.yolcu), temiz: Math.round(p.sure.enTemiz) } } : {}), bt: p.bot ? 1 : 0, id: p.id, n: p.name, c: p.ci, s: p.seat, st: p.seat ? Math.max(0, Math.ceil(SEAT_T - p.seatT)) : 0, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, h: (p.pin[0] ? 1 : 0) | (p.pin[1] ? 2 : 0), th: p.tahta ? 1 : 0, ck: r2((p.cakT || 0) / 2.2), P: Array.from(p.P, r2) })) });
+export const snap = () => ({ t: 's', T: { lv: T.state === 'lobby' ? oyun.lv : T.lv, ac: oyun.acik, hd: T.hedef, tk: T.ol.erzak ? Math.round(T.tok) : -1, ez: [T.erzak.muz, T.erzak.portakal, T.erzak.et], dr: T.durT > 0 && T.state === 'run' ? Math.ceil(DUR_SURE - T.durT) : 0, dk: DOK.on ? 1 : 0, tks: T.tesisKasa, iz: T.izgara > 0 ? 1 : 0, pm: T.pompaT > 0 ? 1 : 0, hr: HARITA, du: T.dus ? [r2(T.dus.y), r2(T.dus.r)] : 0, kl: r2(T.kolT || 0), kk: KENAR.map((k) => (k.kirik ? 1 : 0)).join(''), sn: T.sonsuz ? 1 : 0, tp: Math.round(toplam()), rk: oyun.rekor, yr: T.yeniRekor ? 1 : 0, yz: T.yildiz, eg: T.egitim, X: T.X, Z: T.Z, th: T.th, v: T.v, st: T.steer, f: T.fuel, fl: T.flat, rp: T.rep, dm: T.dmg.map(Math.ceil), ph: Math.round(T.phi * 1000) / 1000, ht: Math.round(T.heat), sl: T.stall ? 1 : 0, rn: T.rain, wp: T.wipeT > 0 ? 1 : 0, ej: T.ej, s: T.state, cd: Math.ceil(T.cd || 0), m: T.msgT > 0 ? T.msg : '', g: T.gas, b: T.br, why: T.why, sg: T.sig, oh: OBS.map((o, i) => (o.hit ? i : -1)).filter((i) => i >= 0) }, k: [TKS.st, TKS.x, TKS.z, TKS.valve > 0 ? 1 : 0, TKS.vp], n: [NZ.p[0], NZ.p[1], NZ.p[2], NZ.dock ? 1 : 0], a: [r2(AH.p[0]), r2(AH.p[1]), r2(AH.p[2]), AH.holder ? 1 : 0], d: [r2(DH.p[0]), r2(DH.p[1]), r2(DH.p[2]), DH.holder ? 1 : 0], q: [PC.st, r2(PC.x), r2(PC.z), Math.max(0, Math.ceil(PC.hp)), PC.slip > 0 ? 1 : 0, PC.used.slice(), T.oilCd > 0 ? Math.ceil(T.oilCd) : 0, r2(PC.darbe || 0)], ol: OIL, cr: CR.map((c) => (c.lost ? 0 : [r2(c.x), r2(c.z), r2(c.lift || 0)])), fr: FIRE.on ? [FIRE.x, FIRE.z, Math.ceil(FIRE.hp)] : 0, x: [r2(EX.p[0]), r2(EX.p[1]), r2(EX.p[2]), EX.holder ? 1 : 0], p: [...players.values()].map((p) => ({ pu: Math.round(p.puan || 0), ...(T.state === 'over' || T.state === 'win' ? { ist: { ...p.ist, surus: Math.round(p.sure.surus), yolcu: Math.round(p.sure.yolcu), temiz: Math.round(p.sure.enTemiz) } } : {}), bt: p.bot ? 1 : 0, id: p.id, n: p.name, c: p.ci, s: p.seat, st: p.seat ? Math.max(0, Math.ceil(SEAT_T - p.seatT)) : 0, y: r2(p.yaw), d: p.dead > 0 ? 1 : 0, h: (p.pin[0] ? 1 : 0) | (p.pin[1] ? 2 : 0), th: p.tahta ? 1 : 0, kz: p.kasa ? 1 : 0, ig: r2((p.izgT || 0) / 3), ck: r2((p.cakT || 0) / 2.2), P: Array.from(p.P, r2) })) });

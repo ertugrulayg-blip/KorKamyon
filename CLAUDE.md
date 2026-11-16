@@ -31,6 +31,7 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/sohbet.js` — sesli sohbet: bağlantılar sessiz parçayla kurulur, mikrofon açılınca `replaceTrack`; kipler kapalı/açık/bas-konuş (V); uzaktaki sesler WebAudio kazancıyla (oyuncu başına seviye).
 - `src/panel.js` — ayarlar (ses seviyeleri, oyuncu listesi, oda sahibi için lobide çıkarma) ve tuş rehberi. Ses ayarları `ui.ses`, `localStorage kk-ses`.
 - Oyuncular tek gövdeyi paylaşır: `assets/chars/govde.glb` (Meshy modeli, iskeleti ve ağırlıkları Blender'da kuruldu; renkler kırmızının kodda boyanmasıyla). Haydut hâlâ eski `haydut.glb`. Gövdeyi yeniden üretmek: Blender'ın Python modülü (`pip install bpy`) ile iskelet betiği — kemik adları `rig.js` içindeki `KEMIK` listesiyle aynı olmalı.
+- Erzak: `T.tok`, `T.erzak`, `DEPO`/`BARBEKU`/`TEZGAH` (sim.js), tesisler `TESIS`, satıcı arabası `DOK` (world.js). Durma payı `DUR_SURE`.
 - Yeni kasa düzeni: `ARKA` (world.js) kasanın arka ucu; yan kenarlar `KENAR` (kırılır, tahta ile onarılır).
 - `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
 - `marketing/` — Steam görselleri (`steam/`), mağaza metni (`STEAM-SAYFASI.md`), üretim betikleri (`cek.cjs` ekran görüntüleri, `hero.cjs` arka planlar, `kapak.cjs` kapaklar ve logo). `?temiz` adresi bardaki isimleri gizler.
