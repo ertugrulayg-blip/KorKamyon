@@ -64,7 +64,7 @@
   #ps .kucuk{left:12px;bottom:calc(var(--PH) + 26px)}
   #py .ok{bottom:14px;width:23vw;height:var(--OH);font-size:calc(26px*var(--k))}
   #py .ok[data-k="sl"]{left:2vw}#py .ok[data-k="yv"]{left:26.5vw}#py .ok[data-k="hz"]{left:51vw}#py .ok[data-k="sr"]{right:2vw}
-  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="t"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="u"]{left:calc(2vw + 240px*var(--k));bottom:calc(var(--OH) + 24px)}
+  #py .kucuk[data-k="s"]{left:2vw;bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="t"]{left:calc(2vw + 120px*var(--k));bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="u"]{left:calc(2vw + 240px*var(--k));bottom:calc(var(--OH) + 24px)}#py .kucuk[data-k="sp"]{left:calc(2vw + 360px*var(--k));bottom:calc(var(--OH) + 24px)}
   @media (pointer:coarse){#egitim{bottom:auto;top:52px;font-size:14px}body.egitimde #rol{display:none}#dok{display:block}
     #rol{font-size:16px;line-height:1.35;max-width:46vw}#rol b{font-size:26px}
     #sag{font-size:17px}#gorev{font-size:14px;max-width:44vw}#yakit,#can{width:min(44vw,240px);height:24px;border-width:3px;border-radius:13px}
@@ -180,7 +180,7 @@
   </div>
   <h3>YOLCU</h3><div class="tus">
     <div><kbd>A</kbd> <kbd>D</kbd> sola / sağa işaret</div><div><kbd>S</kbd> yavaşla · <kbd>W</kbd> hızlan işareti</div>
-    <div><kbd>C</kbd> kamera: yukarıdan → birinci şahıs → üçüncü şahıs (fareyle bak; Esc fareyi bırakır)</div><div><kbd>T</kbd> telsiz: frekansı <kbd>1</kbd>–<kbd>4</kbd> ile tuşla, tanker gelir (yalnız yolcu, yakıt %50 altı)</div><div><kbd>F</kbd> koltuktayken yağ kolu: polis peşteyken yola yağ döker (yolcu)</div>
+    <div><kbd>C</kbd> kamera: yukarıdan → birinci şahıs → üçüncü şahıs (fareyle bak; Esc fareyi bırakır)</div><div><kbd>T</kbd> telsiz: frekansı <kbd>1</kbd>–<kbd>4</kbd> ile tuşla, tanker gelir (yalnız yolcu, yakıt %50 altı)</div><div><kbd>F</kbd> koltuktayken yağ kolu: polis peşteyken yola yağ döker (yolcu)</div><div><kbd>R</kbd> basılı tut: soğutma pompası, motorun hararetini düşürür (yolcu)</div>
   </div>
   <h3>GENEL</h3><div class="tus">
     <div><kbd>Enter</kbd> oyunu başlat (oda sahibi)</div><div><kbd>V</kbd> bas-konuş · <kbd>M</kbd> sustur · <kbd>N</kbd> müzik</div>
@@ -207,7 +207,7 @@
   </div>
   <h3>PASSENGER</h3><div class="tus">
     <div><kbd>A</kbd> <kbd>D</kbd> left / right sign</div><div><kbd>S</kbd> slow down · <kbd>W</kbd> speed up sign</div>
-    <div><kbd>C</kbd> camera: overhead → first person → third person (look with the mouse; Esc releases it)</div><div><kbd>T</kbd> radio: dial the frequency with <kbd>1</kbd>–<kbd>4</kbd> to call the tanker (passenger only, fuel under 50%)</div><div><kbd>F</kbd> in the seat: oil lever, spills oil when the police chase you (passenger)</div>
+    <div><kbd>C</kbd> camera: overhead → first person → third person (look with the mouse; Esc releases it)</div><div><kbd>T</kbd> radio: dial the frequency with <kbd>1</kbd>–<kbd>4</kbd> to call the tanker (passenger only, fuel under 50%)</div><div><kbd>F</kbd> in the seat: oil lever, spills oil when the police chase you (passenger)</div><div><kbd>R</kbd> hold: coolant pump, cools the engine down (passenger)</div>
   </div>
   <h3>GENERAL</h3><div class="tus">
     <div><kbd>Enter</kbd> start the game (host)</div><div><kbd>V</kbd> push to talk · <kbd>M</kbd> mute · <kbd>N</kbd> music</div>
@@ -239,10 +239,10 @@
     <b data-k="ga" class="pedal gaz" data-t="b_gaz"></b>
   </div>
   <div id="py" class="pan">
-    <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="t" class="kucuk" data-t="b_tanker"></b><b data-k="u" class="kucuk" data-t="b_kol"></b>
+    <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="t" class="kucuk" data-t="b_tanker"></b><b data-k="u" class="kucuk" data-t="b_kol"></b><b data-k="sp" class="kucuk" data-t="b_pompa"></b>
     <b data-k="sl" class="ok" data-t="b_sol"></b><b data-k="yv" class="ok" data-t="b_yavas"></b><b data-k="hz" class="ok" data-t="b_hizlan"></b><b data-k="sr" class="ok" data-t="b_sag"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=65"></script>
+<script type="module" src="src/main.js?v=66"></script>
 </body>
 </html>

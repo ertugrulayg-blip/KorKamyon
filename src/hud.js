@@ -3,8 +3,8 @@ import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
 import { $, ASAMA, BUMP, BUMP_V, COL, DAG, dagSag, dagSol, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
-import { OILB, RAD, SPOT, TAHTA, asamaSec } from './sim.js';
-import { aynaKam, aynaM, aynaRT, ibreHiz, ibreIsi, kabinIc, kabinSus, SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
+import { KOL_T, OILB, RAD, SPOT, TAHTA, asamaSec } from './sim.js';
+import { pompaKol, vites, aynaKam, aynaM, aynaRT, ibreHiz, ibreIsi, kabinIc, kabinSus, SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
@@ -183,7 +183,7 @@ export function draw(V, dt) {
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
     if (p.th && !o.tahta) { o.tahta = add(scene, BG, tahtaRenk, 0, 0, 0, 0.26, 0.05, 1.3); } if (o.tahta) { o.tahta.visible = !!p.th && !p.d; if (p.th) { o.tahta.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.05, (P[11] + P[14]) / 2); o.tahta.rotation.set(0, p.y + Math.PI / 2, 0.15); } } // elindeki tahta (kollar arasında, yana doğru)
     if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde;
-      const eller = p === me && camM === 'b' && !p.d; for (const k of [0, 1]) { o.s[k].visible = eller; if (eller) { o.s[k].material = o.elMat || (o.elMat = M(COL[p.c % 4])); o.s[k].scale.setScalar(0.075); } } /* birinci şahısta kendi eldivenlerin görünür */ /* koltuktan bakan kendini görmez */ if (!p.d) {
+      const eller = p === me && (camM === 'b' || camM === 's' || camM === 'y') && !p.d; /* koltukta da kendi ellerin görünür: direksiyon, yağ kolu, pompa */ for (const k of [0, 1]) { o.s[k].visible = eller; if (eller) { o.s[k].material = o.elMat || (o.elMat = M(COL[p.c % 4])); o.s[k].scale.setScalar(0.075); } } /* birinci şahısta kendi eldivenlerin görünür */ /* koltuktan bakan kendini görmez */ if (!p.d) {
         // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
         // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.
         const ayak = Math.min(P[16], P[19]), dik = v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]).normalize().y;
@@ -200,14 +200,14 @@ export function draw(V, dt) {
   const fp = ui.kamera > 0 && !ch && seat === 0 && t.s === 'run' && me && !me.d && RP[me.id]; ui.fpAktif = !!fp; // kasada birinci / üçüncü şahıs
   if (fp && ui.bakisIlk) { ui.bakisIlk = false; ui.bakis = me.y || 0; }
   if (!fp) GOZ.ilk = true;
-  { const k = !ch && !t.du && (seat === 1 || seat === 2) && t.s === 'run' && ui.camMode < 0; if (k && !ui.koltukAktif) ui.sBakis = ui.sEgim = 0; ui.koltukAktif = k; } // koltuğa oturunca baş öne döner
+  { const k = !t.du && (seat === 1 || seat === 2) && t.s === 'run' && ui.camMode < 0; if (k && !ui.koltukAktif) ui.sBakis = ui.sEgim = 0; ui.koltukAktif = k; } // koltuğa oturunca baş öne döner
   if (!t.du) DUS.z = 0;
   if (!fp && !ui.koltukAktif && document.pointerLockElement) document.exitPointerLock();
   if (t.du) { // uçurumdan düşüş: kamera yol kenarında sabit kalır, düşen kamyonu izler
     if (!DUS.z) { DUS.z = cT.Z; DUS.p.set(cx(cT.Z) - 15, yH(cT.Z) - 3, cT.Z - 12); } // vadinin üstünde, boşlukta: yamaç ve düşen kamyon birlikte görünür
     pivot.updateMatrixWorld(true); v1.copy(DUS.p); world.localToWorld(v1); v2.set(0, 0.5, -1.5);
   }
-  else if (ch) { v1.set(0, 14, -26.5); v2.set(0, 1, -7); } // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
+  else if (ch && !(seat && t.s === 'run')) { v1.set(0, 14, -26.5); v2.set(0, 1, -7); } // kovalamaca kamerası yalnız kasadakilere; koltuktakiler aynadan izler // kovalamaca: kamera uzaklaşır, kamyon ve polis birlikte görünür
   else if (seat === 1 && t.s === 'run') { cabPt(v1, 0.7, 2.95, 2.0); const c = Math.cos(ui.sEgim - 0.02) * 30; cabPt(v2, 0.7 + Math.sin(ui.sBakis) * c, 2.95 + Math.sin(ui.sEgim - 0.02) * 30, 2.0 + Math.cos(ui.sBakis) * c); } // şoför: kendi koltuğundan; fareyle başını çevirir
   else if (seat === 2 && t.s === 'run') { cabPt(v1, -0.7, 3.0, 2.0); const c = Math.cos(ui.sEgim - 0.025) * 30; cabPt(v2, -0.7 + Math.sin(ui.sBakis) * c, 3.0 + Math.sin(ui.sEgim - 0.025) * 30, 2.0 + Math.cos(ui.sBakis) * c); } // yolcu: kendi koltuğundan yolu net görür // şoför: boyu kısa, göz tablonun hizasında — gökyüzü ve ağaç tepeleri görünür, yol görünmez
   else if (fp) { // birinci / üçüncü şahıs: göz noktası kalçadan alınıp yumuşatılır (jöle gövdenin sallanması kameraya geçmesin)
@@ -217,7 +217,7 @@ export function draw(V, dt) {
     if (ui.kamera === 1) { v1.copy(GOZ.p); v2.set(v1.x + dx * c, v1.y + Math.sin(ui.egim), v1.z + dz * c); }
     else { const u = 2.9; v1.set(GOZ.p.x - dx * u * c, GOZ.p.y + 0.6 - Math.sin(ui.egim) * u, GOZ.p.z - dz * u * c); v2.set(GOZ.p.x + dx * 2, GOZ.p.y + 0.1 + Math.sin(ui.egim) * 2, GOZ.p.z + dz * 2); } }
   else { v1.set(0, 10.2, -12.2); v2.set(0, 1.5, -1.8); } // diğerleri yukarıdan bakar (kasa uzun); yolcunun ileri penceresi var
-  { const m = ch ? 'c' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : t.du ? 'd' : fp ? (ui.kamera === 1 ? 'b' : 'u') : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b' || m === 'u' || m === 'd') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); if (t.du) cam.up.set(0, 1, 0).applyQuaternion(pivot.quaternion); else cam.up.set(0, 1, 0); /* düşerken ufuk dünyaya göre düz kalsın */ cam.position.copy(camP); cam.lookAt(camL); }
+  { const m = t.du ? 'd' : seat === 1 && t.s === 'run' ? 's' : seat === 2 && t.s === 'run' ? 'y' : ch ? 'c' : fp ? (ui.kamera === 1 ? 'b' : 'u') : 'n'; if (m !== camM) { if (camM && (m === 'c' || camM === 'c')) camB = 1.6; camM = m; } const k = camB > 0 ? 0.07 : 1; camB -= dt; if (m === 's' || m === 'y' || m === 'b' || m === 'u' || m === 'd') { camP.copy(v1); camL.copy(v2); } camP.lerp(v1, k); camL.lerp(v2, k); if (t.du) cam.up.set(0, 1, 0).applyQuaternion(pivot.quaternion); else cam.up.set(0, 1, 0); /* düşerken ufuk dünyaya göre düz kalsın */ cam.position.copy(camP); cam.lookAt(camL); }
   // koltuk fırlatma: koltuk yerinden fırlar, takla atar, birkaç saniye sonra yerine düşer
   for (const s of [1, 2]) { const g = koltuk[s], u = g.userData, e = t.ej ? t.ej[s] : 0;
     if (u.son === undefined) u.son = e; if (e !== u.son) { u.son = e; u.t = 0; }
@@ -241,7 +241,7 @@ export function draw(V, dt) {
   { const ic = camM === 's' || camM === 'y'; kabinIc.visible = ic;
     ibreHiz.rotation.z = -(0.75 - Math.min(1, (t.v * 3.6) / 80) * 1.5) * Math.PI; ibreIsi.rotation.z = -(0.75 - Math.min(1, t.ht / 100) * 1.5) * Math.PI;
     kabinSus.rotation.z += (-(t.st || 0) * 0.5 - kabinSus.rotation.z) * 0.06; kabinSus.rotation.x = Math.sin(performance.now() / 300) * 0.06;
-    if (ic && t.s !== 'lobby') { const i = (aynaSira++) & 1; for (const m of aynaM) m.visible = false; kabinIc.visible = false;
+    if (ic && t.s !== 'lobby') { const i = aynaSira++ % 3; for (const m of aynaM) m.visible = false; kabinIc.visible = false;
       ren.setRenderTarget(aynaRT[i]); ren.render(scene, aynaKam[i]); ren.setRenderTarget(null); for (const m of aynaM) m.visible = true; kabinIc.visible = true; } }
   if (t.s === 'lobby') drawBar(V, dt); else ren.render(scene, cam);
   { const pip = false, el = $('ileri'); if (pip) { const W = innerWidth, H = innerHeight, w = Math.round(Math.min(340, W * 0.34)), h = Math.round(w * 0.62), x = 12, y = TOUCH ? 150 : 175; fogS.visible = false;
@@ -264,7 +264,7 @@ export function draw(V, dt) {
     // F tuşunun çevresinde dolan halka: basılı tutulan işin ilerlemesi
     const el = $('eylem'), metin = ey ? `<kbd class="${dol >= 0 ? 'halka' : ''}">${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; }
     if (ey && dol >= 0) el.firstChild.style.setProperty('--p', Math.round(Math.min(1, dol) * 100) + '%'); }
-  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / 0.6) * Math.PI) * 0.9; telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
+  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / KOL_T) * Math.PI) * 0.95; if (pompaKol.userData.y0 === undefined) pompaKol.userData.y0 = pompaKol.position.y; pompaKol.position.y = pompaKol.userData.y0 + (t.pm ? Math.sin(performance.now() / 70) * 0.1 : 0); { const vg = Math.min(3, (t.v / 5) | 0); vites.rotation.x += ((vg % 2 ? 0.28 : -0.28) - vites.rotation.x) * 0.2; vites.rotation.z += ((vg < 2 ? 0.16 : -0.16) - vites.rotation.z) * 0.2; } telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = t.hr ? (DTBOLGE.find((b) => b.z1 > t.Z - 1) || {}).z0 : BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;

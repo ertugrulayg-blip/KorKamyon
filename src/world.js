@@ -70,12 +70,12 @@ box(-1.5, 1.5, 1.3, 1.8, ARKA - 0.1, ARKA, 'rail', 0x8a8f98);
 box(1.4, 1.5, 1.3, 2.7, 1, 3.2, 'door', 0xd8432f); box(-1.5, -1.4, 1.3, 2.7, 1, 3.2, 'door', 0xd8432f);
 box(-1.5, 1.5, 1.3, 2.7, 3.2, 3.5, 'dash', 0x2b2f38);
 box(-1.5, 1.5, 0.5, 2.1, 3.5, 5.3, 'hood', 0xd8432f);
-box(0.3, 1.1, 1.3, 1.6, 1.5, 2.3, 'seat', 0x30415d); box(-1.1, -0.3, 1.3, 2.0, 1.5, 2.3, 'seat', 0x30415d);
+box(0.3, 1.1, 1.3, 1.6, 1.5, 2.3, 'seat', 0x30415d); box(-1.1, -0.3, 1.3, 1.6, 1.5, 2.3, 'seat', 0x30415d);
 for (const b of BOX) if (b.a[2] >= 1) b.cab = true; // çekici (kabin): dorseye z=HZ'deki mafsaldan bağlı, dönüşte ona göre açı yapar
 export const HZ = 1;
 export const TK = box(-1.2, 1.2, 0.5, 2.0, -3.5, 3.5, 'tanker', 0xe9e9e9); TK.on = false;
 export const PK = box(-1.0, 1.0, 0.45, 1.3, -2.2, 2.2, 'police', 0xffffff), PK2 = box(-0.85, 0.85, 1.3, 1.85, -1.3, 0.5, 'police', 0x1f3a6b); PK.on = PK2.on = false;
-export const SEAT = { 1: [0.7, 1.55, 1.9], 2: [-0.7, 2.0, 1.9] }; // 1 şoför (solda, kısa), 2 yolcu
+export const SEAT = { 1: [0.7, 1.55, 1.9], 2: [-0.7, 1.55, 1.9] }; // 1 şoför (solda), 2 yolcu — koltuklar aynı
 export const INLET = [1.25, 2.0, 0.4];
 export const WHEEL = [[1.78, 0.55, 2.2, 'sol ön'], [-1.78, 0.55, 2.2, 'sağ ön'], [1.78, 0.55, -5.2, 'sol arka'], [-1.78, 0.55, -5.2, 'sağ arka']];
 export const OBS = []; for (let z = 260; z < Z0 + PER - 20; z += 70 + srnd() * 60) OBS.push({ z, x: cx(z) + (srnd() * 9 - 4.5), hit: false });
