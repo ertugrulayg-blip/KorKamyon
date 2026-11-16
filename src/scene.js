@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
 import { BOX, BUMP, DAG, DKAYA, DKOY, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
-import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT, TAHTA } from './sim.js';
+import { AIR, BARR, CR, DRL, EXT, KOL, KOL_BOY, OILB, POMPA, RAD, SPOT, TAHTA } from './sim.js';
 
 // ---------- görüntü ----------
 export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(ui.kalite === 0 ? 1 : ui.kalite === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
@@ -25,10 +25,16 @@ add(truck, CG, M(0x333333), 0, 0.9, HZ, 0.22, 0.5, 0.22); // mafsal pimi
 export const marks = WHEEL.map((w) => add(truck, CG, new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true }), Math.sign(w[0]) * 1.05, 1.32, clamp(w[2], -5.4, 0.55), 0.42, 0.03, 0.42)); // patlak lastik için durulacak yer
 export const wheels = WHEEL.map((w, i) => { const par = i < 2 ? cabIn : truck, m = add(par, CG, M(0x222222), w[0], w[1], w[2], 0.55, 0.44, 0.55); m.rotation.z = Math.PI / 2; add(par, CG, M(0x8d8d92), w[0] - Math.sign(w[0]) * 0.12, w[1], w[2], 0.12, 0.3, 0.12).rotation.z = Math.PI / 2; return m; }); // tekerler gövdeden dışarıda, aksla bağlı
 // koltuklar: oturak + sırtlık tek grup; koltuk fırlatınca grup havaya uçar (hud.js)
-export const koltuk = [null, [0.7, 1.95, 0.9], [-0.7, 2.3, 1.0]].map((k, s) => { if (!k) return null;
+export const koltuk = [null, [0.7], [-0.7]].map((k, s) => { if (!k) return null; // şoför ve yolcu koltuğu aynı
   const g = new THREE.Group(); g.position.set(k[0], 1.3, 1.9); cabIn.add(g); g.userData.ev = g.position.clone();
   const otur = BOX.filter((b) => b.tag === 'seat')[s - 1].mesh; otur.position.sub(g.position); g.add(otur);
-  add(g, BG, M(0x30415d), 0, k[1] - 1.3, -0.45, 0.8, k[2], 0.12); add(g, CG, M(0x888888), 0, -0.15, 0, 0.05, 0.3, 0.05); // sırtlık, yay
+  // deri koltuk: minder, yan destekler, yüksek sırtlık, baş dayama, orta şerit, kolçak, yay
+  const deri = M(0x5a3d2b), acik = M(0xc9a36a), koyuD = M(0x3b281c); otur.material = koyuD;
+  add(g, BG, deri, 0, 0.35, 0.02, 0.74, 0.12, 0.76); add(g, BG, acik, 0, 0.415, 0.02, 0.26, 0.01, 0.7);
+  for (const u of [-1, 1]) { add(g, BG, koyuD, u * 0.37, 0.4, 0.02, 0.1, 0.16, 0.74); add(g, BG, koyuD, u * 0.36, 1.0, -0.4, 0.1, 1.1, 0.2); }
+  const sirt = add(g, BG, deri, 0, 1.0, -0.44, 0.7, 1.2, 0.14); sirt.rotation.x = -0.06; add(g, BG, acik, 0, 1.0, -0.365, 0.24, 1.05, 0.01).rotation.x = -0.06;
+  add(g, BG, koyuD, 0, 1.76, -0.47, 0.4, 0.26, 0.15); add(g, CG, M(0x888888), 0, 1.62, -0.47, 0.025, 0.14, 0.025);
+  add(g, BG, koyuD, k[0] > 0 ? -0.46 : 0.46, 0.62, -0.05, 0.08, 0.06, 0.5); add(g, CG, M(0x888888), 0, -0.15, 0, 0.05, 0.3, 0.05);
   return g; });
 add(truck, CG, M(0xffd23f), INLET[0], 1.65, INLET[2], 0.09, 0.7, 0.09); add(truck, CG, M(0x222222), INLET[0], 2.0, INLET[2], 0.16, 0.08, 0.16);
 export const swheel = new THREE.Group(); swheel.position.set(0.7, 2.05, 2.85); swheel.rotation.x = -0.5; cabIn.add(swheel);
@@ -162,9 +168,18 @@ export function kaliteUygula(k) {
 }
 
 // Yolcunun kabin işleri: kapı dibinde yağ kolu (polise karşı yağ döker), torpidoda telsiz (tankeri çağırır)
-export const yagKolu = new THREE.Group(); yagKolu.position.set(-1.22, 1.32, 2.45); cabIn.add(yagKolu);
-add(cabIn, BG, M(0x3a3f48), -1.22, 1.33, 2.45, 0.22, 0.06, 0.3); // kolun tabanı
-add(yagKolu, CG, M(0x9aa1ab), 0, 0.24, 0, 0.035, 0.48, 0.035); add(yagKolu, SG, M(0xd8232a), 0, 0.5, 0, 0.07); // sap ve kırmızı topuz
+export const yagKolu = new THREE.Group(); yagKolu.position.set(KOL[0], KOL[1], KOL[2]); cabIn.add(yagKolu);
+add(cabIn, BG, M(0x3a3f48), KOL[0], KOL[1] + 0.04, KOL[2], 0.26, 0.08, 0.5); add(cabIn, BG, M(0xffd23f), KOL[0], KOL[1] + 0.085, KOL[2], 0.2, 0.01, 0.2); // kolun tabanı, sarı uyarı plakası
+add(yagKolu, CG, M(0x9aa1ab), 0, KOL_BOY / 2, 0, 0.035, KOL_BOY, 0.035); add(yagKolu, CG, M(0xd8232a), 0, KOL_BOY, 0, 0.06, 0.2, 0.06); // sap ve kırmızı tutamak
+// soğutma pompası (yolcu, torpidoda): gövde ve aşağı yukarı oynayan mavi kol
+add(cabIn, CG, M(0x39445a), POMPA[0], POMPA[1] - 0.05, POMPA[2] + 0.1, 0.09, 0.3, 0.09).rotation.x = 0.5;
+export const pompaKol = new THREE.Group(); pompaKol.position.set(POMPA[0], POMPA[1] + 0.1, POMPA[2] - 0.06); cabIn.add(pompaKol);
+add(pompaKol, CG, M(0x9aa1ab), 0, 0, 0.06, 0.02, 0.2, 0.02).rotation.x = 0.5; add(pompaKol, CG, M(0x3fa7ff), 0, 0.02, -0.06, 0.035, 0.22, 0.035).rotation.z = Math.PI / 2;
+// vites kolu ve el freni (iki koltuğun arasında)
+add(cabIn, BG, M(0x23262d), 0, 1.36, 2.35, 0.34, 0.12, 0.9);
+export const vites = new THREE.Group(); vites.position.set(0.05, 1.42, 2.55); cabIn.add(vites);
+add(vites, CG, M(0x9aa1ab), 0, 0.3, 0, 0.022, 0.6, 0.022); add(vites, SG, M(0x15110d), 0, 0.62, 0, 0.065); add(vites, CG, M(0x15110d), 0, 0.03, 0, 0.07, 0.08, 0.07);
+{ const ef = new THREE.Group(); ef.position.set(-0.08, 1.42, 2.05); ef.rotation.x = -0.9; cabIn.add(ef); add(ef, CG, M(0x9aa1ab), 0, 0.17, 0, 0.02, 0.34, 0.02); add(ef, CG, M(0x15110d), 0, 0.36, 0, 0.03, 0.12, 0.03); }
 export const telsizM = new THREE.Group(); telsizM.position.set(-0.95, 2.18, 3.12); cabIn.add(telsizM);
 add(telsizM, BG, M(0x2b3a2e), 0, 0, 0, 0.3, 0.12, 0.08); add(telsizM, BG, M(0x9dff8a), -0.05, 0.01, -0.045, 0.12, 0.05, 0.01); add(telsizM, CG, M(0x111111), 0.11, 0.12, 0, 0.012, 0.16, 0.012); // gövde, ekran, anten
 
@@ -288,14 +303,19 @@ export function haritaIsik(h) {
 
 // ---------- şoför mahalli: gerçek görüntü veren yan aynalar, gösterge paneli, tavan ----------
 // Aynalar: her biri kabinin dışında geriye bakan küçük bir kameranın görüntüsünü gösterir (hud.js kare başına birini yeniler).
-export const aynaRT = [0, 1].map(() => new THREE.WebGLRenderTarget(256, 384)), aynaKam = [], aynaM = [];
-for (const [i, s] of [[0, 1], [1, -1]]) { // 0 sol (+x), 1 sağ
-  const kam = new THREE.PerspectiveCamera(46, 256 / 384, 0.3, 320); kam.position.set(s * 2.05, 2.85, 3.1); kam.rotation.y = s * 0.09; cabIn.add(kam); aynaKam.push(kam); // -z'ye (geriye) bakar, hafif içe dönük: kasanın yanı görünür
+export const aynaRT = [new THREE.WebGLRenderTarget(256, 384), new THREE.WebGLRenderTarget(256, 384), new THREE.WebGLRenderTarget(448, 144)], aynaKam = [], aynaM = [];
+const aynaKur = (i, kam, g, gen, yuk) => { cabIn.add(kam); aynaKam.push(kam);
   const t = aynaRT[i].texture; t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1; // ayna görüntüsü: sağ-sol ters
-  const g = new THREE.Group(); g.position.set(s * 1.98, 2.85, 3.28); g.rotation.y = s > 0 ? Math.PI + 0.62 : Math.PI - 0.95; if (s < 0) g.scale.setScalar(1.5); /* sağ ayna şoföre uzak: büyük */ cabIn.add(g); // şoföre dönük
-  add(g, BG, M(0x1c1f25), 0, 0, -0.03, 0.62, 0.9, 0.05); // ayna gövdesi
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.83), new THREE.MeshBasicMaterial({ map: t, fog: false })); g.add(m); aynaM.push(m);
-}
+  cabIn.add(g); add(g, BG, M(0x1c1f25), 0, 0, -0.03, gen + 0.07, yuk + 0.07, 0.05); // gövde
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(gen, yuk), new THREE.MeshBasicMaterial({ map: t, fog: false })); g.add(m); aynaM.push(m); };
+for (const [i, s] of [[0, 1], [1, -1]]) { // yan aynalar: 0 sol (+x), 1 sağ — aynı boyda, kabinden uzun kolla açıkta
+  const kam = new THREE.PerspectiveCamera(46, 256 / 384, 0.3, 320); kam.position.set(s * 2.42, 2.85, 3.1); kam.rotation.y = s * 0.1; // -z'ye (geriye) bakar, hafif içe dönük: kasanın yanı görünür
+  const g = new THREE.Group(); g.position.set(s * 2.32, 2.85, 3.28); g.rotation.y = s > 0 ? Math.PI + 0.62 : Math.PI - 0.95; // şoföre dönük
+  aynaKur(i, kam, g, 0.5, 0.75); }
+{ // orta dikiz aynası: ön camın üstünde, kabinin içinden geriye (kasaya) bakar
+  const kam = new THREE.PerspectiveCamera(30, 448 / 144, 0.4, 320); kam.position.set(0.1, 3.05, 2.6); kam.rotation.x = -0.1;
+  const g = new THREE.Group(); g.position.set(0.05, 3.14, 3.28); g.rotation.y = Math.PI - 0.42; g.rotation.order = 'YXZ'; g.rotation.x = 0.08; add(cabIn, CG, M(0x1c1f25), 0.05, 3.27, 3.33, 0.02, 0.16, 0.02);
+  aynaKur(2, kam, g, 0.78, 0.25); }
 // gösterge paneli: hız, yakıt, hararet kadranları (ibreleri hud.js çevirir)
 const kadran = (x, yazi, renk) => { const p = add(cabIn, new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => {
   c.fillStyle = '#12151b'; c.beginPath(); c.arc(64, 64, 60, 0, 7); c.fill(); c.strokeStyle = '#cfd6e0'; c.lineWidth = 4; c.stroke();

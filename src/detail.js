@@ -94,7 +94,7 @@ function doku(w, h, ciz) {
     // kapı: cam görünümü, beyaz şerit, kol
     k.box(koyuCam, s * 1.506, 2.33, 2.1, 0.02, 0.5, 1.7).box(beyaz, s * 1.506, 1.62, 2.1, 0.02, 0.1, 2.2).box(krom, s * 1.515, 1.95, 1.35, 0.03, 0.05, 0.22);
     // ön cam direği, ayna
-    k.box(koyu, s * 1.44, 3.0, 3.42, 0.09, 0.62, 0.09).box(krom, s * 1.7, 2.6, 3.3, 0.45, 0.04, 0.04).box(krom, s * 1.7, 3.1, 3.3, 0.45, 0.04, 0.04); // ayna kolları (aynanın kendisi scene.js'te, gerçek görüntülü)
+    k.box(koyu, s * 1.44, 3.0, 3.42, 0.09, 0.62, 0.09).box(krom, s * 1.88, 2.6, 3.3, 0.8, 0.04, 0.04).box(krom, s * 1.88, 3.1, 3.3, 0.8, 0.04, 0.04); // ayna kolları (aynanın kendisi scene.js'te, gerçek görüntülü)
     // egzoz bacası
     k.cyl(krom, s * 1.64, 2.5, HZ - 0.08, 0.085, 2.6).cyl(koyu, s * 1.64, 2.1, HZ - 0.08, 0.115, 0.9).cyl(koyu, s * 1.64, 3.8, HZ - 0.08, 0.1, 0.06);
   }
