@@ -94,15 +94,15 @@ function doku(w, h, ciz) {
     // kapı: cam görünümü, beyaz şerit, kol
     k.box(koyuCam, s * 1.506, 2.33, 2.1, 0.02, 0.5, 1.7).box(beyaz, s * 1.506, 1.62, 2.1, 0.02, 0.1, 2.2).box(krom, s * 1.515, 1.95, 1.35, 0.03, 0.05, 0.22);
     // ön cam direği, ayna
-    k.box(koyu, s * 1.44, 3.0, 3.42, 0.09, 0.62, 0.09).box(krom, s * 1.88, 2.6, 3.3, 0.8, 0.04, 0.04).box(krom, s * 1.88, 3.1, 3.3, 0.8, 0.04, 0.04); // ayna kolları (aynanın kendisi scene.js'te, gerçek görüntülü)
+    k.box(koyu, s * 1.44, 2.86, 3.42, 0.09, 0.92, 0.09).box(krom, s * 1.88, 2.6, 3.3, 0.8, 0.04, 0.04).box(krom, s * 1.88, 3.1, 3.3, 0.8, 0.04, 0.04); // ayna kolları (aynanın kendisi scene.js'te, gerçek görüntülü)
     // egzoz bacası
     k.cyl(krom, s * 1.64, 2.5, HZ - 0.08, 0.085, 2.6).cyl(koyu, s * 1.64, 2.1, HZ - 0.08, 0.115, 0.9).cyl(koyu, s * 1.64, 3.8, HZ - 0.08, 0.1, 0.06);
   }
   k.cyl(koyu, 0, WHEEL[0][1], WHEEL[0][2], 0.09, 3.6, 'x'); // ön aks
   // kaput şeridi ve arması, ön cam çerçevesi ve camı, silecekler
   k.box(koyuKirmizi, 0, 2.105, 4.4, 0.7, 0.02, 1.76).box(krom, 0, 2.16, 5.12, 0.1, 0.1, 0.22);
-  k.box(koyu, 0, 3.33, 3.42, 2.97, 0.07, 0.09).box(cam, 0, 3.0, 3.42, 2.8, 0.6, 0.02);
-  for (const x of [-0.6, 0.6]) k.box(koyu, x, 2.82, 3.45, 0.7, 0.03, 0.03, 0, 0.35);
+  k.box(koyu, 0, 3.33, 3.42, 2.97, 0.07, 0.09).box(cam, 0, 2.86, 3.42, 2.8, 0.9, 0.02);
+  for (const x of [-0.6, 0.6]) k.box(koyu, x, 2.52, 3.45, 0.7, 0.03, 0.03, 0, 0.35);
   k.done();
 }
 

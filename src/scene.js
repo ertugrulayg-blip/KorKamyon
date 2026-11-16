@@ -2,8 +2,8 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, DAG, DKAYA, DKOY, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
-import { AIR, BARR, CR, DRL, EXT, KOL, KOL_BOY, OILB, POMPA, RAD, SPOT, TAHTA } from './sim.js';
+import { BOX, BUMP, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
+import { AIR, BARBEKU, BARR, CR, DEPO, DRL, EXT, KOL, KOL_BOY, POMPA, RAD, SPOT, TAHTA, TEZGAH } from './sim.js';
 
 // ---------- görüntü ----------
 export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(ui.kalite === 0 ? 1 : ui.kalite === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
@@ -41,7 +41,7 @@ export const swheel = new THREE.Group(); swheel.position.set(0.7, 2.05, 2.85); s
 add(swheel, new THREE.TorusGeometry(0.3, 0.045, 8, 24), M(0x111111), 0, 0, 0); add(swheel, BG, M(0x111111), 0, 0, 0, 0.6, 0.06, 0.04); add(swheel, BG, M(0xd8432f), 0, 0.15, 0, 0.06, 0.3, 0.04);
 export const pedG = add(cabIn, BG, M(0x7bd389), 0.5, 1.5, 3.1, 0.16, 0.3, 0.06), pedB = add(cabIn, BG, M(0xff5a5f), 0.85, 1.5, 3.1, 0.2, 0.3, 0.06);
 export const gauge = add(cabIn, CG, M(0xf5f0e8), 0.7, 2.45, 3.18, 0.16, 0.02, 0.16); gauge.rotation.x = Math.PI / 2;
-export const needle = add(cabIn, BG, M(0xd8432f), 0.7, 2.45, 3.16, 0.02, 0.14, 0.02);
+export const needle = add(cabIn, BG, M(0xd8432f), 0.7, 2.15, 3.16, 0.02, 0.14, 0.02);
 add(truck, BG, M(0x2e6da4), AIR[0], 1.55, AIR[2] - 0.1, 0.6, 0.5, 0.45); add(truck, CG, M(0xd8432f), AIR[0], 1.55, AIR[2] - 0.1, 0.2, 0.62, 0.2).rotation.z = Math.PI / 2; add(truck, CG, M(0xf5f0e8), AIR[0] - 0.18, 1.82, AIR[2] - 0.1, 0.09, 0.03, 0.09).rotation.x = Math.PI / 2; // kompresör
 export const airTip = add(scene, CG, M(0xff8a1f), 0, 0, 0, 0.06, 0.3, 0.06), airHose = add(scene, CG, M(0xc0392b), 0, 0, 0, 1), airA = new THREE.Vector3(AIR[0], AIR[1] - 0.1, AIR[2]);
 add(truck, BG, M(0xf2b632), DRL[0], 1.55, DRL[2] - 0.1, 0.6, 0.5, 0.45); add(truck, BG, M(0x222222), DRL[0], 1.55, DRL[2] - 0.1, 0.62, 0.12, 0.47); add(truck, CG, M(0x222222), DRL[0] + 0.18, 1.82, DRL[2] - 0.1, 0.09, 0.03, 0.09).rotation.x = Math.PI / 2; // tamir kutusu
@@ -57,7 +57,26 @@ export const hpTag = WHEEL.map((w) => { const c = document.createElement('canvas
 export const glass = add(cabIn, new THREE.PlaneGeometry(10, 4), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide, map: (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = 'rgba(226,234,240,0.92)'; g.fillRect(0, 0, 256, 256);
   g.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 26; i++) { const x = srnd() * 256, y = srnd() * 256, r = 18 + srnd() * 46, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })() }), 0, 3.0, 3.38); glass.scale.set(0.29, 0.155, 1); glass.visible = false; glass.renderOrder = 4;
-add(truck, CG, M(0x2a3d2f), OILB[0], 1.65, OILB[2] - 0.1, 0.26, 0.7, 0.26); add(truck, CG, M(0xffd23f), OILB[0], 1.65, OILB[2] - 0.1, 0.27, 0.14, 0.27); add(truck, CG, M(0x111111), OILB[0], 2.01, OILB[2] - 0.1, 0.2, 0.02, 0.2); // yağ varili
+// erzak deposu (eski yağ varilinin yerinde): ahşap sandık, içinde meyveler; kapağında etiket
+{ const g = new THREE.Group(); g.position.set(DEPO[0], 1.3, DEPO[2] - 0.05); truck.add(g);
+  add(g, BG, M(0x9a6b42), 0, 0.3, 0, 0.75, 0.6, 0.6); add(g, BG, M(0x7a5232), 0, 0.3, 0.305, 0.75, 0.08, 0.01); add(g, BG, M(0x7a5232), 0, 0.1, 0.305, 0.75, 0.08, 0.01);
+  for (const [x, z, c] of [[-0.2, 0.1, 0xffd23f], [0.02, 0.12, 0xffd23f], [0.22, 0.05, 0xff8a1f], [-0.1, -0.12, 0xff8a1f], [0.15, -0.14, 0xc0392b]]) add(g, SG, M(c), x, 0.63, z, 0.1); }
+// barbekü: ayaklı mangal, ızgara; et kızarırken köz parlar ve duman çıkar (hud.js)
+export const barbeku = new THREE.Group(); barbeku.position.set(BARBEKU[0], 1.3, BARBEKU[2]); truck.add(barbeku);
+for (const [x, z] of [[-0.2, -0.15], [0.2, -0.15], [-0.2, 0.15], [0.2, 0.15]]) add(barbeku, CG, M(0x333333), x, 0.25, z, 0.02, 0.5, 0.02);
+add(barbeku, BG, M(0x23262d), 0, 0.55, 0, 0.6, 0.18, 0.44); export const koz = add(barbeku, BG, new THREE.MeshBasicMaterial({ color: 0x4a1a0a }), 0, 0.645, 0, 0.52, 0.02, 0.36);
+for (let i = -2; i <= 2; i++) add(barbeku, BG, M(0x9aa1ab), i * 0.1, 0.67, 0, 0.015, 0.012, 0.4);
+export const izgaraEt = add(barbeku, BG, M(0x8a3b2e), 0, 0.7, 0, 0.22, 0.05, 0.16); izgaraEt.visible = false;
+// satıcı arabası (DOK kutusunun üstü): tenteli tezgâh, erzak kasaları, tekerlekler — yalnız tesiste dururken görünür
+export const satici = new THREE.Group(); satici.visible = false; truck.add(satici);
+{ const ox = (DOK.a[0] + DOK.b[0]) / 2, oz = (DOK.a[2] + DOK.b[2]) / 2;
+  for (const [x, z] of [[DOK.a[0] + 0.3, DOK.a[2] + 0.4], [DOK.a[0] + 0.3, DOK.b[2] - 0.4]]) add(satici, CG, M(0x222222), x - 0.2, 0.4, z, 0.4, 0.2, 0.4).rotation.z = Math.PI / 2;
+  add(satici, BG, M(0xc9a36a), TEZGAH[0] - 0.55, 1.75, TEZGAH[2], 0.7, 0.9, 2.4); // tezgâh
+  for (const [x, z] of [[-0.9, -1.2], [-0.9, 1.2], [-0.2, -1.2], [-0.2, 1.2]]) add(satici, CG, M(0x8a8f98), TEZGAH[0] + x, 2.4, TEZGAH[2] + z, 0.03, 2.2, 0.03);
+  const tente = add(satici, BG, M(0xd8432f), TEZGAH[0] - 0.55, 3.55, TEZGAH[2], 1.1, 0.06, 2.8); tente.rotation.z = 0.12; for (let i = -1; i <= 1; i++) add(satici, BG, M(0xf4efe2), TEZGAH[0] - 0.55, 3.56, TEZGAH[2] + i * 0.93, 1.1, 0.062, 0.46).rotation.z = 0.12;
+  satici.userData.ox = ox; satici.userData.oz = oz; }
+export const saticiKasa = [-0.8, 0, 0.8].map((z) => { const g = new THREE.Group(); g.position.set(TEZGAH[0] - 0.45, 2.2, TEZGAH[2] + z); satici.add(g); add(g, BG, M(0xb07a3a), 0, 0.14, 0, 0.5, 0.28, 0.5); for (const [x, c] of [[-0.12, 0xffd23f], [0.1, 0xff8a1f], [0, 0x8a3b2e]]) add(g, SG, M(c), x, 0.33, x * 0.6, 0.09); return g; });
+
 export function mkPolice(g) { const kutu = new THREE.Group(), isik = []; g.add(kutu); // model gelene kadar kutu gövde görünür
   loadModel(KENNEY + 'car/police.glb').then((m) => { if (!m) return; const c = m.clone(); c.scale.setScalar(1.45); g.add(c); kutu.visible = false; isik.forEach((l) => { l.position.set(l.position.x * 0.8, 2.02, -0.25); l.scale.set(0.5, 0.14, 0.26); }); });
   add(kutu, BG, M(0xf2f2f2), 0, 0.875, 0, 2.0, 0.85, 4.4); add(kutu, BG, M(0x1f3a6b), 0, 0.9, 0, 2.03, 0.24, 4.43); add(kutu, BG, M(0x26364f), 0, 1.575, -0.4, 1.7, 0.55, 1.8); add(kutu, BG, M(0x222222), 0, 0.75, 2.26, 1.9, 0.5, 0.14);
@@ -180,7 +199,7 @@ add(cabIn, BG, M(0x23262d), 0, 1.36, 2.35, 0.34, 0.12, 0.9);
 export const vites = new THREE.Group(); vites.position.set(0.05, 1.42, 2.55); cabIn.add(vites);
 add(vites, CG, M(0x9aa1ab), 0, 0.3, 0, 0.022, 0.6, 0.022); add(vites, SG, M(0x15110d), 0, 0.62, 0, 0.065); add(vites, CG, M(0x15110d), 0, 0.03, 0, 0.07, 0.08, 0.07);
 { const ef = new THREE.Group(); ef.position.set(-0.08, 1.42, 2.05); ef.rotation.x = -0.9; cabIn.add(ef); add(ef, CG, M(0x9aa1ab), 0, 0.17, 0, 0.02, 0.34, 0.02); add(ef, CG, M(0x15110d), 0, 0.36, 0, 0.03, 0.12, 0.03); }
-export const telsizM = new THREE.Group(); telsizM.position.set(-0.95, 2.18, 3.12); cabIn.add(telsizM);
+export const telsizM = new THREE.Group(); telsizM.position.set(-0.95, 2.05, 3.12); cabIn.add(telsizM);
 add(telsizM, BG, M(0x2b3a2e), 0, 0, 0, 0.3, 0.12, 0.08); add(telsizM, BG, M(0x9dff8a), -0.05, 0.01, -0.045, 0.12, 0.05, 0.01); add(telsizM, CG, M(0x111111), 0.11, 0.12, 0, 0.012, 0.16, 0.012); // gövde, ekran, anten
 
 // Tahta yığını (kırık kenara çakılacak tahtalar) ve kırık kenar görüntüleri
@@ -250,6 +269,7 @@ export function dagKur() {
         for (const sd of [-1, 1]) { oo.position.set(cx(z) + sd * (Y - 0.45), yH(z) + 0.07, z); oo.rotation.set(0, ry, 0); oo.scale.set(0.14, 0.02, 2.05); cizgi.ekle(oo); } }
       for (let z = z0 + 9; z < z1 - 7; z += 11, n++) for (const sd of [-1, 1]) { if ((n + (sd > 0 ? 0 : 1)) % 4 === 3) continue; const d = 8.5 + ((n * 7) % 4), ry = Math.atan2(cx(z + 1) - cx(z - 1), 2);
         kulube(cx(z) + sd * (Y + d), yH(z) + (sd > 0 ? dagSol(z, d) : dagSag(z, d)), z, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2), karK(z), n + (sd > 0 ? 0 : 5)); } }
+    for (const z of TESIS[1]) tesisKur(dagG, cx(z) - Y - 8.5, yH(z) + dagSag(z, 8.5), z + 6, Math.atan2(cx(z + 1) - cx(z - 1), 2) + Math.PI / 2); // yerleşimdeki tesis
     cizgi.bitir(dagG); }
   // yol kenarları (world.js: dagSol / dagSag): solda kaya duvarı ya da orman düzlüğü; sağda uçurum, hafif yamaç ya da orman
   const SOLD = [0, 0.8, 1.8, 3.5, 7, 13, 22, 34, 55, 80], SAGD = [0, 0.4, 1.2, 2.2, 3.4, 6, 9, 13, 20, 30, 45, 70, 100];
@@ -320,14 +340,28 @@ for (const [i, s] of [[0, 1], [1, -1]]) { // yan aynalar: 0 sol (+x), 1 sağ —
 const kadran = (x, yazi, renk) => { const p = add(cabIn, new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => {
   c.fillStyle = '#12151b'; c.beginPath(); c.arc(64, 64, 60, 0, 7); c.fill(); c.strokeStyle = '#cfd6e0'; c.lineWidth = 4; c.stroke();
   c.strokeStyle = renk; c.lineWidth = 6; for (let k = 0; k <= 8; k++) { const a = Math.PI * (0.75 + (k / 8) * 1.5); c.beginPath(); c.moveTo(64 + Math.cos(a) * 46, 64 + Math.sin(a) * 46); c.lineTo(64 + Math.cos(a) * 56, 64 + Math.sin(a) * 56); c.stroke(); }
-  c.fillStyle = '#fff'; c.font = '900 26px system-ui,Arial'; c.textAlign = 'center'; c.fillText(yazi, 64, 104); }) }), x, 2.45, 3.185); p.rotation.y = Math.PI;
-  const ib = new THREE.Group(); ib.position.set(x, 2.45, 3.17); cabIn.add(ib); add(ib, BG, new THREE.MeshBasicMaterial({ color: 0xff5a3a }), 0, 0.055, 0, 0.014, 0.11, 0.01); return ib; };
+  c.fillStyle = '#fff'; c.font = '900 26px system-ui,Arial'; c.textAlign = 'center'; c.fillText(yazi, 64, 104); }) }), x, 2.15, 3.185); p.rotation.y = Math.PI;
+  const ib = new THREE.Group(); ib.position.set(x, 2.15, 3.17); cabIn.add(ib); add(ib, BG, new THREE.MeshBasicMaterial({ color: 0xff5a3a }), 0, 0.055, 0, 0.014, 0.11, 0.01); return ib; };
 export const ibreHiz = kadran(1.06, 'km/h', '#ffffff'), ibreIsi = kadran(0.34, '🌡', '#ff8a5a'); kadran(0.7, '⛽', '#7bd389').visible = false; // yakıtın ibresi eskisi (needle)
 // yalnız içeriden bakarken görünen parçalar (üstten bakışta koltuktakileri kapatmasın): tavan, güneşlik, arka cam direkleri, sallanan süs
 export const kabinIc = new THREE.Group(); kabinIc.visible = false; cabIn.add(kabinIc);
 add(kabinIc, BG, M(0x2a2420), 0, 3.42, 2.25, 3.0, 0.08, 2.5); // tavan
 add(kabinIc, BG, M(0x3a322c), 0.7, 3.3, 3.25, 0.9, 0.2, 0.05).rotation.x = 0.3; add(kabinIc, BG, M(0x3a322c), -0.7, 3.3, 3.25, 0.9, 0.2, 0.05).rotation.x = 0.3; // güneşlikler
 for (const s of [-1, 1]) { add(kabinIc, BG, M(0x23262d), s * 1.45, 3.05, 1.05, 0.1, 0.72, 0.1); add(kabinIc, BG, M(0x23262d), s * 1.45, 3.36, 2.25, 0.1, 0.08, 2.4); } // arka direkler, kapı üstü
-add(kabinIc, BG, M(0x23262d), 0, 2.74, 3.3, 2.9, 0.08, 0.3); // torpido üstü
+add(kabinIc, BG, M(0x23262d), 0, 2.44, 3.3, 2.9, 0.08, 0.3); // torpido üstü
 export const kabinSus = new THREE.Group(); kabinSus.position.set(0, 3.36, 3.0); kabinIc.add(kabinSus); // tavandan sarkan zar
 add(kabinSus, CG, M(0x111111), 0, -0.15, 0, 0.006, 0.3, 0.006); add(kabinSus, BG, M(0xf4efe2), 0, -0.34, 0, 0.1, 0.1, 0.1).rotation.set(0.5, 0.6, 0.2);
+
+// dinlenme tesisi: yol kenarında tabela, küçük büfe ve tenteli tezgâh (kamyon burada durunca satıcı yanaşır)
+export function tesisKur(parent, x, y, z, ry) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; parent.add(g);
+  add(g, BG, M(0xe8dcc0), 0, 1.3, 0, 4.2, 2.6, 3.2).castShadow = true; add(g, BG, M(0x8a3b2e), 0, 2.75, 0, 4.8, 0.3, 3.8); // büfe ve çatısı
+  add(g, BG, M(0x3a2a1c), 0, 1.0, 1.62, 1.0, 2.0, 0.06); add(g, BG, M(0xbfe3f5), -1.3, 1.6, 1.62, 1.0, 0.9, 0.05);
+  const tente = add(g, BG, M(0xd8432f), 0, 2.3, 2.5, 4.4, 0.08, 1.8); tente.rotation.x = 0.2; for (let i = -1; i <= 1; i++) add(g, BG, M(0xf4efe2), i * 1.47, 2.31, 2.5, 0.74, 0.082, 1.8).rotation.x = 0.2;
+  for (const u of [-2, 2]) add(g, CG, M(0x8a8f98), u, 1.05, 3.3, 0.05, 2.1, 0.05);
+  add(g, BG, M(0xc9a36a), 0, 0.5, 3.0, 3.4, 1.0, 0.8); for (const [u, c] of [[-1.2, 0xffd23f], [-0.4, 0xff8a1f], [0.4, 0xc0392b], [1.2, 0x7bd389]]) add(g, SG, M(c), u, 1.12, 3.0, 0.2);
+  // tabela direği: 🏪
+  add(g, CG, M(0x8a8f98), 3.6, 2.2, 3.4, 0.08, 4.4, 0.08);
+  const lv = add(g, new THREE.PlaneGeometry(2.0, 2.0), new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, map: tex(128, 128, (c) => { c.fillStyle = '#1f6fd0'; c.fillRect(4, 4, 120, 120); c.strokeStyle = '#fff'; c.lineWidth = 8; c.strokeRect(8, 8, 112, 112); c.font = '72px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🏪', 64, 70); }) }), 3.6, 4.6, 3.45); lv.rotation.y = -Math.PI / 2;
+}
+for (const z of TESIS[0]) for (const zz of kopyaZ(z) ? [z, z + PER] : [z]) tesisKur(world, cx(zz) - BARR - 5.5, 0, zz, Math.atan2(cx(zz + 1) - cx(zz), 1) + Math.PI / 2);

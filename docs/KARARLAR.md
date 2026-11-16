@@ -2,6 +2,14 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-16 — Erzak, durma payı, koltuk kuralları, kamera döndürme
+- Kamyon durunca oyun hemen bitmez: 20 sn pay (`DUR_SURE`, `T.durT`); sayaç ekranda. Hız 1,5 m/sn'yi geçince sıfırlanır.
+- Erzak (1000 m ve sonrası, sonsuz, dağ): ortak tokluk (`T.tok`, 0,4/sn azalır; bitince ekip %55 hızla yürür). Depo (eski yağ varilinin yeri): F ile meyve yenir (muz +10, portakal +15). Et çiğ yenmez: barbeküde F basılı 3 sn → +45. Başlangıç: 4 muz, 3 portakal, 2 et. Haydut 9 sn'de bir 2 erzak çalar.
+- Tesisler (`TESIS`: düz yolda 450/1150/1750 m, dağda yerleşimler): kamyon önünde durunca satıcı arabası sağ yana yanaşır (`DOK` çarpışma kutusu; o yandaki korkuluk açılır), tezgâhtan 3 kasa alınır (her biri +2 muz +1 portakal +1 et), depoya bırakılır. Oyuncuların yere inmesi yok (yer fiziği yok): araba kasa hizasında.
+- Yağ varili kalktı: yağı yalnız yolcu, kabindeki kolla döker (kamyonun arkasından).
+- Koltuk: E en yakın boş koltuğa oturtur (1,25 m); kalkılan koltuğa 5 sn oturulmaz, öbürüne oturulur.
+- Kamera: koltukta C içeriden ↔ uzaktan; uzak kamerada fare (tıklayıp kilitleyince) kamyonun çevresinde döndürür, yürüme yönü kameraya göre. Torpido alçaldı (2,7 → 2,4), ön cam aşağı doğru büyüdü.
+
 ## 2026-11-16 — Şoför mahalli: baş çevirme ve gerçek görüntülü aynalar
 - Koltuktayken (şoför ve yolcu) fare ya da ekranı kaydırma başı çevirir (±115°, `ui.sBakis/sEgim`); oturunca baş öne döner.
 - İki yan ayna gerçek görüntü verir: kabinin dışında geriye bakan iki kamera render hedefine çizer (256×384, kare başına biri yenilenir; yalnız içeriden bakarken). Görüntü sağ-sol ters çevrilir. Sağ ayna uzak olduğu için büyük.
