@@ -2,6 +2,11 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-16 — Dağ yolunun görünümü ve düşüş
+- Görünüm sahibinin gönderdiği referansa göre: köşeli low-poly kayalar (dik yüzler turuncu-kiremit, düz yüzler zeytin yeşili), katman katman uzak dağlar, gün batımı pusu (`SIS`, `haritaIsik`), keskin S virajlar. Saç tokası virajlar yolun z'ye göre tanımlı olması yüzünden yapılamıyor.
+- Uçurumdan çıkan kamyon ~3 sn yer çekimiyle düşer ve devrilir; kamera vadinin üstünde sabit kalır.
+- Taşlar dağınık bölgelerde (enine/boyuna); tekerlek altından geçince sarsar. Yolun yarısını kapatan 5 büyük kaya.
+
 ## 2026-11-15 — Dağ yolu (deneme), lastik kuralı, kamera kipleri
 - Aşama seçiminde "⛰ Dağ yolu" (650 m, hep açık): ayrı harita (`HARITA` = 1, world.js). Dar toprak yol (yarı genişlik 4,4 m), solda kaya duvarı (çarpınca hasar), sağda korkuluksuz uçurum (düşen kamyon = oyun biter, `ucurum`). Yol ~45 m tırmanır: yokuşta kamyon zorlanır, motor ısınır, yakıt çabuk biter, kasadakiler ve sandıklar geriye kayar; toprak sürekli sarsar; taş sıraları (`DTAS`) hızlı geçilince lastik patlatır. Polis, haydut, yangın yok (deneme).
 - Çizim: dünya grubu yol yüksekliği kadar indirilir, yokuşta eğilir (`pivot.rotation.x`); dağ sahnesi ilk seçilişte kurulur, düz yolun nesneleri gizlenir.

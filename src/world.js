@@ -11,12 +11,31 @@ const cxDuz = (z) => { const s = clamp((z - 80) / 200, 0, 1); return s * (26 * M
 // Dağ yolu: dar toprak yol, sol (+x) yanda kaya duvarı, sağ (-x) yanda korkuluksuz uçurum; sürekli tırmanır.
 export let HARITA = 0; export const haritaSec = (h) => { HARITA = h; };
 export const DAG = { yol: 4.4, len: 650 }; // yarı genişlik (m), uzunluk
-const cxDag = (z) => { const s = clamp((z - 30) / 90, 0, 1); return s * (13 * Math.sin(z / 58) + 5 * Math.sin(z / 23 + 2)); };
+const cxDag = (z) => { const s = clamp((z - 30) / 90, 0, 1); return s * (17 * Math.sin(z / 46) + 5 * Math.sin(z / 21 + 2)); }; // keskin S virajlar
 const hDag = (z) => { const u = clamp(z, -100, 900); return Math.max(0, u - 20) * 0.075 + 1.6 * Math.sin(u / 37) * clamp((u - 20) / 60, 0, 1); }; // ~45 m tırmanış
 export const cx = (z) => (HARITA ? cxDag(z) : cxDuz(z));
 export const yH = (z) => (HARITA ? hDag(z) : 0); // yolun yüksekliği
 export const egim = (z) => (yH(z + 1) - yH(z - 1)) / 2; // yokuş (tan)
-export const DTAS = []; { let t = 77; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; }; for (let z = 70; z < DAG.len - 20; z += 28 + r() * 30) DTAS.push(z); } // dağ yolundaki taşlar (tümsek gibi)
+// Dağ yolunda taşlar ve kayalar (x: yol eksenine göre, + sol / kaya duvarı tarafı). Tohumlu: herkes aynısını üretir.
+// DTAS: dağınık taşlar { z, x, r }; DTBOLGE: taş bölgeleri { z0, z1 } (uyarı için); DKAYA: büyük kayalar { z, x, r } — çevresinden dolanılır.
+export const DTAS = [], DTBOLGE = [], DKAYA = [];
+{ let t = 77; const r = () => { t = (t * 1664525 + 1013904223) >>> 0; return t / 4294967296; };
+  for (const [z, x] of [[150, 2.4], [255, -2.3], [360, 2.5], [455, -2.2], [560, 2.3]]) DKAYA.push({ z, x, r: 1.55 + r() * 0.3 });
+  const kayaArasi = (z0, z1) => DKAYA.some((k) => k.z > z0 - 14 && k.z < z1 + 14); // bölge kayanın dibine düşmesin
+  for (let z = 60, i = 0; z < DAG.len - 30; i++) {
+    const enine = i % 2 === 0, boy = enine ? 7 + r() * 6 : 22 + r() * 18, yan = r() < 0.5 ? 1 : -1;
+    if (!kayaArasi(z, z + boy)) {
+      DTBOLGE.push({ z0: z, z1: z + boy });
+      const n = Math.round(boy * (enine ? 2.2 : 1.1));
+      for (let k = 0; k < n; k++) { // enine: yolun her yerine; boyuna: bir kenar şeridine dağılır
+        const x = enine ? (r() * 2 - 1) * (DAG.yol - 0.5) : yan * (0.6 + r() * (DAG.yol - 1.1));
+        DTAS.push({ z: z + r() * boy, x, r: 0.2 + r() * 0.28 });
+      }
+    }
+    z += kayaArasi(z, z + boy) ? 8 : boy + 18 + r() * 22;
+  }
+  DTAS.sort((a, b) => a.z - b.z);
+}
 // Döngü: [Z0, Z0+PER) içindeki bir şeyin z+PER'deki kopyası (görüş mesafesi kadar ileriye: sis 230 m)
 export const kopyaZ = (z) => z >= Z0 && z + PER < LEN + 160;
 export let tohum = 12345; export const srnd = () => { tohum = (tohum * 1664525 + 1013904223) >>> 0; return tohum / 4294967296; };

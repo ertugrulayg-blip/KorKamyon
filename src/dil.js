@@ -74,7 +74,7 @@ const S = {
       tumsekPat: (i) => 'PAT! Tümseğe hızlı girdiniz: ' + teker.tr[i] + ' lastik patladı', tumsekYavas: 'Tümsek yavaş geçildi 👍', lastikPat: (i) => 'PAT! Lastik patladı: ' + teker.tr[i],
       sandikYandi: '🔥 Bir sandık yandı!', sandikDustu: '📦 Bir sandık yola düştü! Sandıkları TUT', sandikAtti: '🥷 Haydut bir sandığı aşağı attı!',
       // oyun sonu sebepleri
-      ucurum: 'Kamyon uçurumdan yuvarlandı! 🪨', yukDokuldu: 'Bütün yük yola döküldü!', hurda: 'Kamyon hurdaya döndü!', hedef: (n) => 'Hedefe ulaştınız! 🏁 Teslim edilen yük: ' + n + '/4', yakitBitti: 'Yakıt bitti, kamyon durdu!', durdu: 'Kamyon durdu!',
+      ucurum: 'Kamyon uçurumdan yuvarlandı! 🪨', ucurumDus: '😱 UÇURUMDAN DÜŞÜYORUZ!', kaya: '💥 Kayaya çarptınız! Çevresinden dolanın', tasPat: (w) => '🪨 Taş lastiği patlattı: ' + ['sol ön', 'sağ ön', 'sol arka', 'sağ arka'][w], yukDokuldu: 'Bütün yük yola döküldü!', hurda: 'Kamyon hurdaya döndü!', hedef: (n) => 'Hedefe ulaştınız! 🏁 Teslim edilen yük: ' + n + '/4', yakitBitti: 'Yakıt bitti, kamyon durdu!', durdu: 'Kamyon durdu!',
     },
   },
   en: {
@@ -136,7 +136,7 @@ const S = {
       bariyer: (i) => 'BANG! You hit the barrier: ' + yan.en[i] + ' side damaged', kapaliSerit: 'BANG! You drove into the closed lane', engel: 'BANG! You hit an obstacle',
       tumsekPat: (i) => 'POP! Too fast over the bump: ' + teker.en[i] + ' tyre burst', tumsekYavas: 'Speed bump taken slowly 👍', lastikPat: (i) => 'POP! Flat tyre: ' + teker.en[i],
       sandikYandi: '🔥 A crate burned up!', sandikDustu: '📦 A crate fell off! GRAB the crates', sandikAtti: '🥷 The bandit threw a crate off!',
-      ucurum: 'The truck rolled off the cliff! 🪨', yukDokuldu: 'All the cargo fell off!', hurda: 'The truck is wrecked!', hedef: (n) => 'You reached the destination! 🏁 Cargo delivered: ' + n + '/4', yakitBitti: 'Out of fuel, the truck stopped!', durdu: 'The truck stopped!',
+      ucurum: 'The truck rolled off the cliff! 🪨', ucurumDus: '😱 WE ARE FALLING OFF THE CLIFF!', kaya: '💥 You hit a boulder! Drive around it', tasPat: (w) => '🪨 A rock burst the ' + ['front left', 'front right', 'rear left', 'rear right'][w] + ' tyre', yukDokuldu: 'All the cargo fell off!', hurda: 'The truck is wrecked!', hedef: (n) => 'You reached the destination! 🏁 Cargo delivered: ' + n + '/4', yakitBitti: 'Out of fuel, the truck stopped!', durdu: 'The truck stopped!',
     },
   },
 };
