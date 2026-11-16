@@ -44,7 +44,7 @@ const S = {
     baglantiHata: (a) => 'Bağlantı hatası: ' + a, odaDolu: 'Oda dolu (4 kişi)', sahipAyrildi: 'Oda sahibi ayrıldı', kodYaz: '4 harfli oda kodunu yaz', davet: '👥 Arkadaş davet et', steamNot: 'Steam: odayı kur, sonra üstteki «Arkadaş davet et» düğmesiyle çağır. Arkadaşların Steam arkadaş listesinden «Oyuna katıl» da diyebilir.', steamHata: 'Steam odası kurulamadı ya da odaya girilemedi. Steam açık mı?', atildin: 'Oda sahibi seni odadan çıkardı.',
     // roller ve ekran
     rolBar: '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…',
-    rolSofor: '<b>🚚 ŞOFÖRSÜN</b><br>Kamyonu durdurma! Yolcu tarif eder, işaret verir.<br>A/D direksiyon · W gaz · S fren · E kalk',
+    rolSofor: '<b>🚚 ŞOFÖRSÜN</b><br>Kamyonu durdurma! Yolcu tarif eder, işaret verir.<br>A/D direksiyon · W gaz · S fren · E kalk<br>Fare: başını çevir, aynalara bak',
     rolYolcu: '<b>👀 YOLCUSUN</b><br>Şoförün yardımcısısın: tarif et, işaret ver!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · T telsiz (tanker) · F yağ kolu (polise) · E kalk',
     rolKasa: '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, yağ, su) · C kamera',
     odaKodu: 'Oda kodu', kisi: 'oyuncu', baslatHost: 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat', baslatBekle: 'Oda sahibinin başlatması bekleniyor',
@@ -108,7 +108,7 @@ const S = {
     mikIzin: 'Asking for microphone access…', baglaniyor: 'Connecting…', baglanamadi: 'Could not connect. Try mobile data instead of Wi-Fi (or the other way round).',
     baglantiHata: (a) => 'Connection error: ' + a, odaDolu: 'Room is full (4 players)', sahipAyrildi: 'The host left', kodYaz: 'Type the 4-letter room code', davet: '👥 Invite friends', steamNot: 'Steam: create a room, then use the «Invite friends» button at the top. Friends can also click «Join Game» in their Steam friends list.', steamHata: 'Could not create or join the Steam room. Is Steam running?', atildin: 'The host kicked you from the room.',
     rolBar: '<b>🍺 TRUCKERS\' BAR</b><br>The crew is gathering…',
-    rolSofor: "<b>🚚 YOU'RE DRIVING</b><br>Don't let the truck stop! Your passenger guides and signals.<br>A/D steer · W gas · S brake · E stand up",
+    rolSofor: "<b>🚚 YOU'RE DRIVING</b><br>Don't let the truck stop! Your passenger guides and signals.<br>A/D steer · W gas · S brake · E stand up<br>Mouse: look around, check the mirrors",
     rolYolcu: "<b>👀 YOU'RE THE PASSENGER</b><br>You're the co-driver: guide and signal!<br>A/D left/right sign · S slow down · W speed up · T radio (tanker) · F oil lever (police) · E stand up",
     rolKasa: "<b>📦 YOU'RE IN THE BACK</b><br>WASD walk · Space jump / climb while holding<br>J or left click GRAB · K or right click SLAP<br>E sit down · F use (valve, oil, water) · C camera",
     odaKodu: 'Room code', kisi: 'players', baslatHost: "Press ENTER (or double-tap the screen) when everyone's ready", baslatBekle: 'Waiting for the host to start',

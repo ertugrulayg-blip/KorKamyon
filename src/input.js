@@ -29,11 +29,14 @@ export function kameraDegis() {
   if (!ui.kamera) { if (document.pointerLockElement) document.exitPointerLock(); }
   else if (!TOUCH && !document.pointerLockElement) try { fareSus(); ren.domElement.requestPointerLock(); } catch (e) {} // tuşa basmak kullanıcı hareketi sayılır: fare hemen kilitlenir
 }
-const cevir = (dx, dy, k) => { ui.bakis -= dx * k; ui.egim = clamp(ui.egim - dy * k, -1.2, 1.0); };
-ren.domElement.addEventListener('click', () => { if (ui.kamera && ui.fpAktif && !TOUCH && !document.pointerLockElement) { fareSus(); ren.domElement.requestPointerLock?.(); } });
+const cevir = (dx, dy, k) => {
+  if (ui.koltukAktif) { ui.sBakis = clamp(ui.sBakis - dx * k, -2.0, 2.0); ui.sEgim = clamp(ui.sEgim - dy * k, -0.6, 0.45); return; } // koltukta: baş sağa sola döner
+  ui.bakis -= dx * k; ui.egim = clamp(ui.egim - dy * k, -1.2, 1.0);
+};
+ren.domElement.addEventListener('click', () => { if (((ui.kamera && ui.fpAktif) || ui.koltukAktif) && !TOUCH && !document.pointerLockElement) { fareSus(); ren.domElement.requestPointerLock?.(); } });
 // fare kilitli değilken de (ör. kilit reddedildiyse) oyun alanında fareyi oynatmak bakışı çevirir
 addEventListener('mousemove', (e) => {
-  if (!ui.fpAktif) return;
+  if (!ui.fpAktif && !ui.koltukAktif) return;
   let dx = e.movementX || (FARE.x === null ? 0 : e.clientX - FARE.x), dy = e.movementY || (FARE.y === null ? 0 : e.clientY - FARE.y); FARE.x = e.clientX; FARE.y = e.clientY; // movementX gelmezse konum farkı
   if (performance.now() < FARE.sus) return; // fare kilitlenirken tarayıcı sahte büyük hareketler yollar: kısa süre yok say
   if (Math.abs(dx) > 250 || Math.abs(dy) > 250) return; // imleç ışınlanması gibi sahte sıçramalar
@@ -45,7 +48,7 @@ const fareSus = () => { FARE.sus = performance.now() + 250; FARE.x = FARE.y = nu
 document.addEventListener('pointerlockchange', fareSus);
 { let son = null; // dokunmatik: joystick ve tuşlar dışında ekranı kaydırmak bakışı çevirir
   ren.domElement.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; son = { id: t.identifier, x: t.clientX, y: t.clientY }; }, { passive: true });
-  ren.domElement.addEventListener('touchmove', (e) => { if (!son || !ui.kamera) return; for (const t of e.changedTouches) if (t.identifier === son.id) { cevir(t.clientX - son.x, t.clientY - son.y, 0.006); son.x = t.clientX; son.y = t.clientY; } }, { passive: true });
+  ren.domElement.addEventListener('touchmove', (e) => { if (!son || (!ui.kamera && !ui.koltukAktif)) return; for (const t of e.changedTouches) if (t.identifier === son.id) { cevir(t.clientX - son.x, t.clientY - son.y, 0.006); son.x = t.clientX; son.y = t.clientY; } }, { passive: true });
   ren.domElement.addEventListener('touchend', () => { son = null; }, { passive: true }); }
 // hareket girdisini bakış yönüne çevirir (yalnız kasada, birinci şahısta): W ileri, A/D yana
 function bakisaGore(I) {
