@@ -2,6 +2,12 @@
 
 Yeni kararlar en üste eklenir. Her kayıt: tarih, karar, neden.
 
+## 2026-11-16 — Dağ yolunun son biçimi (sahibiyle görüntü üzerinden ayarlandı)
+- Kenarlar üç tip kesit (`kesit(z)`, world.js): iki yanı orman düzlüğü, sağda keskin uçurum (yalnız burada düşülür), sağda hafif yamaç (9 m sürülebilir). Yan profiller `dagSol/dagSag`.
+- Güneşli açık gökyüzü. Dağ yol boyunca yeşil → kayalık → karlı (`karK`); karda direksiyon geç tepki verir ve kamyon hafif kayar.
+- İki yerleşim (`DKOY`): yol asfalt, çizgili, kenarda koddan çizilen ahşap dağ kulübeleri (karlı bölümde çatılar beyaz); asfaltta sarsıntı ve taş yok.
+- Üçgenli (flat-shaded) görünüm istenmedi: yüzeyler pürüzsüz. Dağla ilgili görsel değişikliklerde önce görüntü gönderilip onay alınır.
+
 ## 2026-11-16 — Dağ yolunun görünümü ve düşüş
 - (16.11 düzeltme) Köşeli/üçgen low-poly görünüm kaldırıldı: sahibi referanstaki dağın yapısını istemişti, üçgenleri değil. Yüzeyler pürüzsüz gölgeli, renk köşe başına yumuşak geçişli (dik yer kaya turuncusu, yatık yer yeşil, geniş ton lekeleri); yamaçlarda orman.
 - (ilk hali) Görünüm sahibinin gönderdiği referansa göre: köşeli low-poly kayalar (dik yüzler turuncu-kiremit, düz yüzler zeytin yeşili), katman katman uzak dağlar, gün batımı pusu (`SIS`, `haritaIsik`), keskin S virajlar. Saç tokası virajlar yolun z'ye göre tanımlı olması yüzünden yapılamıyor.

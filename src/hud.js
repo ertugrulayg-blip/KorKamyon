@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
-import { $, ASAMA, BUMP, BUMP_V, COL, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
+import { $, ASAMA, BUMP, BUMP_V, COL, DAG, dagSag, dagSol, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
 import { OILB, RAD, SPOT, TAHTA, asamaSec } from './sim.js';
 import { SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
@@ -35,6 +35,8 @@ function polDarbe(qs, qd, hp, dt) {
 // eylem yerleri: yanıp sönen işaretler (radyatör, yağ varili, tanker vanası)
 const isaretMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, depthWrite: false });
 const radIsaret = add(cabIn, CG, isaretMat(0x3fa7ff), RAD[0], 1.33, RAD[2], 0.55, 0.03, 0.55), yagIsaret = add(truck, CG, isaretMat(0xffd23f), OILB[0] - 0.05, 1.32, OILB[2] + 0.5, 0.5, 0.03, 0.5), vanaIsaret = add(tanker, CG, isaretMat(0xff5a5f), 0, 2.03, -2, 0.6, 0.03, 0.6);
+// dağda yoldan çıkınca kamyon zeminin eğimini izler (yamaçta hafifçe alçalır)
+const yanY = () => { if (!HARITA) return 0; const e = cT.X - cx(cT.Z); return e > DAG.yol ? dagSol(cT.Z, e - DAG.yol) : e < -DAG.yol ? Math.max(-1.2, dagSag(cT.Z, -e - DAG.yol)) : 0; };
 const DUS = { z: 0, p: new THREE.Vector3() }, EV = new THREE.Vector3(), EY = { tut: 0 }, GOZ = { p: new THREE.Vector3(), hedef: new THREE.Vector3(), ilk: true };
 // Yangın tüpü: tutan kişi yangının yanındayken tüpün ağzından yangına doğru köpük fışkırır
 const KOPUK = Array.from({ length: 48 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xf2f6ff, transparent: true, depthWrite: false }), 0, -9, 0, 0.06); m.visible = false; m.userData = { t: 1, v: new THREE.Vector3() }; return m; });
@@ -128,7 +130,7 @@ function sonEkran(t, V) {
   }).join('') + '</table>';
   return h + `<div style="font-size:18px">${net.isHost ? (win ? L('sonraki') : L('enterYeniden')) : ''}</div>`;
 }
-const SARS = ['bariyer', 'kapaliSerit', 'engel', 'tumsekPat', 'lastikPat', 'polisVurdu', 'polisAtladi']; // ekranı sarsan olaylar
+const SARS = ['duvar', 'agac', 'kaya', 'bariyer', 'kapaliSerit', 'engel', 'tumsekPat', 'lastikPat', 'polisVurdu', 'polisAtladi']; // ekranı sarsan olaylar
 const fx = { m: '', shake: 0, acc: 0, i: 0, eg: 0, j: 0 }, dust = Array.from({ length: 28 }, () => { const m = add(scene, SG, new THREE.MeshBasicMaterial({ color: 0xb9b2a6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, 0.2); m.visible = false; return m; }); // darbe sarsıntısı, teker tozu
 export const RP = {}, cT = { X: 0, Z: 0, th: 0 }, camP = new THREE.Vector3(0, 10.2, -12.2), camL = new THREE.Vector3(0, 1.5, -1.8); export let hudT = 0, lastHud = '', cpD = 1, spD = 0, camM = '', camB = 0;
 export const cabPt = (v, x, y, z) => v.set(x * cpD + (z - HZ) * spD, y, HZ - x * spD + (z - HZ) * cpD); // kabin içindeki nokta → kamyon çerçevesi
@@ -154,7 +156,7 @@ export function draw(V, dt) {
   rainP.visible = rainK > 0.1; if (rainP.visible) { const a = rainP.geometry.attributes.position; for (let i = 1; i < a.array.length; i += 3) { a.array[i] -= dt * 26; if (a.array[i] < 0) a.array[i] += 16; } a.needsUpdate = true; }
   polPark.forEach((g, i) => (g.visible = !qu[i])); oilM.forEach((m, i) => { const o = V.ol[i]; m.visible = !!o; if (o) m.position.set(o[0], 0.03, o[1]); });
   if (net.isHost) { cT.X = t.X; cT.Z = t.Z; cT.th = t.th; } else { cT.th += (t.th - cT.th) * 0.25; cT.X += Math.sin(cT.th) * t.v * dt; cT.Z += Math.cos(cT.th) * t.v * dt; cT.X += (t.X - cT.X) * 0.15; cT.Z += (t.Z - cT.Z) * 0.15; if (Math.abs(t.Z - cT.Z) > 30) { cT.X = t.X; cT.Z = t.Z; } }
-  pivot.rotation.y = -cT.th; world.position.set(-cT.X, -yH(cT.Z), -cT.Z); pivot.rotation.x = HARITA ? -Math.atan(egim(cT.Z)) : 0;
+  pivot.rotation.y = -cT.th; world.position.set(-cT.X, -yH(cT.Z) - yanY(), -cT.Z); pivot.rotation.x = HARITA ? -Math.atan(egim(cT.Z)) : 0;
   pivot.rotation.order = 'ZXY'; pivot.rotation.z = t.du ? -t.du[1] : 0; if (t.du) world.position.y += t.du[0]; // uçurumdan düşüş: kamyon devrilir ve dünyanın dikeyinde düşer (dünya ters yönde yükselir) // dağ: dünya yükselir, yokuşta burun yukarı
   wheels.forEach((w, i) => { w.rotation.x += t.v * dt / 0.55; w.scale.x = w.scale.z = t.fl[i] ? 0.42 : 0.55; w.position.y = t.fl[i] ? 0.42 : 0.55; w.material.color.setHex(t.fl[i] ? 0x8a2a1e : 0x222222); });
   marks.forEach((m, i) => { m.visible = !!t.fl[i] && t.s === 'run'; m.material.opacity = 0.55 + 0.4 * Math.sin(performance.now() / 150); });

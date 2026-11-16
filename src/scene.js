@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, DAG, DKAYA, DKOY, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
+import { BOX, BUMP, DAG, DKAYA, DKOY, DTAS, KENAR, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
 import { AIR, BARR, CR, DRL, EXT, OILB, RAD, SPOT, TAHTA } from './sim.js';
 
 // ---------- görüntü ----------
@@ -202,7 +202,7 @@ export function dagKur() {
   };
   // Dağ yol boyunca değişir: başta yeşil, ortalara doğru kayalık, sona doğru karlı
   const KAYA_Y = new THREE.Color(0x9c8a74), KAR = new THREE.Color(0xf4f7fb), ss = THREE.MathUtils.smoothstep;
-  const yesilK = (z) => 1 - ss(z / DAG.len, 0.2, 0.55), karK = (z) => ss(z / DAG.len, 0.55, 0.9);
+  const yesilK = (z) => 1 - ss(z / DAG.len, 0.2, 0.55);
   const dagRengi = (c, x, y, z, dik) => { const d = dalga(x, z), kaya = ss(dik, 0.45, 0.75);
     c.copy(CIM_A).lerp(CIM_B, 0.5 + d * 0.5).lerp(KAYA_Y, (1 - yesilK(z)) * (0.75 + d * 0.25)); // yatık yerler: çimen → çıplak kaya
     cc2.copy(KAYA_A).lerp(KAYA_B, 0.5 - d * 0.5).lerp(TAS, (1 - yesilK(z)) * 0.55); c.lerp(cc2, kaya); // dik yerler: turuncu kaya → gri kaya
@@ -216,14 +216,25 @@ export function dagKur() {
         c.copy(T1).lerp(T2, 0.5 + dalga(x * 3, z * 2) * 0.5); if (i === 3 || i === 7) c.lerp(IZ, 0.7); if (kenar) c.lerp(KN, 0.6);
         c.lerp(KAR, karK(z) * (kenar ? 0.85 : i === 3 || i === 7 ? 0.25 : 0.6)); // karda izler toprak kalır
         cc2.copy(ASF).lerp(ASF2, 0.5 + dalga(x * 3, z * 2) * 0.5); if (i === 0 || i === S.length - 1) cc2.lerp(KN, 0.5); c.lerp(cc2, k); }); }
-  // asfalt bölümlerde orta ve kenar çizgileri, kenarda evler
-  { const cizgi = new Dilimli(BG, new THREE.MeshBasicMaterial({ color: 0xf2f2ea })), oo = new THREE.Object3D(), C = KENNEY + 'city/', BINA = ['building-small-a', 'building-small-b', 'building-small-c', 'building-small-d', 'building-garage'];
+  // dağ kulübesi: ahşap gövde, eğimli çatı (karlı bölümde beyaz), kapı, pencere, baca; kapısı yola bakar
+  const AHSAP = [0x9a6b42, 0x8a5a36, 0xb07a4a, 0xc9b28a], CATI = [0x8a3b2e, 0x5d6b78, 0x6b4a32];
+  function kulube(x, y, z, ry, kar, tur) {
+    const g = new THREE.Group(); g.position.set(x, y - 0.15, z); g.rotation.y = ry; dagG.add(g);
+    const w = 4.2 + (tur % 3) * 0.5, dp = 3.6, hh = 2.5, duvarM = M(AHSAP[tur % AHSAP.length]), catiM = M(kar > 0.5 ? 0xf4f7fb : CATI[tur % CATI.length]);
+    const gv = add(g, BG, duvarM, 0, hh / 2, 0, w, hh, dp); gv.castShadow = true;
+    for (const s of [-1, 1]) { const c = add(g, BG, catiM, 0, hh + 0.75, s * dp * 0.27, w + 0.6, 0.18, dp * 0.72); c.rotation.x = s * 0.62; c.castShadow = true; } // beşik çatı
+    for (const s of [-1, 1]) { const u = add(g, new THREE.ConeGeometry(dp * 0.52, 1.3, 3), duvarM, s * (w / 2 - 0.01), hh + 0.64, 0, 1, 1, 1); u.rotation.set(0, s > 0 ? 0 : Math.PI, 0); u.scale.set(0.05, 1, 1); } // üçgen alınlık
+    add(g, BG, M(0x5a3a22), 0.6, 1.0, dp / 2 + 0.03, 0.9, 2.0, 0.08); add(g, BG, M(0xbfe3f5), -1.0, 1.5, dp / 2 + 0.03, 0.9, 0.8, 0.06); // kapı, pencere
+    add(g, BG, M(0x7a7a7a), w / 2 - 0.9, hh + 1.5, -0.6, 0.5, 1.3, 0.5); // baca
+  }
+  // asfalt bölümlerde orta ve kenar çizgileri, kenarda kulübeler
+  { const cizgi = new Dilimli(BG, new THREE.MeshBasicMaterial({ color: 0xf2f2ea })), oo = new THREE.Object3D();
     for (const [z0, z1] of DKOY) { let n = 0;
       for (let z = z0 + 6; z < z1 - 6; z += 2) { const ry = Math.atan2(cx(z + 1) - cx(z - 1), 2);
         if (z % 8 < 4) { oo.position.set(cx(z), yH(z) + 0.07, z); oo.rotation.set(0, ry, 0); oo.scale.set(0.2, 0.02, 2); cizgi.ekle(oo); }
         for (const sd of [-1, 1]) { oo.position.set(cx(z) + sd * (Y - 0.45), yH(z) + 0.07, z); oo.rotation.set(0, ry, 0); oo.scale.set(0.14, 0.02, 2.05); cizgi.ekle(oo); } }
-      for (let z = z0 + 10; z < z1 - 8; z += 13, n++) for (const sd of [-1, 1]) { if ((n + (sd > 0 ? 0 : 1)) % 3 === 2) continue; const d = 9.5 + ((n * 7) % 3), ry = Math.atan2(cx(z + 1) - cx(z - 1), 2);
-        spawn(C + BINA[(n * 2 + (sd > 0 ? 0 : 3)) % 5] + '.glb', dagG, cx(z) + sd * (Y + d), yH(z) + (sd > 0 ? dagSol(z, d) : dagSag(z, d)) - 0.1, z, 4.6, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2)); } }
+      for (let z = z0 + 9; z < z1 - 7; z += 11, n++) for (const sd of [-1, 1]) { if ((n + (sd > 0 ? 0 : 1)) % 4 === 3) continue; const d = 8.5 + ((n * 7) % 4), ry = Math.atan2(cx(z + 1) - cx(z - 1), 2);
+        kulube(cx(z) + sd * (Y + d), yH(z) + (sd > 0 ? dagSol(z, d) : dagSag(z, d)), z, ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2), karK(z), n + (sd > 0 ? 0 : 5)); } }
     cizgi.bitir(dagG); }
   // yol kenarları (world.js: dagSol / dagSag): solda kaya duvarı ya da orman düzlüğü; sağda uçurum, hafif yamaç ya da orman
   const SOLD = [0, 0.8, 1.8, 3.5, 7, 13, 22, 34, 55, 80], SAGD = [0, 0.4, 1.2, 2.2, 3.4, 6, 9, 13, 20, 30, 45, 70, 100];

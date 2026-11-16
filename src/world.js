@@ -21,6 +21,7 @@ export function kesit(z) { const w = { u: 0, y: 0, o: 0 }; for (let i = 0; i < K
 // yerleşim yerleri (orman düzlüklerinde): yol asfalt, kenarda evler
 export const DKOY = [[15, 80], [460, 532]];
 export const koyK = (z) => DKOY.reduce((a, [z0, z1]) => Math.max(a, yumusak(z, z0) * (1 - yumusak(z, z1))), 0); // 0 toprak, 1 asfalt
+export const karK = (z) => { const t = clamp((z / DAG.len - 0.55) / 0.35, 0, 1); return t * t * (3 - 2 * t); }; // 0 karsız, 1 tam karlı (yolun sonuna doğru)
 export const sagBanket = (z) => { const w = kesit(z); return w.y * 9 + w.o * 3.5; }; // yolun sağında sürülebilir alan (m)
 export const solBanket = (z) => kesit(z).o * 3.5;
 const ara = (T, d) => { for (let i = 1; i < T.length; i++) if (d <= T[i][0]) { const [x0, y0] = T[i - 1], [x1, y1] = T[i]; return y0 + ((y1 - y0) * (d - x0)) / (x1 - x0); } return T[T.length - 1][1]; };
@@ -41,7 +42,7 @@ export const DTAS = [], DTBOLGE = [], DKAYA = [];
   const kayaArasi = (z0, z1) => DKAYA.some((k) => k.z > z0 - 14 && k.z < z1 + 14); // bölge kayanın dibine düşmesin
   for (let z = 60, i = 0; z < DAG.len - 30; i++) {
     const enine = i % 2 === 0, boy = enine ? 7 + r() * 6 : 22 + r() * 18, yan = r() < 0.5 ? 1 : -1;
-    if (!kayaArasi(z, z + boy)) {
+    if (!kayaArasi(z, z + boy) && !DKOY.some(([k0, k1]) => z + boy > k0 - 5 && z < k1 + 5)) { // yerleşimlerde (asfalt) taş yok
       DTBOLGE.push({ z0: z, z1: z + boy });
       const n = Math.round(boy * (enine ? 2.2 : 1.1));
       for (let k = 0; k < n; k++) { // enine: yolun her yerine; boyuna: bir kenar şeridine dağılır
