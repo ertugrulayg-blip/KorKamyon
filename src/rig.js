@@ -52,7 +52,7 @@ function ik(ust, orta, uc, hedef, kutup, a, b) {
 
 // Bir karakter kopyası üretir. Model yüklenmemişse null döner.
 // dosya verilirse (ör. 'haydut.glb') o model boyanmadan kullanılır.
-export async function makeRig(ci, parent, dosya = null) {
+export async function makeRig(ci, parent, dosya = null, olcek = 1) {
   const ozel = dosya || KARAKTER[ci % 4], mo = ozel && (await loadModel('assets/chars/' + ozel)), m = mo || (await loadModel(CHAR_URL)); if (!m) return null;
   const root = new THREE.Group(), model = cloneSkinned(m);
   const boya = (mo && ozel !== GOVDE) || dosya ? null : kirmiziyiBoya(ci); if (boya) recolor(model, 'rig' + (ci % 4), boya); // kendi modeli olmayan renk: kırmızı kamyoncu boyanır
@@ -67,13 +67,14 @@ export async function makeRig(ci, parent, dosya = null) {
   for (const k of ['LeftFoot', 'RightFoot']) ayak[k] = kokQ.clone().multiply(B[k].getWorldQuaternion(new THREE.Quaternion()));
   const w = (k) => B[k].getWorldPosition(new THREE.Vector3());
   const boy = (a, b) => w(a).distanceTo(w(b)), hips = w('Hips');
+  const el = elOlc(model, B); if (el) for (const e of el) if (e) e.uzun *= olcek;
   return {
-    root, B, bind, ayak, el: elOlc(model, B),
-    hipY: hips.y - root.getWorldPosition(new THREE.Vector3()).y, // modelin ayak tabanından kalça kemiğine yükseklik (ölçek 1)
-    kalcaBacak: hips.y - w('LeftUpLeg').y, // kalça kemiği ile uyluk başı arası
-    bacakBoy: hips.y - w('LeftFoot').y, // kalça kemiğinden ayak bileğine (ayakta dik dururken)
-    kol: [boy('LeftArm', 'LeftForeArm'), boy('LeftForeArm', 'LeftHand')],
-    bacak: [boy('LeftUpLeg', 'LeftLeg'), boy('LeftLeg', 'LeftFoot')],
+    root, B, bind, ayak, el, s: olcek,
+    hipY: (hips.y - root.getWorldPosition(new THREE.Vector3()).y) * olcek, // modelin ayak tabanından kalça kemiğine yükseklik (ölçek 1)
+    kalcaBacak: (hips.y - w('LeftUpLeg').y) * olcek, // kalça kemiği ile uyluk başı arası
+    bacakBoy: (hips.y - w('LeftFoot').y) * olcek, // kalça kemiğinden ayak bileğine (ayakta dik dururken)
+    kol: [boy('LeftArm', 'LeftForeArm') * olcek, boy('LeftForeArm', 'LeftHand') * olcek],
+    bacak: [boy('LeftUpLeg', 'LeftLeg') * olcek, boy('LeftLeg', 'LeftFoot') * olcek],
   };
 }
 
@@ -132,7 +133,7 @@ export function poseRig(r, kalca, yon, hedef, bas = 0, ek = null) {
   for (const [k, q] of r.bind) r.B[k].quaternion.copy(q);
   // kök: kalça kemiği kalça noktasına gelecek biçimde
   P.set(0, -r.hipY, 0).applyQuaternion(yon).add(kalca);
-  M.compose(P, yon, SC);
+  M.compose(P, yon, SC.setScalar(r.s || 1));
   r.root.parent.updateMatrixWorld(true);
   r.root.matrix.copy(m1.copy(r.root.parent.matrixWorld).invert().multiply(M));
   r.root.updateMatrixWorld(true);

@@ -11,7 +11,7 @@ const yuzde = (n) => (DIL === 'tr' ? '%' + n : n + '%');
 const S = {
   tr: {
     // menü ve sabit metinler
-    menuAciklama: 'Şoför sürer, yolcu tarif eder ve yardım eder, kasadakiler yakıt, lastik, yangın ve polisle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.',
+    menuAciklama: 'Şoför sürer, yolcu yardım eder, kasadakiler yakıt, lastik, yangın ve polisle uğraşır. Kamyon durursa oyun biter. 2–4 kişi.',
     haydutAd: 'HAYDUT', adin: 'Adın', odaKur: 'Oda kur', kod: 'KOD', katil: 'Katıl', oyuncu: 'Oyuncu',
     tuslar: '⌨ Tuşlar', ayarlar: '⚙ Ayarlar', kapat: 'Kapat (Esc)', ses: 'SES', oyuncular: 'OYUNCULAR', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 İLERİSİ',
     // aşamalar, eğitim, puan
@@ -46,8 +46,8 @@ const S = {
     baglantiHata: (a) => 'Bağlantı hatası: ' + a, odaDolu: 'Oda dolu (4 kişi)', sahipAyrildi: 'Oda sahibi ayrıldı', kodYaz: '4 harfli oda kodunu yaz', davet: '👥 Arkadaş davet et', steamNot: 'Steam: odayı kur, sonra üstteki «Arkadaş davet et» düğmesiyle çağır. Arkadaşların Steam arkadaş listesinden «Oyuna katıl» da diyebilir.', steamHata: 'Steam odası kurulamadı ya da odaya girilemedi. Steam açık mı?', atildin: 'Oda sahibi seni odadan çıkardı.',
     // roller ve ekran
     rolBar: '<b>🍺 KAMYONCU BARI</b><br>Ekip toplanıyor…',
-    rolSofor: '<b>🚚 ŞOFÖRSÜN</b><br>Kamyonu durdurma! Yolcu tarif eder, işaret verir.<br>A/D direksiyon · W gaz · S fren (dururken basılı: geri) · E kalk<br>Fare: başını çevir, aynalara bak',
-    rolYolcu: '<b>👀 YOLCUSUN</b><br>Şoförün yardımcısısın: tarif et, işaret ver!<br>A/D sola/sağa işareti · S yavaşla · W hızlan · T telsiz (tanker) · F yağ kolu (polise) · R soğutma pompası · E kalk',
+    rolSofor: '<b>🚚 ŞOFÖRSÜN</b><br>Kamyonu durdurma! Yolcu yağ kolu, telsiz ve soğutmayla yardım eder.<br>A/D direksiyon · W gaz · S fren (dururken basılı: geri) · E kalk<br>Fare: başını çevir, aynalara bak',
+    rolYolcu: '<b>👀 YOLCUSUN</b><br>Şoförün yardımcısısın!<br>T telsiz (tanker) · F yağ kolu (polise) · R soğutma pompası · E kalk',
     rolKasa: '<b>📦 KASADASIN</b><br>WASD yürü · Boşluk zıpla / tutunurken tırman<br>J veya sol tık TUT · K veya sağ tık ŞAPLAK<br>E koltuğa otur · F kullan (vana, su, erzak) · C kamera',
     odaKodu: 'Oda kodu', kisi: 'oyuncu', baslatHost: 'Herkes hazırsa ENTER (ya da ekrana çift dokun) ile başlat', baslatBekle: 'Oda sahibinin başlatması bekleniyor',
     lobiIpucu: 'Yola çıkınca: şoför koltuğu solda, yolcu sağda. Dolu şoför koltuğunu almak için şoförün kafasına şaplak at!',
@@ -81,7 +81,7 @@ const S = {
     },
   },
   en: {
-    menuAciklama: "The driver drives, the passenger navigates and helps out, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
+    menuAciklama: "The driver drives, the passenger helps out, the crew in the back fights fuel, flat tyres, fires and the police. If the truck stops, it's game over. 2–4 players.",
     haydutAd: 'BANDIT', adin: 'Your name', odaKur: 'Create room', kod: 'CODE', katil: 'Join', oyuncu: 'Player',
     tuslar: '⌨ Controls', ayarlar: '⚙ Settings', kapat: 'Close (Esc)', ses: 'SOUND', oyuncular: 'PLAYERS', dilBaslik: 'DİL / LANGUAGE', ileri: '👀 AHEAD',
     asamaSec: 'Choose a stage', sadeceSahip: 'The host picks the stage', egitimKisa: 'Tutorial', dagKisa: 'Mountain', dagAd: '⛰ Mountain road · climb along the cliff', telsizBaslik: 'Dial the tanker frequency', telsizAlt: 'Keys 1–4 · T to close', telsizTamam: '📡 Call sent!', b_kol: '🛢 OIL LEVER', b_pompa: '🌡 PUMP', mikrofon: 'Microphone', varsayilan: 'Default', grafik: 'Graphics', kalite0: 'Low', kalite1: 'Medium', kalite2: 'High', grafikNot: 'Shadows and resolution change right away; roadside trees and details change after restarting the game.', yakitYazi: (n) => '⛽ Fuel ' + n + '%', canYazi: (n) => '🔧 Truck ' + n + '%', karakterSec: 'Your character (taken ones are locked)', bos: 'Free', sonsuzKisa: 'Endless', sonsuzBitti: (m) => '🛣 You made it ' + m + ' m!', rekor: (m) => '🏆 Record: ' + m + ' m', yeniRekor: '🏆 NEW RECORD!', gidilen: (m) => '🛣 ' + m + ' m', ilkKez: 'First time? Start with the tutorial — it walks you through every job.', basla: '▶ Start',
@@ -113,8 +113,8 @@ const S = {
     mikIzin: 'Asking for microphone access…', baglaniyor: 'Connecting…', baglanamadi: 'Could not connect. Try mobile data instead of Wi-Fi (or the other way round).',
     baglantiHata: (a) => 'Connection error: ' + a, odaDolu: 'Room is full (4 players)', sahipAyrildi: 'The host left', kodYaz: 'Type the 4-letter room code', davet: '👥 Invite friends', steamNot: 'Steam: create a room, then use the «Invite friends» button at the top. Friends can also click «Join Game» in their Steam friends list.', steamHata: 'Could not create or join the Steam room. Is Steam running?', atildin: 'The host kicked you from the room.',
     rolBar: '<b>🍺 TRUCKERS\' BAR</b><br>The crew is gathering…',
-    rolSofor: "<b>🚚 YOU'RE DRIVING</b><br>Don't let the truck stop! Your passenger guides and signals.<br>A/D steer · W gas · S brake (hold when stopped: reverse) · E stand up<br>Mouse: look around, check the mirrors",
-    rolYolcu: "<b>👀 YOU'RE THE PASSENGER</b><br>You're the co-driver: guide and signal!<br>A/D left/right sign · S slow down · W speed up · T radio (tanker) · F oil lever (police) · R coolant pump · E stand up",
+    rolSofor: "<b>🚚 YOU'RE DRIVING</b><br>Don't let the truck stop! Your passenger helps with the oil lever, radio and coolant.<br>A/D steer · W gas · S brake (hold when stopped: reverse) · E stand up<br>Mouse: look around, check the mirrors",
+    rolYolcu: "<b>👀 YOU'RE THE PASSENGER</b><br>You're the co-driver!<br>T radio (tanker) · F oil lever (police) · R coolant pump · E stand up",
     rolKasa: "<b>📦 YOU'RE IN THE BACK</b><br>WASD walk · Space jump / climb while holding<br>J or left click GRAB · K or right click SLAP<br>E sit down · F use (valve, water, supplies) · C camera",
     odaKodu: 'Room code', kisi: 'players', baslatHost: "Press ENTER (or double-tap the screen) when everyone's ready", baslatBekle: 'Waiting for the host to start',
     lobiIpucu: "On the road: driver's seat on the left, passenger on the right. Slap the driver on the head to take a taken driver's seat!",

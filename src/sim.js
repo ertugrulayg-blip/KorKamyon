@@ -1,5 +1,5 @@
 // Oyun benzetimi: yalnız oda sahibinde çalışır. Kamyon, oyuncular, tanker, polis, yük, yangın, haydut.
-import { CEP, cepGen, DOK, tesisYakin, kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
+import { BOY, zeminY, DIREKSIYON, DIR_EGIM, DIR_R, CEP, cepGen, DOK, tesisYakin, kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
 
 export let cpc = 1, cps = 0, tX = 0, tZ = 0; // cpc/cps: kabin açısının cos/sin'i
 export const toCab = (x, z) => { tX = x * cpc - (z - HZ) * cps; tZ = HZ + x * cps + (z - HZ) * cpc; }, fromCab = (x, z) => { tX = x * cpc + (z - HZ) * cps; tZ = HZ - x * cps + (z - HZ) * cpc; };
@@ -14,7 +14,7 @@ export const BARR = 9.5, BLIM = BARR - 2.05; // bariyerin yol eksenine uzaklığ
 export const DRL = [-0.95, 1.8, ARKA + 0.45], DH = { p: DRL.slice(), holder: null, hand: 0 }; // tamir matkabı: kompresörün yanındaki sarı kutudan kabloyla çekilir, hasarlı yere tutulur
 export const SPOT = [[1.48, 1.6, -1.2, 'sol ön yan'], [-1.48, 1.6, -1.2, 'sağ ön yan'], [1.48, 1.6, -2.8, 'sol arka yan'], [-1.48, 1.6, -2.8, 'sağ arka yan']]; // hasar alan yerler
 export const PC = { st: 0, x: 0, z: -45, hp: 100, t: 0, ram: 5, slip: 0, used: [] }; // polis: 0 yok, 1 yaklaşıyor, 2 kovalıyor, 3 saf dışı
-export const KOL = [-1.22, 1.3, 2.7], KOL_BOY = 0.95, KOL_T = 0.9, POMPA = [-0.28, 2.12, 2.98]; // yolcunun yağ kolu (taban, boy, çekme süresi) ve soğutma pompası (torpidoda)
+export const KOL = [-1.22, 1.3, 2.7], KOL_BOY = 0.95, KOL_T = 0.9, POMPA = [-0.42, 1.85, 2.28]; // yolcunun yağ kolu (taban, boy, çekme süresi) ve soğutma pompası (yolcunun önünde, yerden çıkan ayağın üstünde)
 export const kolAci = () => Math.sin(Math.min(1, (T.kolT || 0) / KOL_T) * Math.PI) * 0.95; // kolun geriye yatma açısı
 export const TAHTA = [-1.08, 1.3, -4.6]; // tahta yığını (sağ kenar boyunca): kırık kenara çakılacak tahtalar buradan alınır
 export const OIL = []; // yola dökülen yağlar (dünya koordinatı); yağ yalnız yolcunun koluyla, kamyonun arkasından dökülür
@@ -59,19 +59,23 @@ const surucu = () => [...players.values()].find((p) => p.seat === 1);
 function carpti(ceza = 30) { const d = surucu(); if (d) { puan(d, -ceza, 'carpma'); d.sure.temiz = 0; } }
 export const say = (kod, a) => { T.msg = a === undefined ? kod : kod + '|' + a; T.msgT = 3.5; };
 
-export const R = [0.25, 0.3, 0.25, 0.13, 0.13, 0.15, 0.15]; // kalça, göğüs, kafa, sol el, sağ el, sol ayak, sağ ayak
-export const OFF = [[0, 0, 0], [0, 0.4, 0], [0, 0.76, 0], [0.35, 0.2, 0], [-0.35, 0.2, 0], [0.15, -0.5, 0], [-0.15, -0.5, 0]];
+export const R = [0.25, 0.3, 0.25, 0.13, 0.13, 0.15, 0.15].map((r) => r * BOY); // kalça, göğüs, kafa, sol el, sağ el, sol ayak, sağ ayak
+export const OFF = [[0, 0, 0], [0, 0.4, 0], [0, 0.76, 0], [0.35, 0.2, 0], [-0.35, 0.2, 0], [0.15, -0.5, 0], [-0.15, -0.5, 0]].map((o) => o.map((v) => v * BOY));
 export function place(pl, x, y, z) { for (let k = 0; k < 7; k++) { pl.P[k * 3] = x + OFF[k][0]; pl.P[k * 3 + 1] = y + OFF[k][1]; pl.P[k * 3 + 2] = z + OFF[k][2]; } pl.Q.set(pl.P); pl.pin = [null, null]; pl.offT = 0; }
 export function mkPlayer(id, name) {
   const used = [...players.values()].map((p) => p.ci);
-  const pl = { puan: 0, ist: {}, sure: { surus: 0, yolcu: 0, temiz: 0, enTemiz: 0 }, id, name, ci: [0, 1, 2, 3].find((i) => !used.includes(i)) ?? 0, P: new Float32Array(21), Q: new Float32Array(21), seat: 0, yaw: 0, can: 100, inp: {}, pin: [null, null], arm: 0.7, gndT: 0, jumpT: 0, stun: 0, punchT: 0, punchCd: 0, punchH: 0, hitDone: true, phase: 0, dead: 0, offT: 0, seatT: 0, seatCd: 0, oilT: 0, onPol: false, lw: 0, lp: 0, ls: 0, lc: 0, lj: false };
+  const pl = { puan: 0, ist: {}, sure: { surus: 0, yolcu: 0, temiz: 0, enTemiz: 0 }, id, name, ci: [0, 1, 2, 3].find((i) => !used.includes(i)) ?? 0, P: new Float32Array(21), Q: new Float32Array(21), seat: 0, yaw: 0, can: 100, inp: {}, pin: [null, null], arm: 0.7 * BOY, gndT: 0, jumpT: 0, stun: 0, punchT: 0, punchCd: 0, punchH: 0, hitDone: true, phase: 0, dead: 0, offT: 0, seatT: 0, seatCd: 0, oilT: 0, onPol: false, lw: 0, lp: 0, ls: 0, lc: 0, lj: false };
   place(pl, rnd(-0.8, 0.8), 1.95, rnd(-5.5, -1.5)); players.set(id, pl); return pl;
 }
 export function poseSeat(pl) {
   const s = SEAT[pl.seat], P = pl.P, d = pl.seat === 1, set = (k, x, y, z) => { P[k * 3] = x; P[k * 3 + 1] = y; P[k * 3 + 2] = z; };
-  set(0, s[0], s[1], s[2]); set(1, s[0], s[1] + 0.4, s[2] + 0.04); set(2, s[0], s[1] + 0.76, s[2] + 0.06);
-  set(3, s[0] + 0.22, d ? 2.05 : s[1] + 0.25, s[2] + (d ? 0.85 : 0.45)); set(4, s[0] - 0.22, d ? 2.05 : s[1] + 0.25, s[2] + (d ? 0.85 : 0.45));
-  set(5, s[0] + 0.15, 1.45, s[2] + 0.7); set(6, s[0] - 0.15, 1.45, s[2] + 0.7);
+  const b = BOY, y0 = s[1] - 0.25 * (1 - b), z0 = s[2] + (d ? 0.12 : 0.08); // küçük beden: kalça mindere iner, koltuğun önüne oturur
+  set(0, s[0], y0, z0); set(1, s[0], y0 + 0.4 * b, z0 + (d ? 0.1 : 0.04) * b); set(2, s[0], y0 + 0.76 * b, z0 + (d ? 0.2 : 0.06) * b); /* şoför direksiyona doğru hafif öne eğik */
+  set(3, s[0] + 0.22 * b, y0 + 0.25 * b, z0 + 0.45 * b); set(4, s[0] - 0.22 * b, y0 + 0.25 * b, z0 + 0.45 * b);
+  set(5, s[0] + 0.15 * b, 1.45, z0 + 0.6 * b); set(6, s[0] - 0.15 * b, 1.45, z0 + 0.6 * b);
+  if (d) for (const k of [3, 4]) { // şoför: eller jantta (saat 10 ve 2), direksiyonla birlikte döner
+    const a = (k === 3 ? 0.55 : Math.PI - 0.55) - T.steer * 2.2, x = Math.cos(a) * DIR_R, y = Math.sin(a) * DIR_R;
+    set(k, DIREKSIYON[0] + x, DIREKSIYON[1] + y * Math.cos(DIR_EGIM), DIREKSIYON[2] + y * Math.sin(DIR_EGIM) - 0.04); }
   if (!d) { // yolcu: sağ eli yağ kolunu tutup çeker, sol eli soğutma pompasını çalıştırır
     if (T.kolT > 0) { const a = kolAci(); set(4, KOL[0], KOL[1] + Math.cos(a) * KOL_BOY, KOL[2] - Math.sin(a) * KOL_BOY); }
     if (T.pompaT > 0) set(3, POMPA[0], POMPA[1] + 0.12 + Math.sin(T.t * 14) * 0.1, POMPA[2] - 0.12); }
@@ -136,7 +140,7 @@ export function stepPlayer(pl, dt) {
     else { // en yakın boş koltuğa oturur (yolcu koltuğunun yanındayken şoför koltuğuna atlamaz)
       let en = 0, enD = 1.25;
       for (const s of [1, 2]) { fromCab(SEAT[s][0], SEAT[s][2]); const d = Math.hypot(P[0] - tX, P[2] - tZ);
-        if (d < enD && !(T.ejT[s] > 0) && !(pl.seatCd > 0 && pl.kalkS === s) && ![...players.values()].some((q) => q.seat === s) && P[1] > 1.5) { en = s; enD = d; } }
+        if (d < enD && !(T.ejT[s] > 0) && !(pl.seatCd > 0 && pl.kalkS === s) && ![...players.values()].some((q) => q.seat === s) && P[1] > 1.2) { en = s; enD = d; } }
       if (en) { pl.seat = en; pl.seatT = 0; pl.tahta = 0; pl.kasa = 0; pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); }
     }
   }
@@ -162,36 +166,36 @@ export function stepPlayer(pl, dt) {
   const g = stand ? 0.25 : pinned ? 0.04 : 0.02, tv = 4.3 * dt * hold * (T.ol.erzak && T.tok <= 0 && !pl.bot ? 0.55 : 1) * (pl.kasa ? 0.8 : 1); // aç ekip ve kasa taşıyan yavaş yürür
   for (const i of [0, 3]) { P[i] += (mx * tv - (P[i] - Q[i])) * g; P[i + 2] += (mz * tv - (P[i + 2] - Q[i + 2])) * g; }
   if (stand) {
-    const wd = -Math.cos(pl.phase) * 0.14 * ml * hold; // yalpa: gövde basan ayağın üstüne yatar
-    { const c = (Math.min(P[16], P[19]) + 0.5 - P[1]) * 0.3; P[1] += c; Q[1] += c * 0.65; } // Q'ya da uygula: yay enerji pompalamasın (inişte zıplatıyordu)
-    P[3] += (P[0] + mx * 0.1 + lx * wd - P[3]) * 0.15; { const c = (P[1] + 0.4 - P[4]) * 0.3; P[4] += c; Q[4] += c * 0.65; } P[5] += (P[2] + mz * 0.1 + lz * wd - P[5]) * 0.15;
-    P[6] += (P[3] - P[6]) * 0.12; { const c = (P[4] + 0.36 - P[7]) * 0.3; P[7] += c; Q[7] += c * 0.65; } P[8] += (P[5] - P[8]) * 0.12;
+    const wd = -Math.cos(pl.phase) * 0.14 * BOY * ml * hold; // yalpa: gövde basan ayağın üstüne yatar
+    { const c = (Math.min(P[16], P[19]) + 0.5 * BOY - P[1]) * 0.3; P[1] += c; Q[1] += c * 0.65; } // Q'ya da uygula: yay enerji pompalamasın (inişte zıplatıyordu)
+    P[3] += (P[0] + mx * 0.1 + lx * wd - P[3]) * 0.15; { const c = (P[1] + 0.4 * BOY - P[4]) * 0.3; P[4] += c; Q[4] += c * 0.65; } P[5] += (P[2] + mz * 0.1 + lz * wd - P[5]) * 0.15;
+    P[6] += (P[3] - P[6]) * 0.12; { const c = (P[4] + 0.36 * BOY - P[7]) * 0.3; P[7] += c; Q[7] += c * 0.65; } P[8] += (P[5] - P[8]) * 0.12;
     pl.phase += ml * hold * dt * 9;
     for (let s = 0; s < 2; s++) {
-      const i = 15 + s * 3, sd = s ? -1 : 1, ph = pl.phase + s * Math.PI, sw = Math.sin(ph) * 0.28 * ml * hold;
-      P[i] += (P[0] + lx * sd * 0.17 + fx * sw - P[i]) * 0.35; P[i + 2] += (P[2] + lz * sd * 0.17 + fz * sw - P[i + 2]) * 0.35;
-      const up = Math.cos(ph); if (ml * hold > 0.1 && up > 0) { const c = (P[34 - i] + up * 0.16 - P[i + 1]) * 0.4; P[i + 1] += c; Q[i + 1] += c; } // kalkan ayak: konum düzeltmesi, hız eklemez (eskiden zıplatıyordu)
+      const i = 15 + s * 3, sd = s ? -1 : 1, ph = pl.phase + s * Math.PI, sw = Math.sin(ph) * 0.28 * BOY * ml * hold;
+      P[i] += (P[0] + lx * sd * 0.17 * BOY + fx * sw - P[i]) * 0.35; P[i + 2] += (P[2] + lz * sd * 0.17 * BOY + fz * sw - P[i + 2]) * 0.35;
+      const up = Math.cos(ph); if (ml * hold > 0.1 && up > 0) { const c = (P[34 - i] + up * 0.16 * BOY - P[i + 1]) * 0.4; P[i + 1] += c; Q[i + 1] += c; } // kalkan ayak: konum düzeltmesi, hız eklemez (eskiden zıplatıyordu)
     }
     if (I.j && !pl.lj) { for (let i = 1; i < 21; i += 3) Q[i] = P[i] - 6.6 * dt; pl.jumpT = 0.3; pl.gndT = 0; }
   }
   pl.lj = !!I.j;
   if (I.p !== undefined && I.p !== pl.lp) { pl.lp = I.p; if (pl.punchCd <= 0 && !st) { pl.punchT = 0.16; pl.punchCd = 0.4; pl.punchH ^= 1; pl.hitDone = false; } }
-  const climb = pinned && I.j; pl.arm += ((climb ? 0.2 : 0.7) - pl.arm) * 0.12;
+  const climb = pinned && I.j; pl.arm += ((climb ? 0.2 : 0.7) * BOY - pl.arm) * 0.12;
   for (let h = 0; h < 2; h++) {
     if (pl.pin[h]) continue; const i = 9 + h * 3, sd = h ? -1 : 1; let tx, ty, tz, k;
-    if (pl.punchT > 0 && h === pl.punchH) { tx = P[3] + fx * 0.95; ty = P[4] + 0.05; tz = P[5] + fz * 0.95; k = 0.6; }
-    else if (I.g && !st) { const up = gnd ? -0.6 : 0.5; tx = P[3] + fx * 0.5 + lx * sd * 0.2; ty = P[4] + up; tz = P[5] + fz * 0.5 + lz * sd * 0.2; k = 0.3; }
-    else if (I.fp) { tx = P[3] + fx * 0.5 + lx * sd * 0.3; ty = P[4] + 0.04; tz = P[5] + fz * 0.5 + lz * sd * 0.3; k = 0.1; } // birinci şahıs: eller önde, göz önünde
-    else { tx = P[3] + lx * sd * 0.36; ty = P[4] - 0.42; tz = P[5] + lz * sd * 0.36; k = 0.1; }
+    if (pl.punchT > 0 && h === pl.punchH) { tx = P[3] + fx * 0.95 * BOY; ty = P[4] + 0.05 * BOY; tz = P[5] + fz * 0.95 * BOY; k = 0.6; }
+    else if (I.g && !st) { const up = (gnd ? -0.6 : 0.5) * BOY; tx = P[3] + (fx * 0.5 + lx * sd * 0.2) * BOY; ty = P[4] + up; tz = P[5] + (fz * 0.5 + lz * sd * 0.2) * BOY; k = 0.3; }
+    else if (I.fp) { tx = P[3] + (fx * 0.5 + lx * sd * 0.3) * BOY; ty = P[4] + 0.04 * BOY; tz = P[5] + (fz * 0.5 + lz * sd * 0.3) * BOY; k = 0.1; } // birinci şahıs: eller önde, göz önünde
+    else { tx = P[3] + lx * sd * 0.36 * BOY; ty = P[4] - 0.42 * BOY; tz = P[5] + lz * sd * 0.36 * BOY; k = 0.1; }
     P[i] += (tx - P[i]) * k; P[i + 1] += (ty - P[i + 1]) * k; P[i + 2] += (tz - P[i + 2]) * k;
   }
-  if (climb) { const h = pl.pin[0] ? 9 : 12; P[4] += (P[h + 1] + 0.45 - P[4]) * 0.07; }
+  if (climb) { const h = pl.pin[0] ? 9 : 12; P[4] += (P[h + 1] + 0.45 * BOY - P[4]) * 0.07; }
   let fg = false;
   for (let it = 0; it < 4; it++) {
-    stick(P, 0, 1, 0.4, 0.5, 0); stick(P, 1, 2, 0.36, 0.3, 0);
+    stick(P, 0, 1, 0.4 * BOY, 0.5, 0); stick(P, 1, 2, 0.36 * BOY, 0.3, 0);
     for (let h = 0; h < 2; h++) {
       const pin = pl.pin[h], j = 3 + h, ji = j * 3;
-      if (!pin) { stick(P, 1, j, 0.7, 0.15, 1); continue; }
+      if (!pin) { stick(P, 1, j, 0.7 * BOY, 0.15, 1); continue; }
       if (pin.b) { tX = pin.b.o[0] + pin.p[0]; tZ = pin.b.o[2] + pin.p[2]; if (pin.b.cab) fromCab(tX, tZ); P[ji] = tX; P[ji + 1] = pin.b.o[1] + pin.p[1]; P[ji + 2] = tZ; stick(P, 1, j, pl.arm, 1, 1); }
       else {
         const qP = pin.q.P, qi = pin.k * 3, dx = qP[qi] - P[3], dy = qP[qi + 1] - P[4], dz = qP[qi + 2] - P[5], d = Math.hypot(dx, dy, dz) || 1e-6;
@@ -200,7 +204,7 @@ export function stepPlayer(pl, dt) {
       }
       Q[ji] = P[ji]; Q[ji + 1] = P[ji + 1]; Q[ji + 2] = P[ji + 2];
     }
-    stick(P, 0, 5, 0.52, 0.3, 1); stick(P, 0, 6, 0.52, 0.3, 1);
+    stick(P, 0, 5, 0.52 * BOY, 0.3, 1); stick(P, 0, 6, 0.52 * BOY, 0.3, 1);
     for (let k = 0; k < 7; k++) {
       const i = k * 3, isHand = k === 3 || k === 4;
       if (isHand && pl.pin[k - 3]) continue;
@@ -232,7 +236,7 @@ export function stepPlayer(pl, dt) {
     for (const q of players.values()) { if (q === pl || q.seat || q.dead > 0) continue; for (const k of [1, 0, 2]) if (d3(P, i, q.P, k * 3) < R[k] + 0.2) { pl.pin[h] = { q, k }; break; } if (pl.pin[h]) break; }
   }
   for (let h = 0; h < 2; h++) { const pin = pl.pin[h]; if (pin && (d3(P, 3, P, 9 + h * 3) > 1.35 || (pin.b && !pin.b.on) || (pin.q && (pin.q.seat || pin.q.dead > 0)))) pl.pin[h] = null; }
-  if (pl.punchT > 0 && !pl.hitDone) { const i = 9 + pl.punchH * 3; for (const q of players.values()) if (q !== pl && q.dead <= 0 && d3(P, i, q.P, 6) < 0.48) { pl.hitDone = true; hitPlayer(pl, q, fx, fz); break; } }
+  if (pl.punchT > 0 && !pl.hitDone) { const i = 9 + pl.punchH * 3; for (const q of players.values()) if (q !== pl && q.dead <= 0 && d3(P, i, q.P, 6) < 0.48 * BOY) { pl.hitDone = true; hitPlayer(pl, q, fx, fz); break; } }
   // tahta: yığının yanında F ile alınır, kırık kenarın yanında F basılı tutularak çakılır
   if (I.u && !pl.luT && !st && !pl.tahta && T.state === 'run' && KENAR.some((k) => k.kirik) && Math.hypot(P[3] - TAHTA[0], P[5] - TAHTA[2]) < 1.2) pl.tahta = 1;
   { const k = pl.tahta && I.u && !st ? KENAR.find((k) => k.kirik && Math.sign(P[3]) === k.s && Math.abs(P[3]) > 0.7 && P[5] > k.z0 - 0.5 && P[5] < k.z1 + 0.5) : null;
@@ -362,13 +366,53 @@ function dagTaslari(oz, auto) {
       }
     }
   }
-  // büyük kayalar: çarpınca yavaşlar ve hasar alır; kamyon kayanın içinden geçemez, kenarına itilir
+  kayaCarp();
+}
+// Yan aynalar kabinden ~1 m dışarı taşar: yamaç ayna yüksekliğine çıkan yere girerse kamyon yoldan içeri itilir.
+const AYNA = [[2.45, 3.28], [-2.45, 3.28]], AYNA_Y = 2.4; // kabin çerçevesinde (x, z); aynanın alt kenarı (m)
+function aynaDuvar() {
+  const a = T.th + T.phi, s = Math.sin(a), c = Math.cos(a), pX = T.X + Math.sin(T.th) * HZ, pZ = T.Z + Math.cos(T.th) * HZ;
+  for (const [ax, az] of AYNA) {
+    const yon = ax > 0 ? -1 : 1; // içeri (yolun ortasına) doğru
+    let itme = 0;
+    for (let n = 0; n < 40; n++) {
+      const x = pX + ax * c + (az - HZ) * s + itme, z = pZ - ax * s + (az - HZ) * c;
+      if (kesit(z).u > 0.5 && ax < 0) break; // uçurum tarafında yamaç yok
+      if (zeminY(x, z) - yH(z) < AYNA_Y) break;
+      itme += yon * 0.05;
+    }
+    if (itme) { T.X += itme; T.v *= 0.99; }
+  }
+}
+// Büyük kayalar: kamyon iki dikdörtgen (dorse ve kabin), kaya bir daire. Kamyon yalnızca gömüldüğü kadar geri itilir
+// (eskiden kaya hizasındaki bütün kamyon birden kayanın kenarına atılıyordu). Önden çarpınca durur, yandan sürterse yavaşlar.
+const KG = 1.45; // kamyonun yarı genişliği (m)
+function kayaCarp() {
+  const cs = Math.sin(T.th + T.phi), cc = Math.cos(T.th + T.phi), ts = Math.sin(T.th), tc = Math.cos(T.th);
+  const pX = T.X + ts * HZ, pZ = T.Z + tc * HZ; // mafsal
+  const govdeler = [
+    { x: T.X, z: T.Z, s: ts, c: tc, z0: ARKA, z1: HZ }, // dorse (kendi çerçevesi T.X, T.Z'de)
+    { x: pX, z: pZ, s: cs, c: cc, z0: 0, z1: 4.6 }, // kabin (mafsaldan ileri)
+  ];
   for (const k of DKAYA) {
-    if (k.z - T.Z > 5.6 || k.z - T.Z < ARKA) continue;
-    const kx = cx(k.z) + k.x, d = T.X - kx, sinir = k.r + 1.5;
-    if (Math.abs(d) >= sinir) continue;
-    T.X = kx + (d >= 0 ? 1 : -1) * sinir; // kayanın kenarına itilir (öbür yana geçemez)
-    if (!k.vurdu || T.t - k.vurdu > 2) { k.vurdu = T.t; T.v *= 0.3; T.dmg[k.x > 0 ? 0 : 1] += 15; jolt(-Math.sign(k.x) * 1.5, 2); carpti(); say('kaya'); }
+    if (Math.abs(k.z - T.Z) > 14) continue;
+    const kx = cx(k.z) + k.x, R = k.r * 1.08;
+    for (const g of govdeler) {
+      const dx = kx - g.x, dz = k.z - g.z;
+      const yan = dx * g.c - dz * g.s, ileri = dx * g.s + dz * g.c; // kayanın gövdeye göre konumu (+yan: sol)
+      const ey = clamp(yan, -KG, KG), ei = clamp(ileri, g.z0, g.z1); // gövdenin kayaya en yakın noktası
+      const ay = yan - ey, ai = ileri - ei, mesafe = Math.hypot(ay, ai);
+      let gom, ny, ni; // gömülme ve itme yönü (gövde çerçevesinde, kayadan gövdeye)
+      if (mesafe > 1e-4) { gom = R - mesafe; ny = -ay / mesafe; ni = -ai / mesafe; }
+      else { gom = R + KG - Math.abs(yan); ny = yan > 0 ? -1 : 1; ni = 0; } // merkez gövdenin içinde: yana çık
+      if (gom <= 0) continue;
+      const onden = ni < -0.7; // kaya gövdenin önünde
+      if (onden) { T.Z += ni * gom * tc; T.X += ni * gom * ts; } // geri it (ileri yönde)
+      else { T.X += (ny * g.c) * gom; } // yandan: yalnız yana, gömüldüğü kadar
+      const hiz = Math.abs(T.v);
+      if (onden && T.v > 0) T.v = 0; else T.v *= 0.97;
+      if (hiz > 2 && (!k.vurdu || T.t - k.vurdu > 1.5)) { k.vurdu = T.t; T.dmg[k.x > 0 ? 0 : 1] += Math.round(4 + hiz * (onden ? 2 : 0.8)); jolt(-Math.sign(yan) * Math.min(1.5, 0.4 + hiz * 0.12), onden ? 1.2 : 0.3); carpti(); say('kaya'); }
+    }
   }
 }
 // Uçurumdan düşüş: kamyon yer çekimiyle düşer ve yana devrilir; kasadakiler havaya savrulur. 3 sn sonra oyun biter.
@@ -388,7 +432,8 @@ function dususAdim(dt) {
 }
 export function stepTruck(dt) {
   const y = [...players.values()].find((p) => p.seat === 2), yi = y ? y.inp : null; // yolcunun şoföre işareti: 1 sol, 2 sağ, 3 yavaş
-  T.sig = yi ? yi.sg || ((yi.mx || 0) > 0.5 ? 1 : (yi.mx || 0) < -0.5 ? 2 : (yi.mz || 0) < -0.5 ? 3 : (yi.mz || 0) > 0.5 ? 4 : 0) : 0; // 1 sol, 2 sağ, 3 yavaş, 4 hızlan
+  T.sig = 0; // yolcunun yol tarifi kapalı (şoför yolu görüyor)
+  if (0) T.sig = yi ? yi.sg || ((yi.mx || 0) > 0.5 ? 1 : (yi.mx || 0) < -0.5 ? 2 : (yi.mz || 0) < -0.5 ? 3 : (yi.mz || 0) > 0.5 ? 4 : 0) : 0; // 1 sol, 2 sağ, 3 yavaş, 4 hızlan
   if (T.state === 'lobby') { T.v = 0; T.pax = T.paz = 0; return; }
   if (T.dus) return dususAdim(dt);
   if (T.state === 'run' && T.cd > 0) { T.cd -= dt; T.v = 0; T.pax = T.paz = 0; T.gas = T.br = 0; if (T.cd > 0) return; T.cd = 0; T.v = 8; say('yolaCiktiniz'); } // başlangıç geri sayımı: kamyon bekler
@@ -431,7 +476,8 @@ export function stepTruck(dt) {
       const bas = [T.X + Math.sin(T.th) * HZ + Math.sin(T.th + T.phi) * 4.6, T.Z + Math.cos(T.th) * HZ + Math.cos(T.th + T.phi) * 4.6], son = [T.X + Math.sin(T.th) * ARKA, T.Z + Math.cos(T.th) * ARKA];
       for (const [px, pz] of [bas, son]) { const ep = px - cx(pz), sol = DAG.yol - 1.45 + solBanket(pz), sag = kesit(pz).u > 0.5 ? 1e9 : DAG.yol - 1.45 + sagBanket(pz);
         const it = ep > sol ? sol - ep : ep < -sag ? -sag - ep : 0;
-        if (it) { T.X += it; T.v *= 0.985; if (Math.abs(it) > 0.25 && T.hitCd <= 0) { T.hitCd = 0.9; T.dmg[it < 0 ? 0 : 1] += 4; jolt(Math.sign(it) * 1.1, 0); say(it < 0 && kesit(pz).o < 0.5 ? 'duvar' : 'agac'); } } } }
+        if (it) { T.X += it; T.v *= 0.985; if (Math.abs(it) > 0.25 && T.hitCd <= 0) { T.hitCd = 0.9; T.dmg[it < 0 ? 0 : 1] += 4; jolt(Math.sign(it) * 1.1, 0); say(it < 0 && kesit(pz).o < 0.5 ? 'duvar' : 'agac'); } } }
+      aynaDuvar(); }
     if (Math.abs(e) > lim) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
       T.X = c + sd * lim; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
       if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; carpti(); jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say(HARITA ? (sd > 0 && kesit(T.Z).o < 0.5 ? 'duvar' : 'agac') : 'bariyer', w); if (Math.random() < 0.5) kenarKir(sd, rnd(ARKA, 0)); if (T.ol.lastik && Math.random() < 0.35) { const yan = [0, 1, 2, 3].filter((k) => !T.flat[k] && Math.sign(WHEEL[k][0]) === sd); if (yan.length) { const k = yan[(Math.random() * yan.length) | 0]; T.flat[k] = 1; say('lastikPat', k); } } /* bariyere sürtünen yandaki lastik patlayabilir */ for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }

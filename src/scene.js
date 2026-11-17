@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
+import { DIREKSIYON, DIR_EGIM, BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
 import { AIR, BARBEKU, BARR, CR, DEPO, DRL, EXT, KOL, KOL_BOY, POMPA, RAD, SPOT, TAHTA, TEZGAH } from './sim.js';
 
 // ---------- görüntü ----------
@@ -37,7 +37,7 @@ export const koltuk = [null, [0.7], [-0.7]].map((k, s) => { if (!k) return null;
   add(g, BG, koyuD, k[0] > 0 ? -0.46 : 0.46, 0.62, -0.05, 0.08, 0.06, 0.5); add(g, CG, M(0x888888), 0, -0.15, 0, 0.05, 0.3, 0.05);
   return g; });
 add(truck, CG, M(0xffd23f), INLET[0], 1.65, INLET[2], 0.09, 0.7, 0.09); add(truck, CG, M(0x222222), INLET[0], 2.0, INLET[2], 0.16, 0.08, 0.16);
-export const swheel = new THREE.Group(); swheel.position.set(0.7, 2.05, 2.85); swheel.rotation.x = -0.5; cabIn.add(swheel);
+export const swheel = new THREE.Group(); swheel.position.set(...DIREKSIYON); swheel.rotation.x = DIR_EGIM; /* kolların yetiştiği yerde */ cabIn.add(swheel);
 add(swheel, new THREE.TorusGeometry(0.3, 0.045, 8, 24), M(0x111111), 0, 0, 0); add(swheel, BG, M(0x111111), 0, 0, 0, 0.6, 0.06, 0.04); add(swheel, BG, M(0xd8432f), 0, 0.15, 0, 0.06, 0.3, 0.04);
 export const pedG = add(cabIn, BG, M(0x7bd389), 0.5, 1.5, 3.1, 0.16, 0.3, 0.06), pedB = add(cabIn, BG, M(0xff5a5f), 0.85, 1.5, 3.1, 0.2, 0.3, 0.06);
 export const gauge = add(cabIn, CG, M(0xf5f0e8), 0.7, 2.45, 3.18, 0.16, 0.02, 0.16); gauge.rotation.x = Math.PI / 2;
@@ -193,6 +193,7 @@ add(cabIn, BG, M(0x3a3f48), KOL[0], KOL[1] + 0.04, KOL[2], 0.26, 0.08, 0.5); add
 add(yagKolu, CG, M(0x9aa1ab), 0, KOL_BOY / 2, 0, 0.035, KOL_BOY, 0.035); add(yagKolu, CG, M(0xd8232a), 0, KOL_BOY, 0, 0.06, 0.2, 0.06); // sap ve kırmızı tutamak
 // soğutma pompası (yolcu, torpidoda): gövde ve aşağı yukarı oynayan mavi kol
 add(cabIn, CG, M(0x39445a), POMPA[0], POMPA[1] - 0.05, POMPA[2] + 0.1, 0.09, 0.3, 0.09).rotation.x = 0.5;
+add(cabIn, CG, M(0x2a2f3a), POMPA[0], (1.38 + POMPA[1] - 0.18) / 2, POMPA[2] + 0.17, 0.05, POMPA[1] - 0.18 - 1.38, 0.05); // pompanın ayağı (kabin tabanından)
 export const pompaKol = new THREE.Group(); pompaKol.position.set(POMPA[0], POMPA[1] + 0.1, POMPA[2] - 0.06); cabIn.add(pompaKol);
 add(pompaKol, CG, M(0x9aa1ab), 0, 0, 0.06, 0.02, 0.2, 0.02).rotation.x = 0.5; add(pompaKol, CG, M(0x3fa7ff), 0, 0.02, -0.06, 0.035, 0.22, 0.035).rotation.z = Math.PI / 2;
 // vites kolu ve el freni (iki koltuğun arasında)

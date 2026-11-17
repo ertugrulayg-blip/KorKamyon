@@ -132,3 +132,7 @@ Her değişiklik dalda yapılır, duman testi geçer, sahibin onayıyla `main`'e
 - Steam yoksa (web, ya da Steam kapalı) PeerJS ve oda kodu aynen çalışır. Steam sürümüyle web sürümü birbirine bağlanamaz.
 - Sesli sohbet Steam'de de PeerJS (WebRTC) ile; ses eşinin kimliği Steam numarasından türer. Steam'in kendi sesine geçiş sonraki iş.
 - App ID: şimdilik Valve'ın deneme numarası 480. Steamworks (KYC + Steam Direct) bitince `desktop/steam.cjs` içindeki `APP_ID` değişir.
+
+## Yolcu tarifi kapandı, karakterler küçüldü (2026-11)
+- Şoför yolu görüyor; yolcunun A/D/W/S yol işaretleri kapatıldı (`T.sig = 0`). Yolcunun işi yağ kolu, telsiz ve soğutma pompası.
+- Oyun içi karakterler 0.7 boyunda: `BOY` (world.js) fizik bedeninin ölçülerini, oturma pozunu ve modelin ölçeğini (`makeRig(..., BOY)`) birlikte küçültür. Bar sahnesindeki karakterler eski boyda.
