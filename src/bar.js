@@ -71,7 +71,8 @@ export function trucker(ci, name) {
   let ball = null; if (ps.ball) { const A = ps.arms[0][1]; ball = new THREE.Group(); ball.userData.y0 = A[1] + Y + 0.125; ball.position.set(A[0], ball.userData.y0, A[2] + 0.02); b.add(ball); add(ball, SG, M(0xf4efe2), 0, 0, 0, 0.045); for (const r of [0.6, -0.6]) add(ball, new THREE.TorusGeometry(0.04, 0.004, 4, 16), M(0xc0392b), 0, 0, 0).rotation.set(r, r, 0); } // beyzbol topu
   g.rotation.y = ps.ry; g.userData = { ns, h, belly, k, ps, ball, eller, kupa, kupa0: kupa.position.clone() };
   // iskeletli model: yüklenince eski kutu gövde gizlenir (top, kupa, tabure ve isim kalır)
-  makeRig(ci, g).then((r) => { if (!r) return; for (const m of bacak) m.visible = false; for (const c of b.children) if (c !== ball) c.visible = false; g.userData.rig = r; g.userData.b = b; });
+  for (const m of bacak) m.visible = false; for (const c of b.children) if (c !== ball) c.visible = false; // model yüklenene dek eski kutu karakter görünmesin
+  makeRig(ci, g).then((r) => { if (!r) { for (const m of bacak) m.visible = true; for (const c of b.children) c.visible = true; return; } g.userData.rig = r; g.userData.b = b; });
   return g;
 }
 export const truckers = new Map(); export let barT = 0;

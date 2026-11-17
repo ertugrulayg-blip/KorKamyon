@@ -39,6 +39,8 @@ export const dagSag = (z, d) => { const w = kesit(z), H = hDag(z) - DAG.vadi;
   const fu = -ara([[0, 0], [0.4, 0.8], [1.2, H * 0.35], [2.2, H * 0.75], [3.4, H - 2.5], [9, H]], d), fy = d < 9 ? -0.04 * d : -0.36 - (d - 9) * 0.42, fo = d < 30 ? -0.01 * d : -0.3 - (d - 30) * 0.8;
   return Math.max(-H, w.u * fu + w.y * fy + w.o * fo); };
 export const cx = (z) => (HARITA ? cxDag(z) : cxDuz(z));
+// zeminin (yol, kaya duvarı, yamaç) bir noktadaki yüksekliği: kamera kayanın içine girmesin diye
+export const zeminY = (x, z) => { if (!HARITA) return 0; const e = x - cx(z), h = yH(z); return e > DAG.yol ? h + dagSol(z, e - DAG.yol) : e < -DAG.yol ? h + dagSag(z, -e - DAG.yol) : h; };
 export const yH = (z) => (HARITA ? hDag(z) : 0); // yolun yüksekliği
 export const egim = (z) => (yH(z + 1) - yH(z - 1)) / 2; // yokuş (tan)
 // Dağ yolunda taşlar ve kayalar (x: yol eksenine göre, + sol / kaya duvarı tarafı). Tohumlu: herkes aynısını üretir.
