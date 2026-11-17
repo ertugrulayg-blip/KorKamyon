@@ -181,7 +181,7 @@ const AVUC = () => -2.0; // sol ön kolu bu kadar çevirince avuç yukarı bakar
 // Tezgâhı bezle siler, sinsi sinsi etrafa bakar, arada ellerini ovuşturur. Oturan oyuncuların arasında görünecek yerde durur.
 const barmen = { g: new THREE.Group(), rig: null, x: 0 };
 bar.add(barmen.g); const bez = add(barmen.g, BG, M(0xe8e2d0), 0, 0, 0, 0.16, 0.03, 0.12);
-makeRig(0, barmen.g, 'haydut.glb').then((r) => { barmen.rig = r; });
+makeRig(0, barmen.g, 'barmen').then((r) => { barmen.rig = r; });
 const MD1 = new THREE.Vector3(), MD2 = new THREE.Vector3(), MD3 = new THREE.Vector3(), MD4 = new THREE.Vector3(), MD5 = new THREE.Vector3(), MD6 = new THREE.Vector3();
 const MK = new THREE.Vector3(), MQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI), MH = { lh: new THREE.Vector3(), rh: new THREE.Vector3(), lf: new THREE.Vector3(), rf: new THREE.Vector3() }, MEK = { egil: 0, basEg: 0, bilek: [0, 0] };
 function drawBarmen(t, n) {

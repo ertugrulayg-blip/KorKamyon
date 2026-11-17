@@ -136,3 +136,8 @@ Her değişiklik dalda yapılır, duman testi geçer, sahibin onayıyla `main`'e
 ## Yolcu tarifi kapandı, karakterler küçüldü (2026-11)
 - Şoför yolu görüyor; yolcunun A/D/W/S yol işaretleri kapatıldı (`T.sig = 0`). Yolcunun işi yağ kolu, telsiz ve soğutma pompası.
 - Oyun içi karakterler 0.7 boyunda: `BOY` (world.js) fizik bedeninin ölçülerini, oturma pozunu ve modelin ölçeğini (`makeRig(..., BOY)`) birlikte küçültür. Bar sahnesindeki karakterler eski boyda.
+
+## Yeni karakter ve levye (2026-11)
+- Tüm karakterler sahibinin Meshy'de ürettiği tombul motorcu. Eski modeller (trucker, mavi, sarı, yeşil, haydut) silindi, git geçmişinde.
+- Oyuncu rengi kot pantolonda; haydut kara kot + kırmızı tişört, barmen kahverengi pantolon.
+- Şaplak yerine levye: herkesin sağ elinde, darbe 10 can (haydut 18). Darbede kan sıçrar, yerde leke kalır; ayarlardan kapatılabilir (mağaza yaş sınıfı için).

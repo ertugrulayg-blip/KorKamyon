@@ -25,12 +25,12 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/input.js` — klavye/dokunmatik. `src/hud.js` — `draw(V, dt)`: çizim ve ekran yazıları.
 - `src/main.js` — PeerJS ağı, mikrofon, ana döngü. `src/state.js` — paylaşılan `net` ve `ui`.
 - `src/detail.js` — kamyon, dorse, tanker süslemeleri (yalnız görüntü; `Batch` ile tek ağda birleştirilir). hud.js yükler.
-- `src/rig.js` — iskeletli karakter (oyunda `BOY` = 0.7 ölçekli; beden ölçüleri sim.js de `BOY` ile çarpılır) (`assets/chars/trucker.glb`): kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
+- `src/rig.js` — iskeletli karakter (oyunda `BOY` = 0.7 ölçekli; beden ölçüleri sim.js de `BOY` ile çarpılır) : kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
 - `src/dil.js` — Türkçe/İngilizce. Oyun mesajları oda sahibinden **kod** olarak gelir (`say('kod', param)`), her istemci `mesaj()` ile kendi dilinde gösterir. Ekran metinleri `L('anahtar')`; index.html'de `data-t` / `data-tp`, uzun bloklar `.dil-tr` / `.dil-en`. Yeni metin eklerken iki dile de yaz.
 - `src/egitim.js` — eğitim adımları (oda sahibinde, `stepEgitim` main'den). Aşama ayarları `ASAMA` (world.js); `oyun.lv/acik`, `asamaSec`, `puan()`, `bitir()` sim.js'te.
 - `src/sohbet.js` — sesli sohbet: bağlantılar sessiz parçayla kurulur, mikrofon açılınca `replaceTrack`; kipler kapalı/açık/bas-konuş (V); uzaktaki sesler WebAudio kazancıyla (oyuncu başına seviye).
 - `src/panel.js` — ayarlar (ses seviyeleri, oyuncu listesi, oda sahibi için lobide çıkarma) ve tuş rehberi. Ses ayarları `ui.ses`, `localStorage kk-ses`.
-- Oyuncular tek gövdeyi paylaşır: `assets/chars/govde.glb` (Meshy modeli, iskeleti ve ağırlıkları Blender'da kuruldu; renkler kırmızının kodda boyanmasıyla). Haydut hâlâ eski `haydut.glb`. Gövdeyi yeniden üretmek: Blender'ın Python modülü (`pip install bpy`) ile iskelet betiği — kemik adları `rig.js` içindeki `KEMIK` listesiyle aynı olmalı.
+- Herkes tek gövdeyi paylaşır: `assets/chars/govde.glb` (Meshy tombul motorcu; iskelet ve ağırlıklar Blender betiğiyle, ağırlık kemiğe uzaklıktan). Oyuncu rengi kotun boyanmasıyla; haydut ve barmen aynı gövde, başka boya (`boyaFn`, rig.js). Sağ elde levye (`levyeTak`, hud.js); darbede kan (`KAN` sim.js → `kanCiz` hud.js, ayarlardan kapatılır `ui.kan`). Gövdeyi yeniden üretmek: Blender'ın Python modülü (`pip install bpy`) ile iskelet betiği — kemik adları `rig.js` içindeki `KEMIK` listesiyle aynı olmalı.
 - Erzak: `T.tok`, `T.erzak`, `DEPO`/`BARBEKU`/`TEZGAH` (sim.js), tesisler `TESIS`, satıcı arabası `DOK` (world.js). Durma payı `DUR_SURE`.
 - Yeni kasa düzeni: `ARKA` (world.js) kasanın arka ucu; yan kenarlar `KENAR` (kırılır, tahta ile onarılır).
 - `src/models.js` — glTF model yükleyici (`loadModel`, `spawn`, `recolor`). `assets/kenney/` — CC0 modeller.
