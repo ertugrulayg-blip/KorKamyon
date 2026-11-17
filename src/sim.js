@@ -14,7 +14,8 @@ export const BARR = 9.5, BLIM = BARR - 2.05; // bariyerin yol eksenine uzaklığ
 export const DRL = [-0.95, 1.8, ARKA + 0.45], DH = { p: DRL.slice(), holder: null, hand: 0 }; // tamir matkabı: kompresörün yanındaki sarı kutudan kabloyla çekilir, hasarlı yere tutulur
 export const SPOT = [[1.48, 1.6, -1.2, 'sol ön yan'], [-1.48, 1.6, -1.2, 'sağ ön yan'], [1.48, 1.6, -2.8, 'sol arka yan'], [-1.48, 1.6, -2.8, 'sağ arka yan']]; // hasar alan yerler
 export const PC = { st: 0, x: 0, z: -45, hp: 100, t: 0, ram: 5, slip: 0, used: [] }; // polis: 0 yok, 1 yaklaşıyor, 2 kovalıyor, 3 saf dışı
-export const KOL = [-1.22, 1.3, 2.7], KOL_BOY = 0.95, KOL_T = 0.9, POMPA = [-0.42, 1.85, 2.28]; // yolcunun yağ kolu (taban, boy, çekme süresi) ve soğutma pompası (yolcunun önünde, yerden çıkan ayağın üstünde)
+export const POMPA_SAP = 0.22; // pompa gövdesinin üstünden sapa
+export const KOL = [-1.22, 1.3, 2.7], KOL_BOY = 0.95, KOL_T = 0.9, POMPA = [-0.42, 1.85, 2.18]; // yolcunun yağ kolu (taban, boy, çekme süresi) ve soğutma pompası (yolcunun önünde, yerden çıkan ayağın üstünde)
 export const kolAci = () => Math.sin(Math.min(1, (T.kolT || 0) / KOL_T) * Math.PI) * 0.95; // kolun geriye yatma açısı
 export const TAHTA = [-1.08, 1.3, -4.6]; // tahta yığını (sağ kenar boyunca): kırık kenara çakılacak tahtalar buradan alınır
 export const OIL = []; // yola dökülen yağlar (dünya koordinatı); yağ yalnız yolcunun koluyla, kamyonun arkasından dökülür
@@ -67,18 +68,19 @@ export function mkPlayer(id, name) {
   const pl = { puan: 0, ist: {}, sure: { surus: 0, yolcu: 0, temiz: 0, enTemiz: 0 }, id, name, ci: [0, 1, 2, 3].find((i) => !used.includes(i)) ?? 0, P: new Float32Array(21), Q: new Float32Array(21), seat: 0, yaw: 0, can: 100, inp: {}, pin: [null, null], arm: 0.7 * BOY, gndT: 0, jumpT: 0, stun: 0, punchT: 0, punchCd: 0, punchH: 0, hitDone: true, phase: 0, dead: 0, offT: 0, seatT: 0, seatCd: 0, oilT: 0, onPol: false, lw: 0, lp: 0, ls: 0, lc: 0, lj: false };
   place(pl, rnd(-0.8, 0.8), 1.95, rnd(-5.5, -1.5)); players.set(id, pl); return pl;
 }
+const OTUR_Y = 0.08, OTUR_Z = 0.22, EGIL = 0.15; // kalça minderden yüksekliği, şoförün öne oturuşu, öne eğilme (eller direksiyonun iki yanına yetişsin)
 export function poseSeat(pl) {
   const s = SEAT[pl.seat], P = pl.P, d = pl.seat === 1, set = (k, x, y, z) => { P[k * 3] = x; P[k * 3 + 1] = y; P[k * 3 + 2] = z; };
-  const b = BOY, y0 = s[1] - 0.25 * (1 - b), z0 = s[2] + (d ? 0.12 : 0.08); // küçük beden: kalça mindere iner, koltuğun önüne oturur
-  set(0, s[0], y0, z0); set(1, s[0], y0 + 0.4 * b, z0 + (d ? 0.1 : 0.04) * b); set(2, s[0], y0 + 0.76 * b, z0 + (d ? 0.2 : 0.06) * b); /* şoför direksiyona doğru hafif öne eğik */
+  const b = BOY, y0 = s[1] + OTUR_Y, z0 = s[2] + (d ? OTUR_Z : 0.08); // kalça minderin üstünde; şoför koltuğun önüne oturur
+  set(0, s[0], y0, z0); set(1, s[0], y0 + 0.4 * b, z0 + (d ? EGIL : 0.04) * b); set(2, s[0], y0 + 0.76 * b, z0 + (d ? EGIL * 2 : 0.06) * b); /* şoför direksiyona doğru hafif öne eğik */
   set(3, s[0] + 0.22 * b, y0 + 0.25 * b, z0 + 0.45 * b); set(4, s[0] - 0.22 * b, y0 + 0.25 * b, z0 + 0.45 * b);
   set(5, s[0] + 0.15 * b, 1.45, z0 + 0.6 * b); set(6, s[0] - 0.15 * b, 1.45, z0 + 0.6 * b);
   if (d) for (const k of [3, 4]) { // şoför: eller jantta (saat 10 ve 2), direksiyonla birlikte döner
-    const a = (k === 3 ? 0.55 : Math.PI - 0.55) - T.steer * 2.2, x = Math.cos(a) * DIR_R, y = Math.sin(a) * DIR_R;
+    const a = (k === 3 ? 0 : Math.PI) - T.steer * 2.2, x = Math.cos(a) * DIR_R, y = Math.sin(a) * DIR_R;
     set(k, DIREKSIYON[0] + x, DIREKSIYON[1] + y * Math.cos(DIR_EGIM), DIREKSIYON[2] + y * Math.sin(DIR_EGIM) - 0.04); }
   if (!d) { // yolcu: sağ eli yağ kolunu tutup çeker, sol eli soğutma pompasını çalıştırır
     if (T.kolT > 0) { const a = kolAci(); set(4, KOL[0], KOL[1] + Math.cos(a) * KOL_BOY, KOL[2] - Math.sin(a) * KOL_BOY); }
-    if (T.pompaT > 0) set(3, POMPA[0], POMPA[1] + 0.12 + Math.sin(T.t * 14) * 0.1, POMPA[2] - 0.12); }
+    if (T.pompaT > 0) set(3, POMPA[0], POMPA[1] + POMPA_SAP + Math.sin(T.t * 14) * 0.08, POMPA[2]); } // el sapı tutar, kol elle birlikte iner kalkar
   for (let i = 0; i < 21; i += 3) { fromCab(P[i], P[i + 2]); P[i] = tX; P[i + 2] = tZ; } pl.Q.set(P); pl.yaw = T.phi;
 }
 export const d3 = (A, i, B, j) => Math.hypot(A[i] - B[j], A[i + 1] - B[j + 1], A[i + 2] - B[j + 2]);

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
 import { BOY, $, ASAMA, BUMP, BUMP_V, COL, DOK, TESIS, zeminY, DAG, dagSag, dagSol, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
-import { BARBEKU, DEPO, KOL_T, RAD, SPOT, TAHTA, TEZGAH, asamaSec } from './sim.js';
+import { POMPA, POMPA_SAP, BARBEKU, DEPO, KOL_T, RAD, SPOT, TAHTA, TEZGAH, asamaSec } from './sim.js';
 import { izgaraEt, koz, satici, saticiKasa, pompaKol, vites, aynaKam, aynaM, aynaRT, ibreHiz, ibreIsi, kabinIc, kabinSus, SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
@@ -282,7 +282,7 @@ export function draw(V, dt) {
     // F tuşunun çevresinde dolan halka: basılı tutulan işin ilerlemesi
     const el = $('eylem'), metin = ey ? `<kbd class="${dol >= 0 ? 'halka' : ''}">${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; }
     if (ey && dol >= 0) el.firstChild.style.setProperty('--p', Math.round(Math.min(1, dol) * 100) + '%'); }
-  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / KOL_T) * Math.PI) * 0.95; if (pompaKol.userData.y0 === undefined) pompaKol.userData.y0 = pompaKol.position.y; pompaKol.position.y = pompaKol.userData.y0 + (t.pm ? Math.sin(performance.now() / 70) * 0.1 : 0); { const vg = Math.min(3, (t.v / 5) | 0); vites.rotation.x += ((vg % 2 ? 0.28 : -0.28) - vites.rotation.x) * 0.2; vites.rotation.z += ((vg < 2 ? 0.16 : -0.16) - vites.rotation.z) * 0.2; } telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
+  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / KOL_T) * Math.PI) * 0.95; { const y = V.p.find((q) => q.s === 2), P = y && RP[y.id]; pompaKol.position.y = POMPA[1] + (t.pm && P ? Math.max(-0.1, Math.min(0.1, P[10] - POMPA[1] - POMPA_SAP)) : 0); } /* sap yolcunun eliyle iner kalkar */ { const vg = Math.min(3, (t.v / 5) | 0); vites.rotation.x += ((vg % 2 ? 0.28 : -0.28) - vites.rotation.x) * 0.2; vites.rotation.z += ((vg < 2 ? 0.16 : -0.16) - vites.rotation.z) * 0.2; } telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = t.hr ? (DTBOLGE.find((b) => b.z1 > t.Z - 1) || {}).z0 : BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;
