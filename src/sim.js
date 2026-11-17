@@ -1,5 +1,5 @@
 // Oyun benzetimi: yalnız oda sahibinde çalışır. Kamyon, oyuncular, tanker, polis, yük, yangın, haydut.
-import { CEP, cepGen, DOK, tesisYakin, kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
+import { zeminY, DIREKSIYON, DIR_EGIM, DIR_R, CEP, cepGen, DOK, tesisYakin, kesit, karK, koyK, sagBanket, solBanket, ARKA, DAG, DKAYA, DTAS, HARITA, KENAR, NORMAL, egim, haritaSec, yH, ASAMA, BOX, BUMP, BUMP_V, DONGU, HZ, INLET, LEN, OBS, PER, SONSUZ, PK, PK2, POLZ, RAIN, SEAT, SEAT_T, TK, WHEEL, box, clamp, cx, rnd } from './world.js';
 
 export let cpc = 1, cps = 0, tX = 0, tZ = 0; // cpc/cps: kabin açısının cos/sin'i
 export const toCab = (x, z) => { tX = x * cpc - (z - HZ) * cps; tZ = HZ + x * cps + (z - HZ) * cpc; }, fromCab = (x, z) => { tX = x * cpc + (z - HZ) * cps; tZ = HZ - x * cps + (z - HZ) * cpc; };
@@ -69,9 +69,12 @@ export function mkPlayer(id, name) {
 }
 export function poseSeat(pl) {
   const s = SEAT[pl.seat], P = pl.P, d = pl.seat === 1, set = (k, x, y, z) => { P[k * 3] = x; P[k * 3 + 1] = y; P[k * 3 + 2] = z; };
-  set(0, s[0], s[1], s[2]); set(1, s[0], s[1] + 0.4, s[2] + 0.04); set(2, s[0], s[1] + 0.76, s[2] + 0.06);
+  set(0, s[0], s[1], s[2]); set(1, s[0], s[1] + 0.4, s[2] + (d ? 0.1 : 0.04)); set(2, s[0], s[1] + 0.76, s[2] + (d ? 0.2 : 0.06)); /* şoför direksiyona doğru hafif öne eğik */
   set(3, s[0] + 0.22, d ? 2.05 : s[1] + 0.25, s[2] + (d ? 0.85 : 0.45)); set(4, s[0] - 0.22, d ? 2.05 : s[1] + 0.25, s[2] + (d ? 0.85 : 0.45));
   set(5, s[0] + 0.15, 1.45, s[2] + 0.7); set(6, s[0] - 0.15, 1.45, s[2] + 0.7);
+  if (d) for (const k of [3, 4]) { // şoför: eller jantta (saat 10 ve 2), direksiyonla birlikte döner
+    const a = (k === 3 ? 0.55 : Math.PI - 0.55) - T.steer * 2.2, x = Math.cos(a) * DIR_R, y = Math.sin(a) * DIR_R;
+    set(k, DIREKSIYON[0] + x, DIREKSIYON[1] + y * Math.cos(DIR_EGIM), DIREKSIYON[2] + y * Math.sin(DIR_EGIM) - 0.04); }
   if (!d) { // yolcu: sağ eli yağ kolunu tutup çeker, sol eli soğutma pompasını çalıştırır
     if (T.kolT > 0) { const a = kolAci(); set(4, KOL[0], KOL[1] + Math.cos(a) * KOL_BOY, KOL[2] - Math.sin(a) * KOL_BOY); }
     if (T.pompaT > 0) set(3, POMPA[0], POMPA[1] + 0.12 + Math.sin(T.t * 14) * 0.1, POMPA[2] - 0.12); }
@@ -362,13 +365,53 @@ function dagTaslari(oz, auto) {
       }
     }
   }
-  // büyük kayalar: çarpınca yavaşlar ve hasar alır; kamyon kayanın içinden geçemez, kenarına itilir
+  kayaCarp();
+}
+// Yan aynalar kabinden ~1 m dışarı taşar: yamaç ayna yüksekliğine çıkan yere girerse kamyon yoldan içeri itilir.
+const AYNA = [[2.45, 3.28], [-2.45, 3.28]], AYNA_Y = 2.4; // kabin çerçevesinde (x, z); aynanın alt kenarı (m)
+function aynaDuvar() {
+  const a = T.th + T.phi, s = Math.sin(a), c = Math.cos(a), pX = T.X + Math.sin(T.th) * HZ, pZ = T.Z + Math.cos(T.th) * HZ;
+  for (const [ax, az] of AYNA) {
+    const yon = ax > 0 ? -1 : 1; // içeri (yolun ortasına) doğru
+    let itme = 0;
+    for (let n = 0; n < 40; n++) {
+      const x = pX + ax * c + (az - HZ) * s + itme, z = pZ - ax * s + (az - HZ) * c;
+      if (kesit(z).u > 0.5 && ax < 0) break; // uçurum tarafında yamaç yok
+      if (zeminY(x, z) - yH(z) < AYNA_Y) break;
+      itme += yon * 0.05;
+    }
+    if (itme) { T.X += itme; T.v *= 0.99; }
+  }
+}
+// Büyük kayalar: kamyon iki dikdörtgen (dorse ve kabin), kaya bir daire. Kamyon yalnızca gömüldüğü kadar geri itilir
+// (eskiden kaya hizasındaki bütün kamyon birden kayanın kenarına atılıyordu). Önden çarpınca durur, yandan sürterse yavaşlar.
+const KG = 1.45; // kamyonun yarı genişliği (m)
+function kayaCarp() {
+  const cs = Math.sin(T.th + T.phi), cc = Math.cos(T.th + T.phi), ts = Math.sin(T.th), tc = Math.cos(T.th);
+  const pX = T.X + ts * HZ, pZ = T.Z + tc * HZ; // mafsal
+  const govdeler = [
+    { x: T.X, z: T.Z, s: ts, c: tc, z0: ARKA, z1: HZ }, // dorse (kendi çerçevesi T.X, T.Z'de)
+    { x: pX, z: pZ, s: cs, c: cc, z0: 0, z1: 4.6 }, // kabin (mafsaldan ileri)
+  ];
   for (const k of DKAYA) {
-    if (k.z - T.Z > 5.6 || k.z - T.Z < ARKA) continue;
-    const kx = cx(k.z) + k.x, d = T.X - kx, sinir = k.r + 1.5;
-    if (Math.abs(d) >= sinir) continue;
-    T.X = kx + (d >= 0 ? 1 : -1) * sinir; // kayanın kenarına itilir (öbür yana geçemez)
-    if (!k.vurdu || T.t - k.vurdu > 2) { k.vurdu = T.t; T.v *= 0.3; T.dmg[k.x > 0 ? 0 : 1] += 15; jolt(-Math.sign(k.x) * 1.5, 2); carpti(); say('kaya'); }
+    if (Math.abs(k.z - T.Z) > 14) continue;
+    const kx = cx(k.z) + k.x, R = k.r * 1.08;
+    for (const g of govdeler) {
+      const dx = kx - g.x, dz = k.z - g.z;
+      const yan = dx * g.c - dz * g.s, ileri = dx * g.s + dz * g.c; // kayanın gövdeye göre konumu (+yan: sol)
+      const ey = clamp(yan, -KG, KG), ei = clamp(ileri, g.z0, g.z1); // gövdenin kayaya en yakın noktası
+      const ay = yan - ey, ai = ileri - ei, mesafe = Math.hypot(ay, ai);
+      let gom, ny, ni; // gömülme ve itme yönü (gövde çerçevesinde, kayadan gövdeye)
+      if (mesafe > 1e-4) { gom = R - mesafe; ny = -ay / mesafe; ni = -ai / mesafe; }
+      else { gom = R + KG - Math.abs(yan); ny = yan > 0 ? -1 : 1; ni = 0; } // merkez gövdenin içinde: yana çık
+      if (gom <= 0) continue;
+      const onden = ni < -0.7; // kaya gövdenin önünde
+      if (onden) { T.Z += ni * gom * tc; T.X += ni * gom * ts; } // geri it (ileri yönde)
+      else { T.X += (ny * g.c) * gom; } // yandan: yalnız yana, gömüldüğü kadar
+      const hiz = Math.abs(T.v);
+      if (onden && T.v > 0) T.v = 0; else T.v *= 0.97;
+      if (hiz > 2 && (!k.vurdu || T.t - k.vurdu > 1.5)) { k.vurdu = T.t; T.dmg[k.x > 0 ? 0 : 1] += Math.round(4 + hiz * (onden ? 2 : 0.8)); jolt(-Math.sign(yan) * Math.min(1.5, 0.4 + hiz * 0.12), onden ? 1.2 : 0.3); carpti(); say('kaya'); }
+    }
   }
 }
 // Uçurumdan düşüş: kamyon yer çekimiyle düşer ve yana devrilir; kasadakiler havaya savrulur. 3 sn sonra oyun biter.
@@ -431,7 +474,8 @@ export function stepTruck(dt) {
       const bas = [T.X + Math.sin(T.th) * HZ + Math.sin(T.th + T.phi) * 4.6, T.Z + Math.cos(T.th) * HZ + Math.cos(T.th + T.phi) * 4.6], son = [T.X + Math.sin(T.th) * ARKA, T.Z + Math.cos(T.th) * ARKA];
       for (const [px, pz] of [bas, son]) { const ep = px - cx(pz), sol = DAG.yol - 1.45 + solBanket(pz), sag = kesit(pz).u > 0.5 ? 1e9 : DAG.yol - 1.45 + sagBanket(pz);
         const it = ep > sol ? sol - ep : ep < -sag ? -sag - ep : 0;
-        if (it) { T.X += it; T.v *= 0.985; if (Math.abs(it) > 0.25 && T.hitCd <= 0) { T.hitCd = 0.9; T.dmg[it < 0 ? 0 : 1] += 4; jolt(Math.sign(it) * 1.1, 0); say(it < 0 && kesit(pz).o < 0.5 ? 'duvar' : 'agac'); } } } }
+        if (it) { T.X += it; T.v *= 0.985; if (Math.abs(it) > 0.25 && T.hitCd <= 0) { T.hitCd = 0.9; T.dmg[it < 0 ? 0 : 1] += 4; jolt(Math.sign(it) * 1.1, 0); say(it < 0 && kesit(pz).o < 0.5 ? 'duvar' : 'agac'); } } }
+      aynaDuvar(); }
     if (Math.abs(e) > lim) { const sd = Math.sign(e), rd = Math.atan2(cx(T.Z + 1) - cx(T.Z - 1), 2), hc = T.th + T.phi, lat = Math.max(0, Math.sin(hc - rd) * T.v * sd);
       T.X = c + sd * lim; if (sd * (hc - rd) > 0) T.phi -= (hc - rd) * 0.6; // bariyer boyunca sıyırır
       if (run && T.hitCd <= 0) { T.hitCd = 0.9; const c2 = [0, 1, 2, 3].filter((w) => Math.sign(SPOT[w][0]) === sd), w = c2[T.dmg[c2[0]] <= T.dmg[c2[1]] ? 0 : 1]; T.dmg[w] += clamp(8 + lat * 4, 8, 28); T.v *= 0.75; carpti(); jolt(sd * clamp(1.3 + lat * 0.35, 1.3, 3.1), 0); /* sert girişte yük daha çok savrulur */ say(HARITA ? (sd > 0 && kesit(T.Z).o < 0.5 ? 'duvar' : 'agac') : 'bariyer', w); if (Math.random() < 0.5) kenarKir(sd, rnd(ARKA, 0)); if (T.ol.lastik && Math.random() < 0.35) { const yan = [0, 1, 2, 3].filter((k) => !T.flat[k] && Math.sign(WHEEL[k][0]) === sd); if (yan.length) { const k = yan[(Math.random() * yan.length) | 0]; T.flat[k] = 1; say('lastikPat', k); } } /* bariyere sürtünen yandaki lastik patlayabilir */ for (const p of players.values()) if (!p.seat) for (let i = 0; i < 21; i += 3) p.Q[i] -= sd * 0.08; } } }

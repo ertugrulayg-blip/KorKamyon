@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
+import { DIREKSIYON, DIR_EGIM, BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
 import { AIR, BARBEKU, BARR, CR, DEPO, DRL, EXT, KOL, KOL_BOY, POMPA, RAD, SPOT, TAHTA, TEZGAH } from './sim.js';
 
 // ---------- görüntü ----------
@@ -37,7 +37,7 @@ export const koltuk = [null, [0.7], [-0.7]].map((k, s) => { if (!k) return null;
   add(g, BG, koyuD, k[0] > 0 ? -0.46 : 0.46, 0.62, -0.05, 0.08, 0.06, 0.5); add(g, CG, M(0x888888), 0, -0.15, 0, 0.05, 0.3, 0.05);
   return g; });
 add(truck, CG, M(0xffd23f), INLET[0], 1.65, INLET[2], 0.09, 0.7, 0.09); add(truck, CG, M(0x222222), INLET[0], 2.0, INLET[2], 0.16, 0.08, 0.16);
-export const swheel = new THREE.Group(); swheel.position.set(0.7, 2.05, 2.85); swheel.rotation.x = -0.5; cabIn.add(swheel);
+export const swheel = new THREE.Group(); swheel.position.set(...DIREKSIYON); swheel.rotation.x = DIR_EGIM; /* kolların yetiştiği yerde */ cabIn.add(swheel);
 add(swheel, new THREE.TorusGeometry(0.3, 0.045, 8, 24), M(0x111111), 0, 0, 0); add(swheel, BG, M(0x111111), 0, 0, 0, 0.6, 0.06, 0.04); add(swheel, BG, M(0xd8432f), 0, 0.15, 0, 0.06, 0.3, 0.04);
 export const pedG = add(cabIn, BG, M(0x7bd389), 0.5, 1.5, 3.1, 0.16, 0.3, 0.06), pedB = add(cabIn, BG, M(0xff5a5f), 0.85, 1.5, 3.1, 0.2, 0.3, 0.06);
 export const gauge = add(cabIn, CG, M(0xf5f0e8), 0.7, 2.45, 3.18, 0.16, 0.02, 0.16); gauge.rotation.x = Math.PI / 2;

@@ -86,7 +86,8 @@ export const HZ = 1;
 export const DOK = box(-4.7, -1.5, 0.5, 1.3, -5.2, -1.2, 'dok', 0x8a6a3a); DOK.on = false;
 export const TK = box(-1.2, 1.2, 0.5, 2.0, -3.5, 3.5, 'tanker', 0xe9e9e9); TK.on = false;
 export const PK = box(-1.0, 1.0, 0.45, 1.3, -2.2, 2.2, 'police', 0xffffff), PK2 = box(-0.85, 0.85, 1.3, 1.85, -1.3, 0.5, 'police', 0x1f3a6b); PK.on = PK2.on = false;
-export const SEAT = { 1: [0.7, 1.55, 1.9], 2: [-0.7, 1.55, 1.9] }; // 1 şoför (solda), 2 yolcu — koltuklar aynı
+export const SEAT = { 1: [0.7, 1.55, 1.9], 2: [-0.7, 1.55, 1.9] };
+export const DIREKSIYON = [0.7, 2.02, 2.42], DIR_R = 0.3, DIR_EGIM = -0.5; // direksiyon merkezi (kabin), jant yarıçapı, sürücüye eğimi // 1 şoför (solda), 2 yolcu — koltuklar aynı
 export const INLET = [1.25, 2.0, 0.4];
 export const WHEEL = [[1.78, 0.55, 2.2, 'sol ön'], [-1.78, 0.55, 2.2, 'sağ ön'], [1.78, 0.55, -5.2, 'sol arka'], [-1.78, 0.55, -5.2, 'sağ arka']];
 export const OBS = []; for (let z = 260; z < Z0 + PER - 20; z += 70 + srnd() * 60) OBS.push({ z, x: cx(z) + (srnd() * 9 - 4.5), hit: false });
