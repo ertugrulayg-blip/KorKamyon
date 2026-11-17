@@ -63,7 +63,10 @@ export function initPanel(opts) {
     // grafik kalitesi
     const g = document.createElement('div'); g.className = 'kay'; g.innerHTML = `<span>${L('grafik')}</span><div class="kip"></div>`; s.appendChild(g);
     for (const k of [0, 1, 2]) { const b = document.createElement('button'); b.textContent = L('kalite' + k); b.className = ui.kalite === k ? 'secili' : ''; b.onclick = () => { kaliteUygula(k); sesler(); }; g.lastChild.appendChild(b); }
-    const n = document.createElement('div'); n.className = 'not'; n.textContent = L('grafikNot'); s.appendChild(n); };
+    const n = document.createElement('div'); n.className = 'not'; n.textContent = L('grafikNot'); s.appendChild(n);
+    // kan efekti (levye darbelerinde)
+    const kn = document.createElement('div'); kn.className = 'kay'; kn.innerHTML = `<span>${L('kanAyar')}</span><div class="kip"></div>`; s.appendChild(kn);
+    for (const v of [true, false]) { const b = document.createElement('button'); b.textContent = L(v ? 'acik' : 'kapali'); b.className = ui.kan === v ? 'secili' : ''; b.onclick = () => { ui.kan = v; try { localStorage.setItem('kk-kan', v ? '1' : '0'); } catch (e) {} sesler(); }; kn.lastChild.appendChild(b); } };
   sesler(); dilDegisince(() => { sesler(); listeIz = ''; if (acik('ayar')) oyuncuListesi(); });
   $('ayarBtn').onclick = () => ayarAc(); $('tusBtn').onclick = () => tuslarAc();
   for (const b of document.querySelectorAll('.pkapat')) b.onclick = () => { ayarAc(false); tuslarAc(false); };

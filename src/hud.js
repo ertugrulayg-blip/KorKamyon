@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
 import { BOY, $, ASAMA, BUMP, BUMP_V, COL, DOK, TESIS, zeminY, DAG, dagSag, dagSol, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
-import { BARBEKU, DEPO, KOL_T, RAD, SPOT, TAHTA, TEZGAH, asamaSec } from './sim.js';
+import { POMPA, POMPA_SAP, BARBEKU, DEPO, KOL_T, RAD, SPOT, TAHTA, TEZGAH, asamaSec } from './sim.js';
 import { izgaraEt, koz, satici, saticiKasa, pompaKol, vites, aynaKam, aynaM, aynaRT, ibreHiz, ibreIsi, kabinIc, kabinSus, SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
@@ -38,6 +38,38 @@ const radIsaret = add(cabIn, CG, isaretMat(0x3fa7ff), RAD[0], 1.33, RAD[2], 0.55
 // dağda yoldan çıkınca kamyon zeminin eğimini izler (yamaçta hafifçe alçalır)
 const yanY = () => { if (!HARITA) return 0; const e = cT.X - cx(cT.Z); return e > DAG.yol ? dagSol(cT.Z, e - DAG.yol) : e < -DAG.yol ? Math.max(-1.2, dagSag(cT.Z, -e - DAG.yol)) : 0; };
 let aynaSira = 0;
+// Levye: karakterin sağ el kemiğine takılır, yumruğun içinden geçer (parmaklara ve avuca dik), ucu ileri bakar.
+const LEVYE_M = M(0x8e1d1d), LEVYE_C = M(0x5d6670);
+function levyeTak(r) {
+  const e = r.el && r.el[1], el = r.B.RightHand; if (!e) return;
+  const g = new THREE.Group(), boy = 0.78; // model biriminde (oyunda BOY ile küçülür)
+  add(g, CG, LEVYE_M, 0, boy * 0.3, 0, 0.032, boy, 0.032); // gövde (tutulan yer alttan çeyrek)
+  const kanca = add(g, CG, LEVYE_C, 0.045, boy * 0.8 + 0.02, 0, 0.03, 0.16, 0.03); kanca.rotation.z = -0.9; // üst uç: kanca
+  add(g, BG, LEVYE_C, -0.02, -boy * 0.2 - 0.01, 0, 0.07, 0.05, 0.025).rotation.z = 0.5; // alt uç: yassı pençe
+  const eksen = new THREE.Vector3().crossVectors(e.parmak, e.avuc).normalize();
+  r.root.updateMatrixWorld(true);
+  const ileri = new THREE.Vector3(0, 0, 1).applyQuaternion(el.getWorldQuaternion(new THREE.Quaternion()).invert());
+  if (eksen.dot(ileri) < 0) eksen.negate();
+  g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), eksen);
+  g.position.copy(e.parmak).multiplyScalar((e.uzun / (r.s || 1)) * 0.75).addScaledVector(e.avuc, 0.03);
+  el.add(g); r.levye = g;
+}
+// Kan: sıçrayan damlalar (yer çekimiyle) ve düştükleri yerde solan lekeler.
+const KAN_M = new THREE.MeshLambertMaterial({ color: 0xa3121b }), damla = [], leke = [];
+for (let i = 0; i < 48; i++) { const m = add(scene, BG, KAN_M, 0, -50, 0, 0.05, 0.05, 0.05); m.visible = false; damla.push({ m, v: new THREE.Vector3(), t: 9 }); }
+for (let i = 0; i < 16; i++) { const m = add(scene, new THREE.CircleGeometry(0.16, 10), new THREE.MeshBasicMaterial({ color: 0x8a0f17, transparent: true, depthWrite: false }), 0, -50, 0); m.rotation.x = -Math.PI / 2; m.visible = false; leke.push({ m, t: 99 }); }
+let kanSon = 0, damlaI = 0, lekeI = 0;
+function kanCiz(kn, dt) {
+  for (const k of kn || []) {
+    if (k[0] <= kanSon) continue; kanSon = k[0];
+    if (!ui.kan) continue;
+    for (let i = 0; i < 12; i++) { const d = damla[damlaI++ % damla.length]; d.t = 0; d.yer = k[6]; d.m.position.set(k[1], k[2], k[3]); d.m.visible = true;
+      d.v.set(k[4] * 1.8 + (Math.random() - 0.5) * 2.2, 1.2 + Math.random() * 2.2, k[5] * 1.8 + (Math.random() - 0.5) * 2.2); d.m.scale.setScalar(0.05 * (0.5 + Math.random() * 0.9)); }
+    const l = leke[lekeI++ % leke.length]; l.t = 0; l.m.position.set(k[1] + k[4] * 0.3, k[6] + 0.015, k[3] + k[5] * 0.3); l.m.scale.setScalar(0.7 + Math.random() * 0.6); l.m.rotation.z = Math.random() * 6; l.m.visible = true;
+  }
+  for (const d of damla) { if (!d.m.visible) continue; d.t += dt; d.v.y -= 14 * dt; d.m.position.addScaledVector(d.v, dt); if (d.m.position.y < d.yer || d.t > 1.2) d.m.visible = false; }
+  for (const l of leke) { if (!l.m.visible) continue; l.t += dt; l.m.material.opacity = 0.85 * Math.min(1, (9 - l.t) / 2); if (l.t < 0.25) l.m.scale.multiplyScalar(1 + dt * 2); if (l.t > 9) l.m.visible = false; } // leke yayılır, 7 sn sonra solar
+}
 // Kamera ile bakılan nokta arasındaki çizgi zeminin (kaya, yamaç) altına giriyorsa kamera yükseltilir.
 const ZK = new THREE.Vector3(), ZH = new THREE.Vector3();
 function zeminUstu(kam, hedef) {
@@ -184,7 +216,7 @@ export function draw(V, dt) {
   if (ks > 0) { const a = new THREE.Vector3(kx, 2, kz + 1), b = nozzle.position, pts = []; const sag = Math.max(0.1, (7.5 - a.distanceTo(b)) * 0.18); for (let i = 0; i <= 6; i++) { const u = i / 6; pts.push(a.clone().lerp(b, u).add(new THREE.Vector3(0, -Math.sin(u * Math.PI) * sag, 0))); } hose = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 14, 0.06, 6), hoseMat); scene.add(hose); }
   const me = V.p.find((p) => p.id === net.myId), seen = new Set();
   for (const p of V.p) {
-    seen.add(p.id); let o = pm.get(p.id); if (o && o.c !== p.c) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(p.id); delete RP[p.id]; o = null; } /* lobide karakter değişti */ if (!o) { o = playerMesh(p.c); o.c = p.c; pm.set(p.id, o); o.body.visible = false; o.s.forEach((m) => (m.visible = false)); o.l.forEach((m) => (m.visible = false)); /* model yüklenene dek eski kutu karakter görünmesin */ if (p.bt) { add(o.body, SG, M(0x111111), 0, 1.03, 0.01, 0.265, 0.3, 0.265); add(o.body, BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 1.07, 0.25, 0.26, 0.05, 0.05); } makeRig(p.c, scene, p.bt ? 'haydut.glb' : null, BOY).then((r) => { if (!r) { o.body.visible = true; o.s.forEach((m) => (m.visible = true)); o.l.forEach((m) => (m.visible = true)); return; } /* model yüklenemezse kutu karakter */ if (pm.get(p.id) !== o) { scene.remove(r.root); return; } o.rig = r; o.body.visible = false; o.s.forEach((m) => (m.visible = false)); o.l.forEach((m) => (m.visible = false)); }); o.tag = isimEtiketi(p.bt ? L('haydutAd') : p.n, p.bt ? '#ff5a5f' : '#' + COL[p.c % 4].toString(16).padStart(6, '0')); o.g.add(o.tag); RP[p.id] = Float32Array.from(p.P); }
+    seen.add(p.id); let o = pm.get(p.id); if (o && o.c !== p.c) { scene.remove(o.g); if (o.rig) scene.remove(o.rig.root); pm.delete(p.id); delete RP[p.id]; o = null; } /* lobide karakter değişti */ if (!o) { o = playerMesh(p.c); o.c = p.c; pm.set(p.id, o); o.body.visible = false; o.s.forEach((m) => (m.visible = false)); o.l.forEach((m) => (m.visible = false)); /* model yüklenene dek eski kutu karakter görünmesin */ if (p.bt) { add(o.body, SG, M(0x111111), 0, 1.03, 0.01, 0.265, 0.3, 0.265); add(o.body, BG, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 1.07, 0.25, 0.26, 0.05, 0.05); } makeRig(p.c, scene, p.bt ? 'haydut' : null, BOY).then((r) => { if (!r) { o.body.visible = true; o.s.forEach((m) => (m.visible = true)); o.l.forEach((m) => (m.visible = true)); return; } /* model yüklenemezse kutu karakter */ if (pm.get(p.id) !== o) { scene.remove(r.root); return; } levyeTak(r); o.rig = r; o.body.visible = false; o.s.forEach((m) => (m.visible = false)); o.l.forEach((m) => (m.visible = false)); }); o.tag = isimEtiketi(p.bt ? L('haydutAd') : p.n, p.bt ? '#ff5a5f' : '#' + COL[p.c % 4].toString(16).padStart(6, '0')); o.g.add(o.tag); RP[p.id] = Float32Array.from(p.P); }
     const P = RP[p.id]; for (let i = 0; i < 21; i++) P[i] = net.isHost || p.s || Math.abs(p.P[i] - P[i]) > 3 ? p.P[i] : P[i] + (p.P[i] - P[i]) * 0.4;
     o.g.visible = !p.d;
     const B = o.body; B.position.set(P[0], P[1], P[2]); v1.set(P[6] - P[0], P[7] - P[1], P[8] - P[2]); if (v1.lengthSq() < 1e-6) v1.set(0, 1, 0); B.quaternion.setFromUnitVectors(UP, v1.normalize()).multiply(qY.setFromAxisAngle(UP, p.y));
@@ -282,7 +314,8 @@ export function draw(V, dt) {
     // F tuşunun çevresinde dolan halka: basılı tutulan işin ilerlemesi
     const el = $('eylem'), metin = ey ? `<kbd class="${dol >= 0 ? 'halka' : ''}">${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; }
     if (ey && dol >= 0) el.firstChild.style.setProperty('--p', Math.round(Math.min(1, dol) * 100) + '%'); }
-  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / KOL_T) * Math.PI) * 0.95; if (pompaKol.userData.y0 === undefined) pompaKol.userData.y0 = pompaKol.position.y; pompaKol.position.y = pompaKol.userData.y0 + (t.pm ? Math.sin(performance.now() / 70) * 0.1 : 0); { const vg = Math.min(3, (t.v / 5) | 0); vites.rotation.x += ((vg % 2 ? 0.28 : -0.28) - vites.rotation.x) * 0.2; vites.rotation.z += ((vg < 2 ? 0.16 : -0.16) - vites.rotation.z) * 0.2; } telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
+  kanCiz(t.kn, dt);
+  asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / KOL_T) * Math.PI) * 0.95; { const y = V.p.find((q) => q.s === 2), P = y && RP[y.id]; pompaKol.position.y = POMPA[1] + (t.pm && P ? Math.max(-0.1, Math.min(0.1, P[10] - POMPA[1] - POMPA_SAP)) : 0); } /* sap yolcunun eliyle iner kalkar */ { const vg = Math.min(3, (t.v / 5) | 0); vites.rotation.x += ((vg % 2 ? 0.28 : -0.28) - vites.rotation.x) * 0.2; vites.rotation.z += ((vg < 2 ? 0.16 : -0.16) - vites.rotation.z) * 0.2; } telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
   { const nb = t.hr ? (DTBOLGE.find((b) => b.z1 > t.Z - 1) || {}).z0 : BUMP.find((z) => z > t.Z - 1), d = nb === undefined ? 1e9 : nb - t.Z, el = $('tumsek'), on = t.s === 'run' && seat !== 1 && d < 110 && !ch;

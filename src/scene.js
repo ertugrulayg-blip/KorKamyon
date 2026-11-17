@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
 import { DIREKSIYON, DIR_EGIM, BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
-import { AIR, BARBEKU, BARR, CR, DEPO, DRL, EXT, KOL, KOL_BOY, POMPA, RAD, SPOT, TAHTA, TEZGAH } from './sim.js';
+import { AIR, BARBEKU, BARR, CR, DEPO, DRL, EXT, KOL, KOL_BOY, POMPA, POMPA_SAP, RAD, SPOT, TAHTA, TEZGAH } from './sim.js';
 
 // ---------- görüntü ----------
 export const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(ui.kalite === 0 ? 1 : ui.kalite === 1 ? Math.min(1.5, devicePixelRatio) : Math.min(2, devicePixelRatio)); document.body.appendChild(ren.domElement);
@@ -192,10 +192,14 @@ export const yagKolu = new THREE.Group(); yagKolu.position.set(KOL[0], KOL[1], K
 add(cabIn, BG, M(0x3a3f48), KOL[0], KOL[1] + 0.04, KOL[2], 0.26, 0.08, 0.5); add(cabIn, BG, M(0xffd23f), KOL[0], KOL[1] + 0.085, KOL[2], 0.2, 0.01, 0.2); // kolun tabanı, sarı uyarı plakası
 add(yagKolu, CG, M(0x9aa1ab), 0, KOL_BOY / 2, 0, 0.035, KOL_BOY, 0.035); add(yagKolu, CG, M(0xd8232a), 0, KOL_BOY, 0, 0.06, 0.2, 0.06); // sap ve kırmızı tutamak
 // soğutma pompası (yolcu, torpidoda): gövde ve aşağı yukarı oynayan mavi kol
-add(cabIn, CG, M(0x39445a), POMPA[0], POMPA[1] - 0.05, POMPA[2] + 0.1, 0.09, 0.3, 0.09).rotation.x = 0.5;
-add(cabIn, CG, M(0x2a2f3a), POMPA[0], (1.38 + POMPA[1] - 0.18) / 2, POMPA[2] + 0.17, 0.05, POMPA[1] - 0.18 - 1.38, 0.05); // pompanın ayağı (kabin tabanından)
-export const pompaKol = new THREE.Group(); pompaKol.position.set(POMPA[0], POMPA[1] + 0.1, POMPA[2] - 0.06); cabIn.add(pompaKol);
-add(pompaKol, CG, M(0x9aa1ab), 0, 0, 0.06, 0.02, 0.2, 0.02).rotation.x = 0.5; add(pompaKol, CG, M(0x3fa7ff), 0, 0.02, -0.06, 0.035, 0.22, 0.035).rotation.z = Math.PI / 2;
+{ // soğutma pompası: tabandan yükselen gövde, ortasından çıkan mil ve T sap (sap elle birlikte iner kalkar)
+  add(cabIn, CG, M(0x2a2f3a), POMPA[0], 1.4, POMPA[2], 0.2, 0.04, 0.2); // taban levhası
+  add(cabIn, CG, M(0x39445a), POMPA[0], (1.4 + POMPA[1]) / 2, POMPA[2], 0.1, POMPA[1] - 1.4, 0.1); // gövde
+  add(cabIn, CG, M(0x1c1f25), POMPA[0], POMPA[1] + 0.01, POMPA[2], 0.12, 0.03, 0.12); // kapak
+}
+export const pompaKol = new THREE.Group(); pompaKol.position.set(POMPA[0], POMPA[1], POMPA[2]); cabIn.add(pompaKol);
+add(pompaKol, CG, M(0x9aa1ab), 0, POMPA_SAP / 2, 0, 0.025, POMPA_SAP, 0.025); // mil
+add(pompaKol, CG, M(0x3fa7ff), 0, POMPA_SAP, 0, 0.04, 0.24, 0.04).rotation.z = Math.PI / 2; // T sap
 // vites kolu ve el freni (iki koltuğun arasında)
 add(cabIn, BG, M(0x23262d), 0, 1.36, 2.35, 0.34, 0.12, 0.9);
 export const vites = new THREE.Group(); vites.position.set(0.05, 1.42, 2.55); cabIn.add(vites);

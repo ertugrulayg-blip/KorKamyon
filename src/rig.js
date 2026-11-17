@@ -4,20 +4,22 @@ import * as THREE from 'three';
 import { clone as cloneSkinned } from '../lib/SkeletonUtils.js';
 import { loadModel, recolor } from './models.js';
 
-export const CHAR_URL = 'assets/chars/trucker.glb';
-// Oyuncu rengine göre karakter dosyası. Olmayanlar için kırmızı kamyoncu boyanarak kullanılır.
-// Herkes aynı gövde (govde.glb, Meshy + Blender iskeleti); renk oyuncuya göre kırmızının boyanmasıyla verilir.
-const GOVDE = 'govde.glb', KARAKTER = [GOVDE, GOVDE, GOVDE, GOVDE];
+export const CHAR_URL = 'assets/chars/govde.glb';
+// Herkes aynı gövde: tombul motorcu (govde.glb, Meshy + Blender iskeleti). Oyuncu rengi kotun boyanmasıyla verilir.
+const GOVDE = 'govde.glb';
 const KEMIK = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
 
-// Oyuncu rengine göre tişört ve kepin kırmızısını başka renge çevirir (0: kırmızı, olduğu gibi).
-const HEDEF = [null, [63, 167, 255], [255, 210, 63], [123, 211, 137]];
-function kirmiziyiBoya(ci) {
-  const h = HEDEF[ci % 4]; if (!h) return null;
-  return (r, g, b) => {
-    if (!(r > 150 && r > g * 2.6 && r > b * 2.6)) return null; // doygun kırmızı: tişört ve kep (ten ve dudak daha az doygun)
-    const k = r / 235; return [Math.min(255, h[0] * k), Math.min(255, h[1] * k), Math.min(255, h[2] * k)];
-  };
+// Oyuncu renkleri (kot pantolon bu renge boyanır): kırmızı, mavi, sarı, yeşil.
+const HEDEF = [[225, 64, 58], [63, 167, 255], [255, 210, 63], [123, 211, 137]];
+const kotMu = (r, g, b) => b > 45 && b > r * 1.25 && b >= g * 0.95; // mavi denim (ten turuncu, ceket siyah, tişört beyaz)
+const acikMi = (r, g, b) => r > 165 && g > 165 && b > 165 && Math.max(r, g, b) - Math.min(r, g, b) < 30; // beyaz tişört
+function boyaFn(tur, ci) {
+  if (tur === 'haydut') return (r, g, b) => { // haydut: kara kot, kırmızı tişört
+    if (kotMu(r, g, b)) { const k = (r + g + b) / 3 / 255; return [40 + 60 * k, 38 + 55 * k, 42 + 60 * k]; }
+    if (acikMi(r, g, b)) { const k = r / 255; return [200 * k, 40 * k, 36 * k]; } return null; };
+  if (tur === 'barmen') return (r, g, b) => (kotMu(r, g, b) ? (() => { const k = (r + g + b) / 3 / 255; return [110 + 70 * k, 74 + 50 * k, 44 + 30 * k]; })() : null); // kahverengi pantolon
+  const h = HEDEF[ci % 4];
+  return (r, g, b) => { if (!kotMu(r, g, b)) return null; const k = Math.min(1.25, (Math.max(r, g, b) / 255) * 1.7); return [Math.min(255, h[0] * k), Math.min(255, h[1] * k), Math.min(255, h[2] * k)]; };
 }
 
 const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), m1 = new THREE.Matrix4();
@@ -51,11 +53,11 @@ function ik(ust, orta, uc, hedef, kutup, a, b) {
 }
 
 // Bir karakter kopyası üretir. Model yüklenmemişse null döner.
-// dosya verilirse (ör. 'haydut.glb') o model boyanmadan kullanılır.
-export async function makeRig(ci, parent, dosya = null, olcek = 1) {
-  const ozel = dosya || KARAKTER[ci % 4], mo = ozel && (await loadModel('assets/chars/' + ozel)), m = mo || (await loadModel(CHAR_URL)); if (!m) return null;
+// tur: null (oyuncu, ci rengi), 'haydut' ya da 'barmen'.
+export async function makeRig(ci, parent, tur = null, olcek = 1) {
+  const m = await loadModel('assets/chars/' + GOVDE); if (!m) return null;
   const root = new THREE.Group(), model = cloneSkinned(m);
-  const boya = (mo && ozel !== GOVDE) || dosya ? null : kirmiziyiBoya(ci); if (boya) recolor(model, 'rig' + (ci % 4), boya); // kendi modeli olmayan renk: kırmızı kamyoncu boyanır
+  recolor(model, tur || 'rig' + (ci % 4), boyaFn(tur, ci)); // oyuncu rengi kotta; haydut ve barmen kendi boyasıyla
   model.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; o.receiveShadow = false; } });
   root.add(model); root.matrixAutoUpdate = false; parent.add(root);
   const B = {}; model.traverse((o) => { if (o.isBone) { const ad = o.name.replace(/^mixamorig:?/, ''); if (KEMIK.includes(ad)) B[ad] = o; } });
