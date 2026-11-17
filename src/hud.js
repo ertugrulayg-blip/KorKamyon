@@ -258,9 +258,9 @@ export function draw(V, dt) {
     const kirikVar = run && (t.kk || '').includes('1');
     if (DOK.mesh) DOK.mesh.visible = !!t.dk; satici.visible = !!t.dk; saticiKasa.forEach((g, i) => (g.visible = i < (t.tks || 0)));
     koz.material.color.setHex(t.iz ? (Math.sin(performance.now() / 60) > 0 ? 0xff5a1f : 0xff8a3d) : 0x4a1a0a); izgaraEt.visible = !!t.iz;
-    KENAR.forEach((k, i) => { const kr = (t.kk || '')[i] === '1' || (t.dk && k.s < 0 && k.z1 > DOK.a[2] && k.z0 < DOK.b[2]); if (k.b.mesh) k.b.mesh.visible = !kr; if (kr && (t.kk || '')[i] !== '1') { kirikM[i].visible = false; return; } kirikM[i].visible = kr; kirikM[i].userData.isaret.material.opacity = nabiz; });
+    KENAR.forEach((k, i) => { const kr = (t.kk || '')[i] === '1' || !!(t.dk && k.s < 0 && k.z1 > DOK.a[2] && k.z0 < DOK.b[2]); /* !!: three.js yalnız tam false'u gizler, 0 çizilir */ if (k.b.mesh) k.b.mesh.visible = !kr; if (kr && (t.kk || '')[i] !== '1') { kirikM[i].visible = false; return; } kirikM[i].visible = kr; kirikM[i].userData.isaret.material.opacity = nabiz; });
     const suGerek = run && (t.ht >= 60 || t.sl), erz = t.tk >= 0, ez = t.ez || [0, 0, 0], vanaGerek = run && ks === 2 && V.n[3] && !kv;
-    radIsaret.visible = suGerek; depoIsaret.visible = run && erz && (t.tk < 50 && ez[0] + ez[1] > 0 || V.p.some((p) => p.kz)); izgIsaret.visible = run && erz && t.tk < 60 && ez[2] > 0; vanaIsaret.visible = vanaGerek; for (const m of [radIsaret, depoIsaret, izgIsaret, vanaIsaret]) m.material.opacity = nabiz;
+    radIsaret.visible = !!suGerek; depoIsaret.visible = run && erz && (t.tk < 50 && ez[0] + ez[1] > 0 || V.p.some((p) => p.kz)); izgIsaret.visible = run && erz && t.tk < 60 && ez[2] > 0; vanaIsaret.visible = !!vanaGerek; /* !!: 0 gelirse three.js gizlemez */ for (const m of [radIsaret, depoIsaret, izgIsaret, vanaIsaret]) m.material.opacity = nabiz;
     let ey = '', dol = -1; // dol: F basılı tutulan işin ilerlemesi (0..1), -1 halka yok
     const basili = !!(key.KeyF || tb.u); EY.tut = basili ? EY.tut + dt : 0;
     if (mp) { const yak = (x, z, r) => Math.hypot(mp[3] - x, mp[5] - z) < r;
