@@ -25,7 +25,7 @@ kasadakiler lastik, yakıt, hasar, yangın, haydut ve polisle uğraşır. Hedef:
 - `src/input.js` — klavye/dokunmatik. `src/hud.js` — `draw(V, dt)`: çizim ve ekran yazıları.
 - `src/main.js` — PeerJS ağı, mikrofon, ana döngü. `src/state.js` — paylaşılan `net` ve `ui`.
 - `src/detail.js` — kamyon, dorse, tanker süslemeleri (yalnız görüntü; `Batch` ile tek ağda birleştirilir). hud.js yükler.
-- `src/rig.js` — iskeletli karakter (`assets/chars/trucker.glb`): kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
+- `src/rig.js` — iskeletli karakter (oyunda `BOY` = 0.7 ölçekli; beden ölçüleri sim.js de `BOY` ile çarpılır) (`assets/chars/trucker.glb`): kalça fizik noktasına, kollar/bacaklar iki kemikli IK ile el/ayak noktalarına bağlanır. Model yüklenemezse eski kutu karakter görünür.
 - `src/dil.js` — Türkçe/İngilizce. Oyun mesajları oda sahibinden **kod** olarak gelir (`say('kod', param)`), her istemci `mesaj()` ile kendi dilinde gösterir. Ekran metinleri `L('anahtar')`; index.html'de `data-t` / `data-tp`, uzun bloklar `.dil-tr` / `.dil-en`. Yeni metin eklerken iki dile de yaz.
 - `src/egitim.js` — eğitim adımları (oda sahibinde, `stepEgitim` main'den). Aşama ayarları `ASAMA` (world.js); `oyun.lv/acik`, `asamaSec`, `puan()`, `bitir()` sim.js'te.
 - `src/sohbet.js` — sesli sohbet: bağlantılar sessiz parçayla kurulur, mikrofon açılınca `replaceTrack`; kipler kapalı/açık/bas-konuş (V); uzaktaki sesler WebAudio kazancıyla (oyuncu başına seviye).

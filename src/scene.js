@@ -193,6 +193,7 @@ add(cabIn, BG, M(0x3a3f48), KOL[0], KOL[1] + 0.04, KOL[2], 0.26, 0.08, 0.5); add
 add(yagKolu, CG, M(0x9aa1ab), 0, KOL_BOY / 2, 0, 0.035, KOL_BOY, 0.035); add(yagKolu, CG, M(0xd8232a), 0, KOL_BOY, 0, 0.06, 0.2, 0.06); // sap ve kırmızı tutamak
 // soğutma pompası (yolcu, torpidoda): gövde ve aşağı yukarı oynayan mavi kol
 add(cabIn, CG, M(0x39445a), POMPA[0], POMPA[1] - 0.05, POMPA[2] + 0.1, 0.09, 0.3, 0.09).rotation.x = 0.5;
+add(cabIn, CG, M(0x2a2f3a), POMPA[0], (1.38 + POMPA[1] - 0.18) / 2, POMPA[2] + 0.17, 0.05, POMPA[1] - 0.18 - 1.38, 0.05); // pompanın ayağı (kabin tabanından)
 export const pompaKol = new THREE.Group(); pompaKol.position.set(POMPA[0], POMPA[1] + 0.1, POMPA[2] - 0.06); cabIn.add(pompaKol);
 add(pompaKol, CG, M(0x9aa1ab), 0, 0, 0.06, 0.02, 0.2, 0.02).rotation.x = 0.5; add(pompaKol, CG, M(0x3fa7ff), 0, 0.02, -0.06, 0.035, 0.22, 0.035).rotation.z = Math.PI / 2;
 // vites kolu ve el freni (iki koltuğun arasında)
