@@ -80,6 +80,12 @@
   #telsiz{position:fixed;left:50%;bottom:16%;transform:translateX(-50%);z-index:7;background:#2b3a2e;border:4px solid #1a231c;border-radius:18px;padding:12px 16px;color:#d6f5c9;font-weight:900;text-align:center;box-shadow:0 8px 24px #0008;pointer-events:auto}
   #telsiz .kod{font:900 30px ui-monospace,monospace;letter-spacing:8px;background:#0e1510;border-radius:8px;padding:6px 10px;margin:8px 0;color:#9dff8a}
   #telsiz .tuslar{display:flex;gap:8px;justify-content:center}#telsiz .tuslar b{width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:24px;background:#44574a;border-radius:10px;cursor:pointer;border-bottom:4px solid #1a231c}#telsiz .tuslar b:active{transform:translateY(2px)}
+  #erzakPen{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;background:#3a2a1c;border:5px solid #24180f;border-radius:20px;padding:14px 16px 10px;color:#ffe9c7;font-weight:900;text-align:center;box-shadow:0 10px 30px #000a;pointer-events:auto;min-width:300px}
+  #erzakPen .ust{font-size:22px;margin-bottom:10px}#erzakPen .urunler{display:flex;gap:10px;justify-content:center}
+  #erzakPen .urun{width:118px;padding:10px 6px 8px;background:#5b4330;border-radius:14px;border-bottom:5px solid #24180f;cursor:pointer;position:relative}
+  #erzakPen .urun:hover{background:#6e523b}#erzakPen .urun:active{transform:translateY(2px)}#erzakPen .urun.yok{opacity:.35;cursor:default}
+  #erzakPen .ik{font-size:46px;line-height:1.1}#erzakPen .ad{font-size:16px;margin-top:2px}#erzakPen .adet{font-size:13px;color:#ffd23f}#erzakPen .ac{font-size:11px;font-weight:600;opacity:.8;margin-top:4px}
+  #erzakPen .no{position:absolute;left:8px;top:6px;font-size:12px;opacity:.6}#erzakPen .alt{font-size:12px;margin-top:10px;opacity:.75}#erzakPen .bos{margin:6px 0;color:#ffb0a0}
   #telsiz .alt{font-size:13px;margin-top:6px;opacity:.8}#telsiz.yanlis{animation:telsizSars .3s}@keyframes telsizSars{25%{margin-left:-10px}75%{margin-left:10px}}
   /* Steam (masaüstü): oda kodu yerine davet */
   #davetBtn,#steamNot{display:none} body.steam #davetBtn{display:inline-block} body.steam #steamNot{display:block;font-size:13px;opacity:.85;margin-top:6px;line-height:1.35} body.steam #menu .sat{display:none}
@@ -159,6 +165,7 @@
   <div id="afis"></div>
 </div>
 <div id="asama"></div>
+<div id="erzakPen" style="display:none"><div class="ust"></div><div class="urunler"></div><div class="bos"></div><div class="alt"></div></div>
 <div id="telsiz" style="display:none"><div class="ust">📻 <span></span></div><div class="kod"></div><div class="tuslar"><b data-n="1">1</b><b data-n="2">2</b><b data-n="3">3</b><b data-n="4">4</b></div><div class="alt"></div></div>
 <div id="dugmeler"><b id="davetBtn" data-t="davet"></b><b id="kamBtn" title="C">🎥</b><b id="mikBtn"></b><b id="tusBtn" title="H" data-t="tuslar"></b><b id="ayarBtn" title="O" data-t="ayarlar"></b></div>
 <div id="ayar" class="panel kapali"><div class="kart2">
@@ -243,6 +250,6 @@
     <b data-k="s" class="kucuk" data-t="b_kalk"></b><b data-k="t" class="kucuk" data-t="b_tanker"></b><b data-k="u" class="kucuk" data-t="b_kol"></b><b data-k="sp" class="kucuk" data-t="b_pompa"></b>
   </div>
 </div>
-<script type="module" src="src/main.js?v=74"></script>
+<script type="module" src="src/main.js?v=78"></script>
 </body>
 </html>
