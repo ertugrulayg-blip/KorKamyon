@@ -105,6 +105,7 @@ from mathutils.geometry import intersect_point_line
 kemik = {b.name: (Vector(b.head_local), Vector(b.tail_local)) for b in arm.data.bones}
 gruplar = {ad: govde.vertex_groups.get(ad) or govde.vertex_groups.new(name=ad) for ad in kemik}
 BOYUN_UST = 1.28 * OLCEK
+KOL_ALT, GOVDE_YARI, EL_ALT = 1.0 * OLCEK, 0.5 * OLCEK, 0.5 * OLCEK # ham ölçü: omuz altı yükseklik, gövdenin yarı genişliği, ellerin altı (kesitlerden)
 def uzak(v, ad):
     a, b = kemik[ad]; q, t = intersect_point_line(v, a, b); t = max(0.0, min(1.0, t))
     return (v - (a + (b - a) * t)).length
@@ -114,6 +115,11 @@ for vx in govde.data.vertices:
     else:
         adaylar = [ad for ad in kemik if not ((ad.startswith('Left') and v.x < -0.03) or (ad.startswith('Right') and v.x > 0.03))]
         adaylar = [ad for ad in adaylar if ad != 'Head']
+        # Omuz hizasının altında kollar gövdeden ayrık sarkar (A duruşu): gövde genişliğinin içindekiler (ceket, bel, kalça)
+        # kol kemiğine bağlanmaz, dışındakiler (kol, el) yalnız kol kemiklerine. Yoksa kol kalkınca belin yanı uzar.
+        if v.z < KOL_ALT:
+            kolda = abs(v.x) > GOVDE_YARI and v.z > EL_ALT # ellerin altı (bacaklar, botların dış kenarı) hiç kola bağlanmaz
+            adaylar = [ad for ad in adaylar if (('Arm' in ad or 'Hand' in ad) == kolda)]
     d = sorted((uzak(v, ad), ad) for ad in adaylar)[:3]
     w = [(1.0 / (x + 0.015) ** 4, ad) for x, ad in d]; top = sum(x for x, _ in w)
     for x, ad in w:
