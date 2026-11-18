@@ -68,7 +68,7 @@ export function mkPlayer(id, name) {
   const pl = { puan: 0, ist: {}, sure: { surus: 0, yolcu: 0, temiz: 0, enTemiz: 0 }, id, name, ci: [0, 1, 2, 3].find((i) => !used.includes(i)) ?? 0, P: new Float32Array(21), Q: new Float32Array(21), seat: 0, yaw: 0, can: 100, inp: {}, pin: [null, null], arm: 0.7 * BOY, gndT: 0, jumpT: 0, stun: 0, punchT: 0, punchCd: 0, punchH: 0, hitDone: true, phase: 0, dead: 0, offT: 0, seatT: 0, seatCd: 0, oilT: 0, onPol: false, lw: 0, lp: 0, ls: 0, lc: 0, lj: false };
   place(pl, rnd(-0.8, 0.8), 1.95, rnd(-5.5, -1.5)); players.set(id, pl); return pl;
 }
-const OTUR_Y = 0.08, OTUR_Z = 0.22, EGIL = 0.15; // kalça minderden yüksekliği, şoförün öne oturuşu, öne eğilme (eller direksiyonun iki yanına yetişsin)
+let OTUR_Y = 0.08, OTUR_Z = 0.25, EGIL = 0.02; export const oturAyar = (y, z, e) => { OTUR_Y = y; OTUR_Z = z; EGIL = e; }; // ayarlayıcı: denemeler için // kalça minderden yüksekliği, şoförün öne oturuşu, öne eğilme (eller direksiyonun iki yanına yetişsin)
 export function poseSeat(pl) {
   const s = SEAT[pl.seat], P = pl.P, d = pl.seat === 1, set = (k, x, y, z) => { P[k * 3] = x; P[k * 3 + 1] = y; P[k * 3 + 2] = z; };
   const b = BOY, y0 = s[1] + OTUR_Y, z0 = s[2] + OTUR_Z; // kalça minderin üstünde; şoför koltuğun önüne oturur
