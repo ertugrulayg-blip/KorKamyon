@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { KENNEY, loadModel, scatter, spawn } from './models.js';
 import { ui } from './state.js';
-import { DIREKSIYON, DIR_EGIM, BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
+import { SEZ, DIREKSIYON, DIR_EGIM, BOX, BUMP, CEP, cepGen, DAG, DKAYA, DKOY, DOK, DTAS, KENAR, TESIS, HZ, INLET, LEN, OBS, PER, POLZ, TK, WHEEL, Z0, clamp, cx, dagSag, dagSol, karK, kesit, kopyaZ, koyK, srnd, yH } from './world.js';
 import { AIR, BARBEKU, BARR, CR, DEPO, DRL, EXT, KOL, KOL_BOY, POMPA, POMPA_SAP, RAD, SPOT, TAHTA, TEZGAH } from './sim.js';
 
 // ---------- görüntü ----------
@@ -20,7 +20,7 @@ export const boxMesh = (b, par) => { const m = new THREE.Mesh(BG, M(b.c)); m.sca
 export const add = (par, geo, mat, x, y, z, sx = 1, sy = sx, sz = sx) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = !mat.transparent && !mat.isMeshBasicMaterial; m.receiveShadow = !mat.transparent; par.add(m); return m; };
 export const truck = new THREE.Group(); scene.add(truck);
 export const cabG = new THREE.Group(); cabG.position.z = HZ; truck.add(cabG); export const cabIn = new THREE.Group(); cabIn.position.z = -HZ; cabG.add(cabIn); // çekici: mafsal etrafında döner
-for (const b of BOX) if (b !== TK && b.tag !== 'police' && b.tag !== 'crate') boxMesh(b, b.cab ? cabIn : truck);
+for (const b of BOX) if (b !== TK && b.tag !== 'police' && b.tag !== 'crate' && b.tag !== 'sezlong') boxMesh(b, b.cab ? cabIn : truck);
 add(truck, CG, M(0x333333), 0, 0.9, HZ, 0.22, 0.5, 0.22); // mafsal pimi
 export const marks = WHEEL.map((w) => add(truck, CG, new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true }), Math.sign(w[0]) * 1.05, 1.32, clamp(w[2], -5.4, 0.55), 0.42, 0.03, 0.42)); // patlak lastik için durulacak yer
 export const wheels = WHEEL.map((w, i) => { const par = i < 2 ? cabIn : truck, m = add(par, CG, M(0x222222), w[0], w[1], w[2], 0.55, 0.44, 0.55); m.rotation.z = Math.PI / 2; add(par, CG, M(0x8d8d92), w[0] - Math.sign(w[0]) * 0.12, w[1], w[2], 0.12, 0.3, 0.12).rotation.z = Math.PI / 2; return m; }); // tekerler gövdeden dışarıda, aksla bağlı
@@ -346,6 +346,18 @@ for (const [i, s] of [[0, 1], [1, -1]]) { // yan aynalar: 0 sol (+x), 1 sağ —
   const kam = new THREE.PerspectiveCamera(30, 448 / 144, 0.4, 320); kam.position.set(0.1, 3.05, 2.6); kam.rotation.x = -0.1;
   const g = new THREE.Group(); g.position.set(0.05, 3.14, 3.28); g.rotation.y = Math.PI - 0.42; g.rotation.order = 'YXZ'; g.rotation.x = 0.08; add(cabIn, CG, M(0x1c1f25), 0.05, 3.27, 3.33, 0.02, 0.16, 0.02);
   aynaKur(2, kam, g, 0.78, 0.25); }
+// Şezlong: beyaz çerçeve, mavi-beyaz çizgili kumaş, yaslı arkalık
+SEZ.forEach((z, i) => {
+  const g = new THREE.Group(); g.position.set(z.x, 1.3, z.z); g.rotation.y = z.yon > 0 ? 0 : Math.PI; truck.add(g); // arkalık ayakların ters yönünde
+  const renk = i ? '#e04a3c' : '#2f7fd8', kumas = new THREE.MeshLambertMaterial({ map: tex(64, 64, (c) => { for (let k = 0; k < 8; k++) { c.fillStyle = k % 2 ? '#f6f1e6' : renk; c.fillRect(k * 8, 0, 8, 64); } }) });
+  const cerceve = M(0xf2f2f2), L = z.boy / 2, W = z.gen / 2;
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(g, CG, cerceve, sx * (W - 0.03), 0.12, sz * (L - 0.06), 0.03, 0.24, 0.03); // ayaklar
+  for (const sx of [-1, 1]) add(g, BG, cerceve, sx * (W - 0.02), 0.25, 0.1, 0.035, 0.035, L * 2 - 0.25); // yan borular
+  add(g, BG, kumas, 0, 0.27, 0.12, z.gen - 0.06, 0.04, L * 2 - 0.3); // oturak
+  const arka = new THREE.Group(); arka.position.set(0, 0.27, -L + 0.28); arka.rotation.x = 0.65; g.add(arka); // arkalık: kasanın arkasına doğru yükselir
+  add(arka, BG, kumas, 0, 0, -0.27, z.gen - 0.06, 0.04, 0.55); for (const sx of [-1, 1]) add(arka, BG, cerceve, sx * (W - 0.02), -0.01, -0.27, 0.035, 0.035, 0.58);
+  for (const sx of [-1, 1]) add(g, CG, cerceve, sx * (W - 0.05), 0.24, -L + 0.2, 0.03, 0.3, 0.03).rotation.x = -0.6; // arkalık dayanakları
+});
 // gösterge paneli: hız, yakıt, hararet kadranları (ibreleri hud.js çevirir)
 const kadran = (x, yazi, renk) => { const p = add(cabIn, new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (c) => {
   c.fillStyle = '#12151b'; c.beginPath(); c.arc(64, 64, 60, 0, 7); c.fill(); c.strokeStyle = '#cfd6e0'; c.lineWidth = 4; c.stroke();
