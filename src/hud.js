@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
-import { BOY, $, ASAMA, BUMP, BUMP_V, COL, DOK, TESIS, zeminY, DAG, dagSag, dagSol, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
+import { SEZ, BOY, $, ASAMA, BUMP, BUMP_V, COL, DOK, TESIS, zeminY, DAG, dagSag, dagSol, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
 import { PISME, YANMA, POMPA, POMPA_SAP, BARBEKU, DEPO, KOL_T, RAD, SPOT, TAHTA, TEZGAH, asamaSec } from './sim.js';
 import { barbeku, izgaraEt, koz, satici, saticiKasa, pompaKol, vites, aynaKam, aynaM, aynaRT, ibreHiz, ibreIsi, kabinIc, kabinSus, SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
@@ -283,7 +283,7 @@ export function draw(V, dt) {
     if (p.kz && !o.kasaM) { o.kasaM = add(scene, BG, M(0xb07a3a), 0, 0, 0, 0.5, 0.3, 0.5); } if (o.kasaM) { o.kasaM.visible = !!p.kz && !p.d; if (p.kz) { o.kasaM.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.1, (P[11] + P[14]) / 2); o.kasaM.rotation.y = p.y; } } // elindeki erzak kasası
     eldeCiz(o, p, P);
     if (p.th && !o.tahta) { o.tahta = add(scene, BG, tahtaRenk, 0, 0, 0, 0.26, 0.05, 1.3); } if (o.tahta) { o.tahta.visible = !!p.th && !p.d; if (p.th) { o.tahta.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.05, (P[11] + P[14]) / 2); o.tahta.rotation.set(0, p.y + Math.PI / 2, 0.15); } } // elindeki tahta (kollar arasında, yana doğru)
-    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; if (o.rig.levye) o.rig.levye.visible = !p.s; /* koltuktayken levye görünmez (direksiyon ve pompa elde) */
+    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; if (o.rig.levye) o.rig.levye.visible = !p.s && !p.sz; /* koltuktayken levye görünmez (direksiyon ve pompa elde) */
       const eller = p === me && (camM === 'b' || camM === 's' || camM === 'y') && !p.d; /* koltukta da kendi ellerin görünür: direksiyon, yağ kolu, pompa */ for (const k of [0, 1]) { o.s[k].visible = eller; if (eller) { o.s[k].material = o.elMat || (o.elMat = M(COL[p.c % 4])); o.s[k].scale.setScalar(0.075 * BOY); } } /* birinci şahısta kendi eldivenlerin görünür */ /* koltuktan bakan kendini görmez */ if (!p.d) {
         // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
         // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.
@@ -360,11 +360,13 @@ export function draw(V, dt) {
     KENAR.forEach((k, i) => { const kr = (t.kk || '')[i] === '1' || !!(t.dk && k.s < 0 && k.z1 > DOK.a[2] && k.z0 < DOK.b[2]); /* !!: three.js yalnız tam false'u gizler, 0 çizilir */ if (k.b.mesh) k.b.mesh.visible = !kr; if (kr && (t.kk || '')[i] !== '1') { kirikM[i].visible = false; return; } kirikM[i].visible = kr; kirikM[i].userData.isaret.material.opacity = nabiz; });
     const suGerek = run && (t.ht >= 60 || t.sl), erz = t.tk >= 0, ez = t.ez || [0, 0, 0], vanaGerek = run && ks === 2 && V.n[3] && !kv;
     radIsaret.visible = !!suGerek; depoIsaret.visible = run && erz && (t.tk < 50 && ez[0] + ez[1] > 0 || V.p.some((p) => p.kz)); izgIsaret.visible = run && erz && (V.p.some((p) => p.ed === 'et') || (t.iz2 || []).some((s) => s >= PISME)); vanaIsaret.visible = !!vanaGerek; /* !!: 0 gelirse three.js gizlemez */ for (const m of [radIsaret, depoIsaret, izgIsaret, vanaIsaret]) m.material.opacity = nabiz;
-    let ey = '', dol = -1; // dol: F basılı tutulan işin ilerlemesi (0..1), -1 halka yok
+    let ey = '', dol = -1, tus = 'F'; // dol: F basılı tutulan işin ilerlemesi (0..1), -1 halka yok; tus: ipucundaki tuş
     erzakPenceresi(t, me, mp);
     const basili = !!(key.KeyF || tb.u); EY.tut = basili ? EY.tut + dt : 0;
     if (mp) { const yak = (x, z, r) => Math.hypot(mp[3] - x, mp[5] - z) < r;
       if (suGerek && (cabPt(EV, RAD[0], 0, RAD[2]), yak(EV.x, EV.z, 1.7))) { ey = L('ey_su'); dol = basili ? 1 - t.ht / 100 : 0; }
+      else if (me.sz) { ey = L('ey_sezKalk'); tus = 'E'; }
+      else if (!me.s && !me.ed && !me.kz && SEZ.some((z, i) => Math.hypot(mp[3] - z.x, mp[5] - z.z) < 0.85 && !V.p.some((q) => q.sz === i + 1))) { ey = L('ey_sez'); tus = 'E'; }
       else if (erz && me.kz && yak(DEPO[0], DEPO[2], 1.3)) ey = L('ey_birak');
       else if (erz && me.ed) ey = me.ed === 'et' ? L(yak(BARBEKU[0], BARBEKU[2], 1.4) ? 'ey_izgaraKoy' : 'ey_izgaraGotur') : L('ey_yeEl', me.ed);
       else if (erz && izgaraYakin(mp) && (t.iz2 || []).length) { const m = Math.max(...t.iz2); ey = m >= PISME ? L('ey_etAl', m >= YANMA) : L('ey_pisiyor', Math.ceil(PISME - m)); dol = m < PISME ? m / PISME : -1; }
@@ -374,7 +376,7 @@ export function draw(V, dt) {
       else if (kirikVar && !me.th && yak(TAHTA[0], TAHTA[2], 1.2)) ey = L('ey_tahta');
       else if (me.th) { const i = KENAR.findIndex((k, i) => t.kk[i] === '1' && Math.sign(mp[3]) === k.s && Math.abs(mp[3]) > 0.7 && mp[5] > k.z0 - 0.5 && mp[5] < k.z1 + 0.5); ey = i >= 0 ? L('ey_cak', Math.round((me.ck || 0) * 100)) : ''; dol = i >= 0 ? me.ck || 0 : -1; } }
     // F tuşunun çevresinde dolan halka: basılı tutulan işin ilerlemesi
-    const el = $('eylem'), metin = ey ? `<kbd class="${dol >= 0 ? 'halka' : ''}">${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; }
+    const el = $('eylem'), metin = ey ? `<kbd class="${dol >= 0 ? 'halka' : ''}">${TOUCH ? L(tus === 'E' ? 'b_otur' : 'b_kullan') : tus}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; }
     if (ey && dol >= 0) el.firstChild.style.setProperty('--p', Math.round(Math.min(1, dol) * 100) + '%'); }
   kanCiz(t.kn, dt); if (EZ.acik && t.s !== 'run') erzakKapat();
   izgaraCiz(t, dt);
