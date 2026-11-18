@@ -346,9 +346,9 @@ for (const [i, s] of [[0, 1], [1, -1]]) { // yan aynalar: 0 sol (+x), 1 sağ —
   const kam = new THREE.PerspectiveCamera(30, 448 / 144, 0.4, 320); kam.position.set(0.1, 3.05, 2.6); kam.rotation.x = -0.1;
   const g = new THREE.Group(); g.position.set(0.05, 3.14, 3.28); g.rotation.y = Math.PI - 0.42; g.rotation.order = 'YXZ'; g.rotation.x = 0.08; add(cabIn, CG, M(0x1c1f25), 0.05, 3.27, 3.33, 0.02, 0.16, 0.02);
   aynaKur(2, kam, g, 0.78, 0.25); }
-// Şezlonglar: beyaz çerçeve, çizgili kumaş (mavi-beyaz, kırmızı-beyaz), arkalık kasanın arkasına doğru yaslı
+// Şezlong: beyaz çerçeve, mavi-beyaz çizgili kumaş, yaslı arkalık
 SEZ.forEach((z, i) => {
-  const g = new THREE.Group(); g.position.set(z.x, 1.3, z.z); truck.add(g);
+  const g = new THREE.Group(); g.position.set(z.x, 1.3, z.z); g.rotation.y = z.yon > 0 ? 0 : Math.PI; truck.add(g); // arkalık ayakların ters yönünde
   const renk = i ? '#e04a3c' : '#2f7fd8', kumas = new THREE.MeshLambertMaterial({ map: tex(64, 64, (c) => { for (let k = 0; k < 8; k++) { c.fillStyle = k % 2 ? '#f6f1e6' : renk; c.fillRect(k * 8, 0, 8, 64); } }) });
   const cerceve = M(0xf2f2f2), L = z.boy / 2, W = z.gen / 2;
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(g, CG, cerceve, sx * (W - 0.03), 0.12, sz * (L - 0.06), 0.03, 0.24, 0.03); // ayaklar

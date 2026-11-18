@@ -119,16 +119,16 @@ export function dropNozzle() {
 const SEZ_Y = 1.58; // minderin üstü
 export const sezYakin = (pl) => SEZ.findIndex((z, i) => Math.hypot(pl.P[3] - z.x, pl.P[5] - z.z) < 0.85 && pl.P[1] > 1.2 && ![...players.values()].some((q) => q.sez === i + 1));
 export function sezUzan(pl, i) { pl.sez = i + 1; pl.tahta = 0; pl.kasa = 0; eldenBirak(pl); pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); say('sezlong', pl.name); }
-export function sezKalk(pl) { const z = SEZ[pl.sez - 1]; pl.sez = 0; if (z) place(pl, z.x + (z.x > 0 ? 0.55 : -0.55), 1.95, z.z); }
+export function sezKalk(pl) { const z = SEZ[pl.sez - 1]; pl.sez = 0; if (z) place(pl, z.x + (z.x > 0 ? -0.6 : 0.6), 1.95, z.z); } // kasanın ortasına doğru kalkar
 function sezFirla(pl, vx, vz) { const z = SEZ[pl.sez - 1]; pl.sez = 0; if (!z) return; place(pl, z.x, 2.0, z.z); for (let i = 0; i < 21; i += 3) { pl.Q[i] -= (vx || (Math.random() - 0.5) * 2) * 0.05; pl.Q[i + 1] -= 0.12; pl.Q[i + 2] -= vz * 0.05; } pl.stun = 0.8; say('sezlongUcti', pl.name); }
 function poseSez(pl) {
   const z = SEZ[pl.sez - 1], P = pl.P, b = BOY, set = (k, x, y, zz) => { P[k * 3] = x; P[k * 3 + 1] = y; P[k * 3 + 2] = zz; };
-  const hz = z.z - 0.05, hy = SEZ_Y + 0.12 * b, yat = 0.65; // kalça; gövde arkaya ~37° yaslı (arkalık kasanın arka ucunda)
-  const cy = Math.sin(yat), cz = -Math.cos(yat), nefes = Math.sin(T.t * 1.6) * 0.01;
+  const f = z.yon, hz = z.z - 0.05 * f, hy = SEZ_Y + 0.12 * b, yat = 0.65; // f: ayakların yönü; kalça; gövde arkalığa ~37° yaslı
+  const cy = Math.sin(yat), cz = -Math.cos(yat) * f, nefes = Math.sin(T.t * 1.6) * 0.01, sol = f * b; // sol: karakterin solu (+x ileriye bakınca)
   set(0, z.x, hy, hz); set(1, z.x, hy + 0.4 * b * cy + nefes, hz + 0.4 * b * cz); set(2, z.x, hy + 0.76 * b * cy, hz + 0.76 * b * cz);
-  set(3, z.x + 0.17 * b, hy + 0.8 * b * cy, hz + 0.86 * b * cz); set(4, z.x - 0.17 * b, hy + 0.8 * b * cy, hz + 0.86 * b * cz); // eller başın arkasında
-  set(5, z.x + 0.12 * b, SEZ_Y + 0.05, hz + 0.55 * b); set(6, z.x - 0.1 * b, SEZ_Y + 0.08, hz + 0.5 * b + Math.sin(T.t * 2.2) * 0.03); // bacaklar uzanık, biri keyifle sallanır
-  pl.Q.set(P); pl.yaw = 0;
+  set(3, z.x + 0.17 * sol, hy + 0.8 * b * cy, hz + 0.86 * b * cz); set(4, z.x - 0.17 * sol, hy + 0.8 * b * cy, hz + 0.86 * b * cz); // eller başın arkasında
+  set(5, z.x + 0.12 * sol, SEZ_Y + 0.05, hz + 0.55 * b * f); set(6, z.x - 0.1 * sol, SEZ_Y + 0.08, hz + (0.5 * b + Math.sin(T.t * 2.2) * 0.03) * f); // bacaklar uzanık, biri keyifle sallanır
+  pl.Q.set(P); pl.yaw = f > 0 ? 0 : Math.PI;
 }
 export function unseat(q) { const s = SEAT[q.seat]; q.kalkS = q.seat; q.seat = 0; place(q, s[0], 2.1, 0.5); q.seatCd = Math.max(q.seatCd, KOLTUK_BEKLE); } // kalktığı koltuğa 5 sn oturamaz (öbür koltuğa oturabilir)
 const KOLTUK_BEKLE = 5;

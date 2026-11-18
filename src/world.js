@@ -83,8 +83,9 @@ box(0.3, 1.1, 1.3, 1.6, 1.5, 2.3, 'seat', 0x30415d); box(-1.1, -0.3, 1.3, 1.6, 1
 for (const b of BOX) if (b.a[2] >= 1) b.cab = true; // çekici (kabin): dorseye z=HZ'deki mafsaldan bağlı, dönüşte ona göre açı yapar
 export const HZ = 1;
 // satıcı arabası: kamyon tesiste durunca sağ yanına yanaşır, üstünde erzak kasaları (oyuncular kasadan üstüne yürür)
-// Şezlonglar (kasada, sandıklarla ızgara arasında): arkalık kasanın arkasında, ayaklar kabine doğru. Oyuncu E ile uzanır.
-export const SEZ = [[0.45, -4.6], [-0.25, -4.6]].map(([x, z]) => ({ x, z, boy: 1.15, gen: 0.5, b: box(x - 0.25, x + 0.25, 1.3, 1.58, z - 0.575, z + 0.575, 'sezlong', 0xf2efe6) }));
+// Şezlong (tek): kasanın sol kenarında, ızgarayla aynı sırada; arkalık kabine dayalı, ayaklar arkaya (yola) bakar. Oyuncu E ile uzanır.
+// yon: ayakların baktığı yön (+1 kabine, -1 arkaya).
+export const SEZ = [[1.08, -4.45, -1]].map(([x, z, yon]) => ({ x, z, yon, boy: 1.15, gen: 0.5, b: box(x - 0.25, x + 0.25, 1.3, 1.58, z - 0.575, z + 0.575, 'sezlong', 0xf2efe6) }));
 export const DOK = box(-4.7, -1.5, 0.5, 1.3, -5.2, -1.2, 'dok', 0x8a6a3a); DOK.on = false;
 export const TK = box(-1.2, 1.2, 0.5, 2.0, -3.5, 3.5, 'tanker', 0xe9e9e9); TK.on = false;
 export const PK = box(-1.0, 1.0, 0.45, 1.3, -2.2, 2.2, 'police', 0xffffff), PK2 = box(-0.85, 0.85, 1.3, 1.85, -1.3, 0.5, 'police', 0x1f3a6b); PK.on = PK2.on = false;
