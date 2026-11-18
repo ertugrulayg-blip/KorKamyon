@@ -115,7 +115,7 @@ export function dropNozzle() {
   if (TKS.st === 2 && Math.hypot(NZ.p[0] - INLET[0], NZ.p[1] - INLET[1], NZ.p[2] - INLET[2]) < 0.9) { NZ.dock = true; say('hortumTak'); puan(h, 30, 'yakit'); }
 }
 // ---------- şezlong ----------
-// Uzanan oyuncu kollarını başının arkasına atar, canı hızlı dolar. Sert sarsıntıda ya da darbede şezlongdan fırlar.
+// Uzanan oyuncunun elleri yanlarda durur, canı hızlı dolar. Sert sarsıntıda ya da darbede şezlongdan fırlar.
 const SEZ_Y = 1.58; // minderin üstü
 export const sezYakin = (pl) => SEZ.findIndex((z, i) => Math.hypot(pl.P[3] - z.x, pl.P[5] - z.z) < 0.85 && pl.P[1] > 1.2 && ![...players.values()].some((q) => q.sez === i + 1));
 export function sezUzan(pl, i) { pl.sez = i + 1; pl.tahta = 0; pl.kasa = 0; eldenBirak(pl); pl.pin = [null, null]; if (NZ.holder === pl.id) dropNozzle(); say('sezlong', pl.name); }
@@ -126,7 +126,7 @@ function poseSez(pl) {
   const f = z.yon, hz = z.z - 0.05 * f, hy = SEZ_Y + 0.12 * b, yat = 0.65; // f: ayakların yönü; kalça; gövde arkalığa ~37° yaslı
   const cy = Math.sin(yat), cz = -Math.cos(yat) * f, nefes = Math.sin(T.t * 1.6) * 0.01, sol = f * b; // sol: karakterin solu (+x ileriye bakınca)
   set(0, z.x, hy, hz); set(1, z.x, hy + 0.4 * b * cy + nefes, hz + 0.4 * b * cz); set(2, z.x, hy + 0.76 * b * cy, hz + 0.76 * b * cz);
-  set(3, z.x + 0.17 * sol, hy + 0.8 * b * cy, hz + 0.86 * b * cz); set(4, z.x - 0.17 * sol, hy + 0.8 * b * cy, hz + 0.86 * b * cz); // eller başın arkasında
+  set(3, z.x + 0.34 * sol, SEZ_Y + 0.1, hz + 0.08 * f); set(4, z.x - 0.34 * sol, SEZ_Y + 0.1, hz + 0.08 * f); // eller kalçanın yanında, şezlongun kenarında
   set(5, z.x + 0.12 * sol, SEZ_Y + 0.05, hz + 0.55 * b * f); set(6, z.x - 0.1 * sol, SEZ_Y + 0.08, hz + (0.5 * b + Math.sin(T.t * 2.2) * 0.03) * f); // bacaklar uzanık, biri keyifle sallanır
   pl.Q.set(P); pl.yaw = f > 0 ? 0 : Math.PI;
 }
@@ -251,7 +251,7 @@ export function stepPlayer(pl, dt) {
     if (pl.punchT > 0 && h === pl.punchH) { tx = P[3] + fx * 0.95 * BOY; ty = P[4] + 0.05 * BOY; tz = P[5] + fz * 0.95 * BOY; k = 0.6; }
     else if (I.g && !st) { const up = (gnd ? -0.6 : 0.5) * BOY; tx = P[3] + (fx * 0.5 + lx * sd * 0.2) * BOY; ty = P[4] + up; tz = P[5] + (fz * 0.5 + lz * sd * 0.2) * BOY; k = 0.3; }
     else if (I.fp) { tx = P[3] + (fx * 0.5 + lx * sd * 0.3) * BOY; ty = P[4] + 0.04 * BOY; tz = P[5] + (fz * 0.5 + lz * sd * 0.3) * BOY; k = 0.1; } // birinci şahıs: eller önde, göz önünde
-    else { tx = P[3] + lx * sd * 0.36 * BOY; ty = P[4] - 0.42 * BOY; tz = P[5] + lz * sd * 0.36 * BOY; k = 0.1; }
+    else { tx = P[3] + lx * sd * 0.64 * BOY; ty = P[4] - 0.36 * BOY; tz = P[5] + lz * sd * 0.64 * BOY; k = 0.1; } // boştaki kollar gövdeden açık durur (tombul gövdeye yapışmasın)
     P[i] += (tx - P[i]) * k; P[i + 1] += (ty - P[i + 1]) * k; P[i + 2] += (tz - P[i + 2]) * k;
   }
   if (climb) { const h = pl.pin[0] ? 9 : 12; P[4] += (P[h + 1] + 0.45 * BOY - P[4]) * 0.07; }
