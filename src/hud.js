@@ -3,8 +3,8 @@ import * as THREE from 'three';
 import { DIL, L, mesaj, mesajKod } from './dil.js';
 import { net, ui } from './state.js';
 import { BOY, $, ASAMA, BUMP, BUMP_V, COL, DOK, TESIS, zeminY, DAG, dagSag, dagSol, DKAYA, DTAS, DTBOLGE, GATE, HARITA, HZ, KENAR, LEN, POLZ, WHEEL, cx, egim, haritaSec, yH } from './world.js';
-import { POMPA, POMPA_SAP, BARBEKU, DEPO, KOL_T, RAD, SPOT, TAHTA, TEZGAH, asamaSec } from './sim.js';
-import { izgaraEt, koz, satici, saticiKasa, pompaKol, vites, aynaKam, aynaM, aynaRT, ibreHiz, ibreIsi, kabinIc, kabinSus, SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
+import { PISME, YANMA, POMPA, POMPA_SAP, BARBEKU, DEPO, KOL_T, RAD, SPOT, TAHTA, TEZGAH, asamaSec } from './sim.js';
+import { barbeku, izgaraEt, koz, satici, saticiKasa, pompaKol, vites, aynaKam, aynaM, aynaRT, ibreHiz, ibreIsi, kabinIc, kabinSus, SIS, dagG, dagKur, haritaIsik, kirikM, tahtaRenk, telsizM, yagKolu } from './scene.js';
 import { BG, CG, GRAY, M, SG, SKY, UP, add, airA, airHose, airTip, bitis, cabG, cabIn, cam, cam2, crM, dmgDent, dmgMark, dmgTag, drA, drBit, drCable, drill, exM, fireG, flames, fogS, glass, hoseMat, hpTag, koltuk, marks, needle, nozzle, obsMesh, oilM, pedB, pedG, pivot, pol, polL, polPark, rainP, ren, scene, steam, swheel, tanker, truck, v1, v2, valve, wheels, world } from './scene.js';
 import { BACA } from './detail.js';
 import { makeRig, poseRig } from './rig.js';
@@ -118,6 +118,64 @@ function asamaPanel(t, V) {
 // Yolcunun telsizi: T ile açılır; ekrandaki 3 haneli frekans 1-4 tuşlarıyla girilince tanker çağrılır.
 // Yolcu değilse T eskisi gibi çağrı gönderir (oda sahibi "yalnız yolcu çağırabilir" der).
 const TZ = { acik: false, kod: '', girilen: '', kapanT: 0 };
+// ---------- erzak kutusu ----------
+// Depoya yakınken F (ya da dokunmatikte KULLAN) kutuyu açar: ürünler sayılarıyla görünür, tıklanan (ya da 1-3) ele geçer.
+// Seçim oda sahibine girdiyle gider (ui.erzakAl, her seçimde artan numarayla).
+const EZ = { acik: false, f: false, n: 0, imza: '', sonEd: '' };
+const URUN = [['muz', '🍌'], ['portakal', '🍊'], ['et', '🥩']];
+const izgaraYakin = (mp) => { const dI = Math.hypot(mp[3] - BARBEKU[0], mp[5] - BARBEKU[2]), dD = Math.hypot(mp[3] - DEPO[0], mp[5] - DEPO[2]); return dI < 1.4 && dI < dD; };
+function erzakKapat() { EZ.acik = false; EZ.imza = ''; $('erzakPen').style.display = 'none'; }
+function erzakSec(k) { ui.erzakAl = ++EZ.n + ':' + k; erzakKapat(); }
+addEventListener('keydown', (e) => { if (EZ.acik && e.code === 'Escape') { e.stopPropagation(); erzakKapat(); } }, true);
+function erzakPenceresi(t, me, mp) {
+  const kenar = ui.fBasti || (!!tb.u && !EZ.f); ui.fBasti = false; EZ.f = !!tb.u; // klavyede basış olayı, dokunmatikte KULLAN tuşunun inişi
+  const dD = mp ? Math.hypot(mp[3] - DEPO[0], mp[5] - DEPO[2]) : 99;
+  const eldeVardi = EZ.sonEd; EZ.sonEd = me ? me.ed : ''; // F ile yenen yiyecek oda sahibinde aynı karede gider: o basış kutuyu açmasın
+  const acilir = t.s === 'run' && t.tk >= 0 && me && !me.s && !me.ed && !eldeVardi && !me.kz && dD < 1.3 && !(izgaraYakin(mp) && (t.iz2 || []).length); // ızgarada et varken ve ızgaraya daha yakınken F eti alır
+  if (kenar) { if (EZ.acik) { erzakKapat(); return; } if (acilir) { EZ.acik = true; if (document.pointerLockElement) document.exitPointerLock(); } }
+  if (!EZ.acik) { ui.rakam = 0; return; }
+  if (!me || dD > 1.8 || me.ed || me.s) { erzakKapat(); return; } // uzaklaştı ya da eline bir şey aldı
+  const ez = t.ez || [0, 0, 0];
+  if (ui.rakam) { const i = ui.rakam - 1; ui.rakam = 0; if (URUN[i] && ez[i] > 0) { erzakSec(URUN[i][0]); return; } }
+  const el = $('erzakPen'), imza = ez.join(',') + DIL;
+  if (EZ.imza !== imza) { EZ.imza = imza;
+    el.querySelector('.ust').textContent = L('ezBaslik'); el.querySelector('.alt').textContent = TOUCH ? '' : L('ezKapat');
+    el.querySelector('.bos').textContent = ez[0] + ez[1] + ez[2] ? '' : L('ezBos');
+    const u = el.querySelector('.urunler'); u.innerHTML = '';
+    URUN.forEach(([k, ik], i) => { const b = document.createElement('div'); b.className = 'urun' + (ez[i] > 0 ? '' : ' yok');
+      b.innerHTML = `<span class="no">${TOUCH ? '' : i + 1}</span><div class="ik">${ik}</div><div class="ad">${L('u_' + k)}</div><div class="adet">${L('ezAdet', ez[i])}</div><div class="ac">${L('ud_' + k)}</div>`;
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (ez[i] > 0) erzakSec(k); }); u.appendChild(b); }); }
+  el.style.display = '';
+}
+// Elde tutulan yiyecek: kocaman muz, portakal ya da but (çiğ kırmızı, pişmiş kahverengi, yanık kara). Sol elde durur.
+const YEMEK_RENK = { et: 0xc0473f, pismis: 0x8a4a1f, yanik: 0x231a15 };
+function yemekYap(k) {
+  const g = new THREE.Group();
+  if (k === 'muz') { const m = add(g, new THREE.TorusGeometry(0.2, 0.05, 8, 16, 1.9), M(0xf5d33b), 0, 0, 0); m.rotation.z = -0.4; m.scale.set(1, 1, 0.9);
+    add(g, CG, M(0x5a4126), Math.cos(1.5) * 0.2, Math.sin(1.5) * 0.2 + 0.02, 0, 0.03, 0.06, 0.03); }
+  else if (k === 'portakal') { add(g, new THREE.SphereGeometry(0.13, 14, 10), M(0xf58a1f), 0, 0, 0); add(g, BG, M(0x3f8a3a), 0.02, 0.13, 0, 0.06, 0.02, 0.04); }
+  else { const et = add(g, new THREE.SphereGeometry(0.15, 12, 9), M(YEMEK_RENK[k]), 0, 0.12, 0); et.scale.set(1, 1.25, 0.9); // but: et ve kemik
+    add(g, CG, M(k === 'yanik' ? 0x5a5550 : 0xf1ead8), 0, -0.08, 0, 0.045, 0.2, 0.045); add(g, new THREE.SphereGeometry(0.04, 8, 6), M(k === 'yanik' ? 0x5a5550 : 0xf1ead8), 0.025, -0.19, 0); add(g, new THREE.SphereGeometry(0.04, 8, 6), M(k === 'yanik' ? 0x5a5550 : 0xf1ead8), -0.025, -0.19, 0); }
+  g.traverse((m) => { if (m.isMesh) m.castShadow = true; }); scene.add(g); return g;
+}
+function eldeCiz(o, p, P) {
+  const k = !p.d && p.ed ? p.ed : '';
+  if (o.yemekTur !== k) { if (o.yemek) { scene.remove(o.yemek); o.yemek = null; } o.yemekTur = k; if (k) o.yemek = yemekYap(k); }
+  if (o.yemek) { o.yemek.position.set(P[9], P[10] + 0.08, P[11]); o.yemek.rotation.set(0.25, p.y, 0.15); }
+}
+// Izgara: üstünde en çok 2 et (çiğ → pişmiş → yanık renk geçişi); pişerken duman, yanınca kara duman.
+const izgEt = [-0.13, 0.13].map((x) => { const m = add(barbeku, BG, M(0x9c2f2a), x, 0.69, 0, 0.2, 0.06, 0.15); m.visible = false; return m; });
+const ER = [new THREE.Color(0x9c2f2a), new THREE.Color(0x7a4421), new THREE.Color(0x1e1612)];
+const izgDuman = []; for (let i = 0; i < 14; i++) { const m = add(barbeku, new THREE.SphereGeometry(0.12, 8, 6), new THREE.MeshBasicMaterial({ color: 0xd8d8d8, transparent: true, opacity: 0, depthWrite: false }), 0, 0.8, 0); m.visible = false; izgDuman.push({ m, t: i / 14 }); }
+function izgaraCiz(t, dt) {
+  const iz = t.s === 'run' ? t.iz2 || [] : [];
+  izgEt.forEach((m, i) => { const s = iz[i]; m.visible = s !== undefined; if (s === undefined) return;
+    if (s < PISME) m.material.color.copy(ER[0]).lerp(ER[1], s / PISME); else if (s < YANMA) m.material.color.copy(ER[1]).lerp(ER[2], Math.max(0, (s - YANMA + 30) / 30)); else m.material.color.copy(ER[2]); });
+  const yanik = iz.some((s) => s >= YANMA), on = iz.length > 0, hiz = yanik ? 1.6 : 1;
+  for (const d of izgDuman) { d.m.visible = on; if (!on) continue; d.t = (d.t + dt * 0.45 * hiz) % 1; const u = d.t, a = d.m.position;
+    a.set(Math.sin(u * 9 + d.t * 40) * 0.08, 0.78 + u * 1.6, -u * 0.9); d.m.scale.setScalar(0.5 + u * 1.8 * (yanik ? 1.4 : 1));
+    d.m.material.color.setHex(yanik ? 0x2a2522 : 0xdcdcdc); d.m.material.opacity = (yanik ? 0.7 : 0.45) * Math.sin(u * Math.PI); }
+}
 function telsizPanel(t, me, dt) {
   const el = $('telsiz'), yolcu = me && me.s === 2 && t.s === 'run' && !t.cd;
   if (!el.dataset.kur) { el.dataset.kur = 1; for (const b of el.querySelectorAll('b[data-n]')) b.addEventListener('pointerdown', (e) => { e.preventDefault(); ui.telsizTus = +b.dataset.n; }); }
@@ -223,6 +281,7 @@ export function draw(V, dt) {
     o.s.forEach((m, k) => m.position.set(P[9 + k * 3], P[10 + k * 3], P[11 + k * 3])); o.s[2].rotation.y = o.s[3].rotation.y = p.y;
     o.tag.position.set(P[6], P[7] + 0.62, P[8]);
     if (p.kz && !o.kasaM) { o.kasaM = add(scene, BG, M(0xb07a3a), 0, 0, 0, 0.5, 0.3, 0.5); } if (o.kasaM) { o.kasaM.visible = !!p.kz && !p.d; if (p.kz) { o.kasaM.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.1, (P[11] + P[14]) / 2); o.kasaM.rotation.y = p.y; } } // elindeki erzak kasası
+    eldeCiz(o, p, P);
     if (p.th && !o.tahta) { o.tahta = add(scene, BG, tahtaRenk, 0, 0, 0, 0.26, 0.05, 1.3); } if (o.tahta) { o.tahta.visible = !!p.th && !p.d; if (p.th) { o.tahta.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.05, (P[11] + P[14]) / 2); o.tahta.rotation.set(0, p.y + Math.PI / 2, 0.15); } } // elindeki tahta (kollar arasında, yana doğru)
     if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde;
       const eller = p === me && (camM === 'b' || camM === 's' || camM === 'y') && !p.d; /* koltukta da kendi ellerin görünür: direksiyon, yağ kolu, pompa */ for (const k of [0, 1]) { o.s[k].visible = eller; if (eller) { o.s[k].material = o.elMat || (o.elMat = M(COL[p.c % 4])); o.s[k].scale.setScalar(0.075 * BOY); } } /* birinci şahısta kendi eldivenlerin görünür */ /* koltuktan bakan kendini görmez */ if (!p.d) {
@@ -297,16 +356,19 @@ export function draw(V, dt) {
   { const nabiz = 0.45 + 0.4 * Math.sin(performance.now() / 140), run = t.s === 'run' && !t.cd, mp = me && !me.s && !me.d ? (RP[me.id] || me.P) : null;
     const kirikVar = run && (t.kk || '').includes('1');
     if (DOK.mesh) DOK.mesh.visible = !!t.dk; satici.visible = !!t.dk; saticiKasa.forEach((g, i) => (g.visible = i < (t.tks || 0)));
-    koz.material.color.setHex(t.iz ? (Math.sin(performance.now() / 60) > 0 ? 0xff5a1f : 0xff8a3d) : 0x4a1a0a); izgaraEt.visible = !!t.iz;
+    koz.material.color.setHex(t.iz ? (Math.sin(performance.now() / 60) > 0 ? 0xff5a1f : 0xff8a3d) : 0x4a1a0a); izgaraEt.visible = false;
     KENAR.forEach((k, i) => { const kr = (t.kk || '')[i] === '1' || !!(t.dk && k.s < 0 && k.z1 > DOK.a[2] && k.z0 < DOK.b[2]); /* !!: three.js yalnız tam false'u gizler, 0 çizilir */ if (k.b.mesh) k.b.mesh.visible = !kr; if (kr && (t.kk || '')[i] !== '1') { kirikM[i].visible = false; return; } kirikM[i].visible = kr; kirikM[i].userData.isaret.material.opacity = nabiz; });
     const suGerek = run && (t.ht >= 60 || t.sl), erz = t.tk >= 0, ez = t.ez || [0, 0, 0], vanaGerek = run && ks === 2 && V.n[3] && !kv;
-    radIsaret.visible = !!suGerek; depoIsaret.visible = run && erz && (t.tk < 50 && ez[0] + ez[1] > 0 || V.p.some((p) => p.kz)); izgIsaret.visible = run && erz && t.tk < 60 && ez[2] > 0; vanaIsaret.visible = !!vanaGerek; /* !!: 0 gelirse three.js gizlemez */ for (const m of [radIsaret, depoIsaret, izgIsaret, vanaIsaret]) m.material.opacity = nabiz;
+    radIsaret.visible = !!suGerek; depoIsaret.visible = run && erz && (t.tk < 50 && ez[0] + ez[1] > 0 || V.p.some((p) => p.kz)); izgIsaret.visible = run && erz && (V.p.some((p) => p.ed === 'et') || (t.iz2 || []).some((s) => s >= PISME)); vanaIsaret.visible = !!vanaGerek; /* !!: 0 gelirse three.js gizlemez */ for (const m of [radIsaret, depoIsaret, izgIsaret, vanaIsaret]) m.material.opacity = nabiz;
     let ey = '', dol = -1; // dol: F basılı tutulan işin ilerlemesi (0..1), -1 halka yok
+    erzakPenceresi(t, me, mp);
     const basili = !!(key.KeyF || tb.u); EY.tut = basili ? EY.tut + dt : 0;
     if (mp) { const yak = (x, z, r) => Math.hypot(mp[3] - x, mp[5] - z) < r;
       if (suGerek && (cabPt(EV, RAD[0], 0, RAD[2]), yak(EV.x, EV.z, 1.7))) { ey = L('ey_su'); dol = basili ? 1 - t.ht / 100 : 0; }
-      else if (erz && yak(DEPO[0], DEPO[2], 1.3) && (me.kz || (t.tk < 92 && ez[0] + ez[1] > 0))) ey = me.kz ? L('ey_birak') : L('ey_ye');
-      else if (erz && yak(BARBEKU[0], BARBEKU[2], 1.3) && ez[2] > 0 && t.tk < 95 && !me.kz) { ey = L('ey_izgara', Math.round((me.ig || 0) * 100)); dol = me.ig || 0; }
+      else if (erz && me.kz && yak(DEPO[0], DEPO[2], 1.3)) ey = L('ey_birak');
+      else if (erz && me.ed) ey = me.ed === 'et' ? L(yak(BARBEKU[0], BARBEKU[2], 1.4) ? 'ey_izgaraKoy' : 'ey_izgaraGotur') : L('ey_yeEl', me.ed);
+      else if (erz && izgaraYakin(mp) && (t.iz2 || []).length) { const m = Math.max(...t.iz2); ey = m >= PISME ? L('ey_etAl', m >= YANMA) : L('ey_pisiyor', Math.ceil(PISME - m)); dol = m < PISME ? m / PISME : -1; }
+      else if (erz && !EZ.acik && yak(DEPO[0], DEPO[2], 1.3)) ey = L('ey_kutu');
       else if (t.dk && t.tks > 0 && !me.kz && yak(TEZGAH[0], TEZGAH[2], 1.4)) ey = L('ey_kasa', t.tks);
       else if (vanaGerek && Math.hypot(mp[3] - kx, mp[4] - 2.3, mp[5] - (kz - 2)) < 1.4) { ey = L('ey_vana'); dol = V.k[4] || 0; }
       else if (kirikVar && !me.th && yak(TAHTA[0], TAHTA[2], 1.2)) ey = L('ey_tahta');
@@ -314,7 +376,8 @@ export function draw(V, dt) {
     // F tuşunun çevresinde dolan halka: basılı tutulan işin ilerlemesi
     const el = $('eylem'), metin = ey ? `<kbd class="${dol >= 0 ? 'halka' : ''}">${TOUCH ? L('b_kullan') : 'F'}</kbd>${ey}` : ''; if (el.dataset.m !== metin) { el.dataset.m = metin; el.innerHTML = metin; el.style.display = ey ? 'block' : 'none'; }
     if (ey && dol >= 0) el.firstChild.style.setProperty('--p', Math.round(Math.min(1, dol) * 100) + '%'); }
-  kanCiz(t.kn, dt);
+  kanCiz(t.kn, dt); if (EZ.acik && t.s !== 'run') erzakKapat();
+  izgaraCiz(t, dt);
   asamaPanel(t, V); telsizPanel(t, me, dt); yagKolu.rotation.x = -Math.sin(Math.min(1, (t.kl || 0) / KOL_T) * Math.PI) * 0.95; { const y = V.p.find((q) => q.s === 2), P = y && RP[y.id]; pompaKol.position.y = POMPA[1] + (t.pm && P ? Math.max(-0.1, Math.min(0.1, P[10] - POMPA[1] - POMPA_SAP)) : 0); } /* sap yolcunun eliyle iner kalkar */ { const vg = Math.min(3, (t.v / 5) | 0); vites.rotation.x += ((vg % 2 ? 0.28 : -0.28) - vites.rotation.x) * 0.2; vites.rotation.z += ((vg < 2 ? 0.16 : -0.16) - vites.rotation.z) * 0.2; } telsizM.rotation.z = TZ.acik ? Math.sin(performance.now() / 120) * 0.05 : 0; egitimYazi(t); puanBalon(t, me); konfeti(t);
   if ((hudT -= dt) > 0) return; hudT = 0.1;
   const dk = $('dok'), pr = t.s === 'lobby' ? 'L' : String(seat); if (dk.dataset.r !== pr) { dk.dataset.r = pr; joy.x = joy.y = 0; for (const k in tb) tb[k] = 0; }
