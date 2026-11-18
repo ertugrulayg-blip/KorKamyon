@@ -283,7 +283,7 @@ export function draw(V, dt) {
     if (p.kz && !o.kasaM) { o.kasaM = add(scene, BG, M(0xb07a3a), 0, 0, 0, 0.5, 0.3, 0.5); } if (o.kasaM) { o.kasaM.visible = !!p.kz && !p.d; if (p.kz) { o.kasaM.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.1, (P[11] + P[14]) / 2); o.kasaM.rotation.y = p.y; } } // elindeki erzak kasası
     eldeCiz(o, p, P);
     if (p.th && !o.tahta) { o.tahta = add(scene, BG, tahtaRenk, 0, 0, 0, 0.26, 0.05, 1.3); } if (o.tahta) { o.tahta.visible = !!p.th && !p.d; if (p.th) { o.tahta.position.set((P[9] + P[12]) / 2, (P[10] + P[13]) / 2 + 0.05, (P[11] + P[14]) / 2); o.tahta.rotation.set(0, p.y + Math.PI / 2, 0.15); } } // elindeki tahta (kollar arasında, yana doğru)
-    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde;
+    if (o.rig) { const icde = p === me && (camM === 's' || camM === 'y' || camM === 'b'); o.rig.root.visible = !p.d && !icde; o.tag.visible = !icde; if (o.rig.levye) o.rig.levye.visible = !p.s; /* koltuktayken levye görünmez (direksiyon ve pompa elde) */
       const eller = p === me && (camM === 'b' || camM === 's' || camM === 'y') && !p.d; /* koltukta da kendi ellerin görünür: direksiyon, yağ kolu, pompa */ for (const k of [0, 1]) { o.s[k].visible = eller; if (eller) { o.s[k].material = o.elMat || (o.elMat = M(COL[p.c % 4])); o.s[k].scale.setScalar(0.075 * BOY); } } /* birinci şahısta kendi eldivenlerin görünür */ /* koltuktan bakan kendini görmez */ if (!p.d) {
         // Fizik bedeni kısa bacaklı (kalça ayaktan 0,5 m yukarıda); uzun bacaklı modeller çömelik durmasın diye
         // ayakta dik dururken çizilen gövde kaldırılır. Ayaklar ve tutunan eller fizikteki yerinde kalır, boştaki eller gövdeyle kalkar.

@@ -1,6 +1,7 @@
 # Meshy gövdesini oyuna hazırlar: köşeleri birleştir, sadeleştir, dokuyu yeni UV ile yeniden pişir, ölçekle,
 # iskelet kur (eklem yerleri bu model için ölçüldü), ağırlıkları kemiğe uzaklıktan ver, GLB aktar.
-# Kullanım (Blender Python modülü: pip install bpy): python tools/govde_iskelet.py -- girdi.glb assets/chars/govde.glb yuz=20000
+# Kullanım (Blender Python modülü: pip install bpy): python tools/govde_iskelet.py -- girdi.glb assets/chars/govde.glb yuz=20000 doku=1024
+# Meshy'den düşük yüzlü (≤ 1,5 × yuz) gelen model sadeleştirilmez, kendi dokusu kullanılır.
 import bpy, sys, math
 
 args = sys.argv[sys.argv.index('--') + 1:]
@@ -18,33 +19,46 @@ govde.select_set(True)
 # 1) sadeleştir ve dokuyu yeniden pişir: Meshy'nin doku haritası yüzlerce küçük parçadan oluşur; sadeleştirince dikişler
 # kayar ve doku çatlak çatlak görünür. Bu yüzden düşük yüzlü kopyaya yeni, düzgün bir doku haritası açılır ve
 # yüksek detaylı modelin rengi üstüne pişirilir (Cycles "seçiliden etkine").
-yuksek = govde
-bpy.ops.object.duplicate(); govde = bpy.context.object; govde.name = 'Govde'; yuksek.name = 'Yuksek'
-# Meshy ağı doku parçaları boyunca kopuktur: önce köşeler birleşir, yoksa sadeleştirince parçalar arasında delik açılır
-bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT'); bpy.ops.mesh.remove_doubles(threshold=0.0002); bpy.ops.object.mode_set(mode='OBJECT')
-print('birleşince köşe:', len(govde.data.vertices))
-mod = govde.modifiers.new('sade', 'DECIMATE'); mod.ratio = HEDEF_YUZ / len(govde.data.polygons); mod.use_collapse_triangulate = True
-bpy.ops.object.modifier_apply(modifier=mod.name)
-print('yüz:', len(govde.data.polygons))
-while govde.data.uv_layers: govde.data.uv_layers.remove(govde.data.uv_layers[0])
-govde.data.uv_layers.new(name='UV')
-bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
-bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.004); bpy.ops.object.mode_set(mode='OBJECT')
-DOKU = 2048
-img = bpy.data.images.new('govde_renk', DOKU, DOKU)
-mat = bpy.data.materials.new('Govde'); mat.use_nodes = True; nt = mat.node_tree
-bsdf = nt.nodes['Principled BSDF']; bsdf.inputs['Metallic'].default_value = 0.0; bsdf.inputs['Roughness'].default_value = 0.7
-tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img; nt.nodes.active = tex
-govde.data.materials.clear(); govde.data.materials.append(mat)
-sc = bpy.context.scene; sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = 1
-bk = sc.render.bake; bk.use_pass_direct = False; bk.use_pass_indirect = False; bk.use_pass_color = True
-bk.use_selected_to_active = True; bk.cage_extrusion = 0.02; bk.max_ray_distance = 0.06; bk.margin = 8
-for o in bpy.context.view_layer.objects: o.select_set(False)
-yuksek.select_set(True); govde.select_set(True); bpy.context.view_layer.objects.active = govde
-bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'})
-nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
-bpy.data.objects.remove(yuksek, do_unlink=True)
-print('doku pişirildi', DOKU)
+DOKU = int(dict(a.split("=") for a in args[2:]).get("doku", 2048)) if len(args) > 2 else 2048
+if len(govde.data.polygons) <= HEDEF_YUZ * 1.5:
+    # Meshy'den zaten düşük yüzlü geldi (kendi düzgün UV'siyle): sadeleştirme ve pişirme yok. Yalnız renk dokusu kalır,
+    # normal ve metal/pürüz haritaları atılır (dosyayı büyütür, bu çizgi film görünüşte farkı az).
+    mat = govde.data.materials[0]; nt = mat.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    for ad in ('Metallic', 'Roughness', 'Normal'):
+        for l in list(bsdf.inputs[ad].links): nt.links.remove(l)
+    bsdf.inputs['Metallic'].default_value = 0.0; bsdf.inputs['Roughness'].default_value = 0.7
+    renk = bsdf.inputs['Base Color'].links[0].from_node.image
+    for n in [n for n in nt.nodes if n.type == 'TEX_IMAGE' and n.image != renk]: nt.nodes.remove(n)
+    if renk.size[0] > DOKU: renk.scale(DOKU, DOKU)
+    print('yüz:', len(govde.data.polygons), '(düşük yüzlü geldi) doku', renk.size[:])
+else:
+    yuksek = govde
+    bpy.ops.object.duplicate(); govde = bpy.context.object; govde.name = 'Govde'; yuksek.name = 'Yuksek'
+    # Meshy ağı doku parçaları boyunca kopuktur: önce köşeler birleşir, yoksa sadeleştirince parçalar arasında delik açılır
+    bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT'); bpy.ops.mesh.remove_doubles(threshold=0.0002); bpy.ops.object.mode_set(mode='OBJECT')
+    print('birleşince köşe:', len(govde.data.vertices))
+    mod = govde.modifiers.new('sade', 'DECIMATE'); mod.ratio = HEDEF_YUZ / len(govde.data.polygons); mod.use_collapse_triangulate = True
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    print('yüz:', len(govde.data.polygons))
+    while govde.data.uv_layers: govde.data.uv_layers.remove(govde.data.uv_layers[0])
+    govde.data.uv_layers.new(name='UV')
+    bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.004); bpy.ops.object.mode_set(mode='OBJECT')
+    img = bpy.data.images.new('govde_renk', DOKU, DOKU)
+    mat = bpy.data.materials.new('Govde'); mat.use_nodes = True; nt = mat.node_tree
+    bsdf = nt.nodes['Principled BSDF']; bsdf.inputs['Metallic'].default_value = 0.0; bsdf.inputs['Roughness'].default_value = 0.7
+    tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img; nt.nodes.active = tex
+    govde.data.materials.clear(); govde.data.materials.append(mat)
+    sc = bpy.context.scene; sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = 1
+    bk = sc.render.bake; bk.use_pass_direct = False; bk.use_pass_indirect = False; bk.use_pass_color = True
+    bk.use_selected_to_active = True; bk.cage_extrusion = 0.02; bk.max_ray_distance = 0.06; bk.margin = 8
+    for o in bpy.context.view_layer.objects: o.select_set(False)
+    yuksek.select_set(True); govde.select_set(True); bpy.context.view_layer.objects.active = govde
+    bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'})
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    bpy.data.objects.remove(yuksek, do_unlink=True)
+    print('doku pişirildi', DOKU)
 
 # 2) ölçek ve ayaklar yerde (Blender z yukarı)
 govde.select_set(True); bpy.context.view_layer.objects.active = govde
