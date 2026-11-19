@@ -16,7 +16,9 @@ export const barLamp = [-2.3, 2.3].map((x) => { const l = new THREE.PointLight(0
   add(bar, new THREE.ConeGeometry(0.3, 0.26, 14, 1, true), M(0x1d3a2a, { side: THREE.DoubleSide }), x, 2.95, 0.4); add(bar, SG, MB(0xffe2b0, { fog: false }), x, 2.86, 0.4, 0.07); add(bar, CG, M(0x111111), x, 4.0, 0.4, 0.012, 2, 0.012); return l; });
 add(bar, BG, M(0x2a1a10), 0, -0.05, -2, 18, 0.1, 18); add(bar, BG, M(0x1c130d), 0, 2.5, 2.7, 18, 5.2, 0.2); add(bar, BG, M(0x1c130d), -7, 2.5, -2, 0.2, 5.2, 18); add(bar, BG, M(0x1c130d), 7, 2.5, -2, 0.2, 5.2, 18);
 for (let z = -6; z < 2.6; z += 0.9) add(bar, BG, M(0x1f130b), 0, 0.003, z, 14, 0.01, 0.03); // döşeme tahtası araları
-add(bar, BG, M(0x3a2415), 0, 0.55, 0.45, 12, 1.1, 0.8); add(bar, BG, M(0x7a4d28), 0, 1.13, 0.4, 12.2, 0.06, 1.0); add(bar, CG, M(0xb08a3a), 0, 0.3, -0.05, 0.03, 12, 0.03).rotation.z = Math.PI / 2;
+// Tezgâh, tabureler ve oturuş yükseklikleri kısa bacaklı gövdeye göre (ALCAK kadar alçak): ayaklar yere değer, dirsekler tezgâhta
+export const ALCAK = 0.6, OTUR_ALCAK = 0.71; // tezgâh ve kupalar ALCAK, oturan kalça OTUR_ALCAK kadar aşağıda (bacak boyu ~0,29 m)
+add(bar, BG, M(0x3a2415), 0, 0.55 - ALCAK / 2, 0.45, 12, 1.1 - ALCAK, 0.8); add(bar, BG, M(0x7a4d28), 0, 1.13 - ALCAK, 0.4, 12.2, 0.06, 1.0); add(bar, CG, M(0xb08a3a), 0, 0.12, -0.05, 0.03, 12, 0.03).rotation.z = Math.PI / 2;
 // arka raf: şişeler, neon
 add(bar, BG, M(0x24170e), 0, 1.5, 2.45, 9, 3, 0.3); for (const y of [1.45, 2.05, 2.65]) add(bar, BG, M(0x5a3a20), 0, y, 2.25, 8.6, 0.05, 0.3);
 { const BC = [0x2f6b3a, 0x6b3a1a, 0x9a7a2a, 0x3a5a7a, 0x8a2a2a, 0xd8d0b0]; let n = 0; for (const y of [1.45, 2.05]) for (let x = -4; x <= 4; x += 0.36 + srnd() * 0.2) { const c = M(BC[n++ % 6]), hh = 0.26 + srnd() * 0.14; add(bar, CG, c, x, y + 0.03 + hh / 2, 2.22, 0.055, hh, 0.055); add(bar, CG, c, x, y + 0.08 + hh, 2.22, 0.02, 0.12, 0.02); } }
@@ -30,7 +32,7 @@ for (const s of [-1, 1]) { const x = s * 6.88, z0 = -3.0, z1 = -0.8;
   const l = new THREE.DirectionalLight(s < 0 ? 0xbcd0ff : 0xffe0b8, 2.4); l.position.set(s * 6, 3.2, -2); l.target.position.set(0, 1, -0.6); bar.add(l); bar.add(l.target); }
 export const dust = (() => { const n = 160, p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const u = Math.random(), s = i % 2 ? 1 : -1; p[i * 3] = s * (6.8 - u * 5.2); p[i * 3 + 1] = 2.5 - u * 2.5 + rnd(-0.6, 0.6); p[i * 3 + 2] = rnd(-3, -0.6) + u * 0.5; } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); const m = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xdde8ff, size: 0.035, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); bar.add(m); return m; })();
 // küllük, sigara, duman
-add(bar, CG, M(0x8d8d92), 0, 1.18, 0.5, 0.14, 0.04, 0.14); add(bar, CG, M(0xf2ead8), 0.06, 1.22, 0.5, 0.012, 0.17, 0.012).rotation.z = Math.PI / 2 - 0.2; add(bar, SG, MB(0xff6a1a, { fog: false }), 0.145, 1.238, 0.5, 0.017);
+add(bar, CG, M(0x8d8d92), 0, 1.18 - ALCAK, 0.5, 0.14, 0.04, 0.14); add(bar, CG, M(0xf2ead8), 0.06, 1.22 - ALCAK, 0.5, 0.012, 0.17, 0.012).rotation.z = Math.PI / 2 - 0.2; add(bar, SG, MB(0xff6a1a, { fog: false }), 0.145, 1.238 - ALCAK, 0.5, 0.017);
 export const smT = tex(64, 64, (g) => { const r = g.createRadialGradient(32, 32, 2, 32, 32, 32); r.addColorStop(0, 'rgba(255,255,255,.9)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); });
 export const smoke = Array.from({ length: 20 }, () => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: smT, transparent: true, depthWrite: false, color: 0xd8d0c8, fog: false })); bar.add(s); return s; });
 // ---------- kamyoncu tipi (barda ve oyunda aynı) ----------
@@ -56,18 +58,19 @@ export const POSE = [
 ];
 export function trucker(ci, name) {
   const k = ci % 4, ps = POSE[k], g = new THREE.Group(), sk = M(SKIN[k]), col = M(COL[k]), hr = M(HAIR[k]);
-  add(g, CG, M(0x5a1f1a), 0, 0.78, 0, 0.25, 0.08, 0.25); add(g, CG, steel, 0, 0.39, 0, 0.04, 0.78, 0.04); add(g, CG, steel, 0, 0.02, 0, 0.26, 0.04, 0.26); add(g, new THREE.TorusGeometry(0.22, 0.02, 6, 20), steel, 0, 0.33, 0).rotation.x = Math.PI / 2;
+  const ot = 0.78 - OTUR_ALCAK + 0.02; // tabure oturağı (alçak tabure: kısa bacaklar yere değsin)
+  add(g, CG, M(0x5a1f1a), 0, ot, 0, 0.25, 0.08, 0.25); add(g, CG, steel, 0, ot / 2, 0, 0.04, ot, 0.04); add(g, CG, steel, 0, 0.02, 0, 0.26, 0.04, 0.26);
   const n0 = g.children.length; // bundan sonra eklenen bacaklar iskeletli model gelince gizlenir
   ps.legs.forEach((L, i) => { const s = i ? -1 : 1; seg(g, jean, [s * 0.16, 0.9, 0], L[0], 0.115); seg(g, jean, L[0], L[1], 0.09); add(g, BG, dark, L[1][0], L[1][1] - 0.04, L[1][2] + 0.07, 0.15, 0.11, 0.32); });
   const bacak = g.children.slice(n0);
-  const b = new THREE.Group(); b.position.y = 0.9; b.rotation.x = ps.lean; g.add(b); const Y = -0.9; // gövde kalçadan eğilir
+  const b = new THREE.Group(); b.position.y = 0.9 - OTUR_ALCAK; b.rotation.x = ps.lean; g.add(b); const Y = -0.9; // gövde kalçadan eğilir
   add(b, SG, leather, 0, 1.4 + Y, -0.03, 0.46, 0.54, 0.37); const belly = add(b, SG, col, 0, 1.2 + Y, 0.15, 0.37, 0.39, 0.33); add(b, BG, dark, 0, 0.98 + Y, 0.3, 0.5, 0.05, 0.12); add(b, BG, M(0xc9a23a), 0, 0.98 + Y, 0.37, 0.1, 0.07, 0.02);
   add(b, CG, sk, 0, 1.88 + Y, 0, 0.11, 0.14, 0.11);
   const eller = [];
   ps.arms.forEach((A, i) => { const s = i ? -1 : 1, e = [A[0][0], A[0][1] + Y, A[0][2]], hnd = [A[1][0], A[1][1] + Y, A[1][2]]; add(b, SG, leather, s * 0.42, 1.68 + Y, 0, 0.15); seg(b, leather, [s * 0.44, 1.66 + Y, 0], e, 0.115); seg(b, leather, e, hnd, 0.1); eller.push(add(b, SG, sk, hnd[0], hnd[1], hnd[2] + 0.02, 0.085)); });
   const h = new THREE.Group(); h.position.set(0, 2.05 + Y, 0.02); b.add(h); add(h, SG, sk, 0, 0, 0, 0.21, 0.235, 0.21); faceParts(h, k, sk, col, hr);
-  const kupa = new THREE.Group(); kupa.position.set(ps.mug[0], 1.25, ps.mug[1]); g.add(kupa); add(kupa, CG, M(0xe9a824, { transparent: true, opacity: 0.85 }), 0, 0, 0, 0.07, 0.18, 0.07); add(kupa, CG, M(0xffffff), 0, 0.105, 0, 0.072, 0.035, 0.072);
-  const ns = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false, fog: false, map: tex(256, 64, (c, w, hh) => { c.font = '900 34px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#000'; c.strokeText(name, w / 2, hh / 2); c.fillStyle = '#' + COL[k].toString(16).padStart(6, '0'); c.fillText(name, w / 2, hh / 2); }) })); ns.position.set(0, 2.62, 0); ns.scale.set(1.3, 0.325, 1); g.add(ns); ns.visible = !location.search.includes('temiz'); // ?temiz: tanıtım görselleri için isimsiz
+  const kupa = new THREE.Group(); kupa.position.set(ps.mug[0], 1.25 - ALCAK, ps.mug[1]); g.add(kupa); add(kupa, CG, M(0xe9a824, { transparent: true, opacity: 0.85 }), 0, 0, 0, 0.07, 0.18, 0.07); add(kupa, CG, M(0xffffff), 0, 0.105, 0, 0.072, 0.035, 0.072);
+  const ns = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false, fog: false, map: tex(256, 64, (c, w, hh) => { c.font = '900 34px system-ui,Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#000'; c.strokeText(name, w / 2, hh / 2); c.fillStyle = '#' + COL[k].toString(16).padStart(6, '0'); c.fillText(name, w / 2, hh / 2); }) })); ns.position.set(0, 2.62 - ALCAK - 0.25, 0); ns.scale.set(1.3, 0.325, 1); g.add(ns); ns.visible = !location.search.includes('temiz'); // ?temiz: tanıtım görselleri için isimsiz
   let ball = null; if (ps.ball) { const A = ps.arms[0][1]; ball = new THREE.Group(); ball.userData.y0 = A[1] + Y + 0.125; ball.position.set(A[0], ball.userData.y0, A[2] + 0.02); b.add(ball); add(ball, SG, M(0xf4efe2), 0, 0, 0, 0.045); for (const r of [0.6, -0.6]) add(ball, new THREE.TorusGeometry(0.04, 0.004, 4, 16), M(0xc0392b), 0, 0, 0).rotation.set(r, r, 0); } // beyzbol topu
   g.rotation.y = ps.ry; g.userData = { ns, h, belly, k, ps, ball, eller, kupa, kupa0: kupa.position.clone() };
   // iskeletli model: yüklenince eski kutu gövde gizlenir (top, kupa, tabure ve isim kalır)
@@ -95,6 +98,7 @@ export function topEli(t) {
 const AGIZ = [0.3, 0.3, 0.3, 0.3]; // hepsi aynı gövde (govde.glb): ağız başın 0,3 m önünde
 // kupa boyu: iri elli sarıda kupa da büyük (yoksa yumruğun içinde kaybolur)
 const KUPA = [1.2, 1.2, 1.2, 1.2]; // eldiven eller iri: kupa biraz büyük
+const AYAK_Y = 0.09; // ayak bileğinin yerden yüksekliği (yeni gövde)
 const OTUR = [[[0.95, 0.9], [1.0, 0.6]], null, [[0.95, 0.95], [0.9, 0.8]], [[0.95, 0.9], [0.95, 0.92]]];
 const KY = new THREE.Vector3(), KA = new THREE.Vector3(), KK = new THREE.Vector3(), KV = new THREE.Vector3(), KP = new THREE.Vector3(), KB = new THREE.Vector3(), KQ = new THREE.Quaternion();
 const AQ = new THREE.Quaternion(), AY = new THREE.Vector3(0, 1, 0), AX = new THREE.Vector3(1, 0, 0), AT = new THREE.Vector3();
@@ -104,10 +108,10 @@ function ayakta(u, g, t) {
   BK.set(gx, hy, -0.2);
   const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(AQ).add(BK); // gövdeye göre konum → dünya
   const nefes = Math.sin(t * 1.5) * 0.012;
-  BH.lf.set(gx + 0.1, 0.13, -0.5); BH.rf.set(gx - 0.18, 0.13, -0.42);
+  BH.lf.set(gx + 0.08, AYAK_Y, -0.3); BH.rf.set(gx - 0.16, AYAK_Y, -0.26); // kısa bacaklar: ayaklar gövdenin hemen önünde, yerde
   EK.egil = nefes; EK.basEg = 0.05 + Math.sin(t * 0.33) * 0.06; EK.bilek[0] = EK.bilek[1] = 0; EK.kolBagla = nefes || true; // kollar çapraz: her el öbür dirseğe
   poseRig(r, BK, AQ, BH, u.h.rotation.y * 0.7 - 0.2, EK); EK.kolBagla = false;
-  u.ns.position.copy(g.worldToLocal(AT.set(gx, 2.55, -0.2))); // isim kendi başının üstünde
+  u.ns.position.copy(g.worldToLocal(AT.set(gx, 1.75, -0.2))); // isim kendi başının üstünde
 }
 function barRig(u, g, t) {
   if (u.k === 1) return ayakta(u, g, t);
@@ -115,16 +119,16 @@ function barRig(u, g, t) {
   // kalça: uyluklar minderin (üstü 0,82) hemen üstünde kalacak yükseklikte
   BK.set(0, 0.04 + u.rig.kalcaBacak, 0); b.localToWorld(BK); b.getWorldQuaternion(BQ);
   u.eller[0].getWorldPosition(BH.lh); u.eller[1].getWorldPosition(BH.rh);
-  EK.otur = OTUR[k];
+  EK.otur = OTUR[k]; EK.yer = AYAK_Y; // oturanların ayakları yere basar
   if (k === 2) { // sarı: tam yan dönük oturur; sağ dirseği tezgâhta, sol eli dizinde, kupası sağ elinin yanında
     BQ.setFromAxisAngle(AY, Math.PI / 2); const gx = BK.x;
-    BH.rh.set(gx + 0.12, 1.21, 0.3); BH.lh.set(gx + 0.3, 0.98, -0.18);
-    u.kupa0.copy(g.worldToLocal(AT.set(gx + 0.32, 1.25, 0.38)));
+    BH.rh.set(gx + 0.12, 1.21 - ALCAK, 0.3); BH.lh.set(gx + 0.3, 0.98 - ALCAK, -0.18);
+    u.kupa0.copy(g.worldToLocal(AT.set(gx + 0.32, 1.25 - ALCAK, 0.38)));
   }
   if (k === 3) { // yeşil (yaşlı usta): rahat kamyoncu oturuşu — alçak, dizler açık, ayaklar halkada, dirsekler dizlerde, öne eğik
     BK.y -= 0.06; EK.otur = null; EK.dizDisa = true;
     const yer = (v, x, y, z) => v.set(x, y, z).applyQuaternion(BQ).add(BK);
-    yer(BH.lf, 0.3, -0.5, 0.22); yer(BH.rf, -0.3, -0.5, 0.22); BH.lf.y = BH.rf.y = 0.43; // ayaklar taburenin halkasında (0,33) duruyor
+    yer(BH.lf, 0.3, -0.5, 0.22); yer(BH.rf, -0.3, -0.5, 0.22); BH.lf.y = BH.rf.y = AYAK_Y; // ayaklar yerde
     // kollar uyluklarda (dizlere yakın), arada bir ağır ağır dizini tıpışlar; gülerken sağ eliyle dizine vurur
     const l = (t + 2) % 7, gul = l < 1.6 ? Math.sin((l / 1.6) * Math.PI) : 0, vur = l < 1.6 ? Math.max(0, Math.sin(l * 9)) * 0.12 * gul : 0;
     const tip = Math.max(0, Math.sin(t * 5.2)) * 0.035 * (Math.sin(t * 0.4) > 0.6 ? 1 : 0); // ritim tutar gibi
@@ -192,10 +196,10 @@ function drawBarmen(t, n) {
   // Barmen salona (-z) bakar: sağ eli +x yanında (kameradan bakınca solda), sol eli -x yanında.
   // Sağ el tezgâhı daire çizerek siler; sol el tezgâhın kenarına dayanır.
   const a = t * 2.4;
-  MH.rh.set(x + 0.26 + Math.cos(a) * 0.13, 1.2, 0.86 + Math.sin(a) * 0.08);
-  MH.lh.set(x - 0.3, 1.2, 0.96);
+  MH.rh.set(x + 0.26 + Math.cos(a) * 0.13, 1.2 - ALCAK, 0.86 + Math.sin(a) * 0.08);
+  MH.lh.set(x - 0.3, 1.2 - ALCAK, 0.96);
   // el ovuşturma: iki el göğsün önünde buluşur, sağ el sol elin üstünde ileri geri kayar
-  if (k > 0) { const o = Math.sin(t * 14) * 0.035; MH.rh.lerp(MK.clone().set(x + 0.045, 1.28 + o, z - 0.26), k); MH.lh.lerp(MK.clone().set(x - 0.045, 1.28 - o, z - 0.26), k); }
+  if (k > 0) { const o = Math.sin(t * 14) * 0.035; MH.rh.lerp(MK.clone().set(x + 0.045, 1.28 - ALCAK + o, z - 0.26), k); MH.lh.lerp(MK.clone().set(x - 0.045, 1.28 - ALCAK - o, z - 0.26), k); }
   MH.lf.set(x + 0.14, 0.13, z + 0.02); MH.rf.set(x - 0.14, 0.13, z + 0.02);
   MEK.egil = 0.22 * (1 - k) + Math.sin(t * 1.4) * 0.02; MEK.basEg = -0.12 + Math.sin(t * 0.9) * 0.05 - k * 0.15; MEK.bilek[0] = MEK.bilek[1] = 0;
   // eller: silen elin avucu tezgâha bakar, parmaklar ileri; ovuştururken avuçlar birbirine
@@ -203,11 +207,11 @@ function drawBarmen(t, n) {
   // sinsi bakışlar: arada hızla sağa sola döner
   const g = t % 5, bas = g < 0.5 ? 0.6 * Math.sin((g / 0.5) * Math.PI) : g > 2.5 && g < 3 ? -0.6 * Math.sin(((g - 2.5) / 0.5) * Math.PI) : Math.sin(t * 0.5) * 0.12;
   poseRig(r, MK, MQ, MH, bas, MEK);
-  bez.position.set(MH.rh.x - 0.02, 1.165, MH.rh.z - 0.07); bez.rotation.y = a * 0.3; /* bez avucun altında */ bez.visible = k < 0.5;
+  bez.position.set(MH.rh.x - 0.02, 1.165 - ALCAK, MH.rh.z - 0.07); bez.rotation.y = a * 0.3; /* bez avucun altında */ bez.visible = k < 0.5;
 }
 export function drawBar(V, dt) {
   barT += dt; const a = innerWidth / innerHeight; if (barCam.aspect !== a) { barCam.aspect = a; barCam.fov = a < 1 ? 70 : 50; barCam.updateProjectionMatrix(); }
-  const d = clamp(3.7 / (Math.tan(barCam.fov * Math.PI / 360) * a), 4.7, 12); barCam.position.set(Math.sin(barT * 0.15) * 0.35, 1.75, -0.6 - d); barCam.lookAt(0, 1.25, -0.4);
+  const d = clamp(3.7 / (Math.tan(barCam.fov * Math.PI / 360) * a), 4.7, 12); barCam.position.set(Math.sin(barT * 0.15) * 0.35, 1.3, -0.6 - d); barCam.lookAt(0, 0.8, -0.4); // alçak tezgâh ve kısa karakterler
   const ids = new Set(), mid = (V.p.length - 1) / 2; drawBarmen(barT, V.p.length);
   V.p.forEach((p, i) => { ids.add(p.id); let g = truckers.get(p.id); if (g && g.userData.k !== p.c % 4) { bar.remove(g); truckers.delete(p.id); g = null; } /* karakter değişti */ if (!g) { g = trucker(p.c, p.n); truckers.set(p.id, g); bar.add(g); }
     const u = g.userData; g.position.set((mid - i) * 1.7, 0, u.ps.z);
@@ -217,7 +221,7 @@ export function drawBar(V, dt) {
       if (u.rig && u.avuc) { u.ball.position.copy(u.b.worldToLocal(u.avuc.clone())); u.ball.position.y += 1.9 * t * (1 - t); } // avuçtan kalkar, avuca iner
       else u.ball.position.y = u.ball.userData.y0 + 1.9 * t * (1 - t); } }); // topu yavaşça atıp tutar
   for (const [id, g] of truckers) if (!ids.has(id)) { bar.remove(g); truckers.delete(id); }
-  smoke.forEach((s, i) => { const u = (barT * 0.22 + i / smoke.length) % 1; s.position.set(0.145 + Math.sin(u * 6 + i) * 0.12 * u + u * 0.15, 1.26 + u * 1.7, 0.5 + Math.cos(u * 4 + i * 2) * 0.08 * u); const z = 0.06 + u * 0.55; s.scale.set(z, z, 1); s.material.opacity = 0.34 * (1 - u) * Math.min(1, u * 10); });
+  smoke.forEach((s, i) => { const u = (barT * 0.22 + i / smoke.length) % 1; s.position.set(0.145 + Math.sin(u * 6 + i) * 0.12 * u + u * 0.15, 1.26 - ALCAK + u * 1.7, 0.5 + Math.cos(u * 4 + i * 2) * 0.08 * u); const z = 0.06 + u * 0.55; s.scale.set(z, z, 1); s.material.opacity = 0.34 * (1 - u) * Math.min(1, u * 10); });
   dust.position.set(Math.sin(barT * 0.13) * 0.15, Math.sin(barT * 0.2) * 0.12, 0);
   neon.material.opacity = Math.sin(barT * 31) > 0.97 || Math.sin(barT * 2.3) > 0.985 ? 0.35 : 1;
   barLamp.forEach((l, i) => (l.intensity = 12 + Math.sin(barT * 9 + i * 3) * 0.5));
