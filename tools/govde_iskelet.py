@@ -8,6 +8,7 @@ args = sys.argv[sys.argv.index('--') + 1:]
 GIRDI, CIKTI = args[0], args[1]
 HEDEF_YUZ = int(dict(a.split("=") for a in args[2:]).get("yuz", 14000)) if len(args) > 2 else 14000
 OLCEK = 0.75
+BOY_HEDEF = 1.425 # oyundaki gövde boyu (m, ölçek 1)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=GIRDI)
@@ -62,6 +63,11 @@ else:
 
 # 2) ölçek ve ayaklar yerde (Blender z yukarı)
 govde.select_set(True); bpy.context.view_layer.objects.active = govde
+# Eklem kalıbı motorcu modelinde (boy 1,90, kol ucu x 0,84) ölçüldü. Başka modelde boyuna ve genişliğine oranlanır.
+_vs = [govde.matrix_world @ v.co for v in govde.data.vertices]
+_H = max(v.z for v in _vs) - min(v.z for v in _vs); _X = max(abs(v.x) for v in _vs)
+OLCEK = BOY_HEDEF / _H; SZ = _H / 1.90; SX = _X / 0.84
+print('ham boy', round(_H, 3), 'genişlik', round(_X, 3), 'SX', round(SX, 3))
 govde.scale = (OLCEK, OLCEK, OLCEK)
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 alt = min(v.co.z for v in govde.data.vertices)
@@ -69,7 +75,7 @@ for v in govde.data.vertices: v.co.z -= alt
 print('boy:', round(max(v.co.z for v in govde.data.vertices), 3))
 
 # 4) iskelet: eklem yerleri kesitlerden ve görüntülerden ölçüldü (ham ölçü, ayak tabanı 0, boy 1.90). Model -Y'ye bakar; sol +X.
-def p(x, y, z): return (x * OLCEK, y * OLCEK, z * OLCEK)
+def p(x, y, z): return (x * SX * OLCEK, y * SX * OLCEK, z * SZ * OLCEK)
 EKLEM = {
     'Hips': (p(0, 0, 0.48), p(0, 0, 0.62), None),
     'Spine': (p(0, 0, 0.62), p(0, 0, 0.78), 'Hips'),
@@ -104,8 +110,8 @@ from mathutils import Vector
 from mathutils.geometry import intersect_point_line
 kemik = {b.name: (Vector(b.head_local), Vector(b.tail_local)) for b in arm.data.bones}
 gruplar = {ad: govde.vertex_groups.get(ad) or govde.vertex_groups.new(name=ad) for ad in kemik}
-BOYUN_UST = 1.28 * OLCEK
-KOL_ALT, GOVDE_YARI, EL_ALT, OMUZ_IC = 1.0 * OLCEK, 0.5 * OLCEK, 0.5 * OLCEK, 0.36 * OLCEK # omuz ekleminin içi; ham ölçü: omuz altı yükseklik, gövdenin yarı genişliği, ellerin altı (kesitlerden)
+BOYUN_UST = 1.28 * SZ * OLCEK
+KOL_ALT, GOVDE_YARI, EL_ALT, OMUZ_IC = 1.0 * SZ * OLCEK, 0.5 * SX * OLCEK, 0.5 * SZ * OLCEK, 0.36 * SX * OLCEK # omuz ekleminin içi; ham ölçü: omuz altı yükseklik, gövdenin yarı genişliği, ellerin altı (kesitlerden)
 def uzak(v, ad):
     a, b = kemik[ad]; q, t = intersect_point_line(v, a, b); t = max(0.0, min(1.0, t))
     return (v - (a + (b - a) * t)).length
