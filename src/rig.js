@@ -6,7 +6,7 @@ import { loadModel, recolor } from './models.js';
 
 export const CHAR_URL = 'assets/chars/govde.glb';
 // Herkes aynı gövde: tombul motorcu (govde.glb, Meshy + Blender iskeleti). Oyuncu rengi kotun boyanmasıyla verilir.
-const GOVDE = 'govde.glb';
+const GOVDE = 'govde.glb', TIP = [GOVDE, GOVDE, 'montlu.glb', GOVDE]; // oyuncu rengine göre tip (sarı: montlu); kendi tipi olmayan renk motorcu, kotu boyanır
 const KEMIK = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
 
 // Oyuncu renkleri (kot pantolon bu renge boyanır): kırmızı, mavi, sarı, yeşil.
@@ -55,9 +55,9 @@ function ik(ust, orta, uc, hedef, kutup, a, b) {
 // Bir karakter kopyası üretir. Model yüklenmemişse null döner.
 // tur: null (oyuncu, ci rengi), 'haydut' ya da 'barmen'.
 export async function makeRig(ci, parent, tur = null, olcek = 1) {
-  const m = await loadModel('assets/chars/' + GOVDE); if (!m) return null;
+  const dosya = tur ? GOVDE : TIP[ci % 4], m = (await loadModel('assets/chars/' + dosya)) || (await loadModel('assets/chars/' + GOVDE)); if (!m) return null;
   const root = new THREE.Group(), model = cloneSkinned(m);
-  recolor(model, tur || 'rig' + (ci % 4), boyaFn(tur, ci)); // oyuncu rengi kotta; haydut ve barmen kendi boyasıyla
+  if (tur || dosya === GOVDE) recolor(model, tur || 'rig' + (ci % 4), boyaFn(tur, ci)); // motorcunun kotu oyuncu renginde; kendi tipi olanın kıyafeti zaten renginde
   model.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; o.receiveShadow = false; } });
   root.add(model); root.matrixAutoUpdate = false; parent.add(root);
   const B = {}; model.traverse((o) => { if (o.isBone) { const ad = o.name.replace(/^mixamorig:?/, ''); if (KEMIK.includes(ad)) B[ad] = o; } });
